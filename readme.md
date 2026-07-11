@@ -43,12 +43,16 @@ This project was built to answer a simple question: _What if a media studio was 
 
 ## 🚀 Getting Started
 
-### Option A — Open directly
+### Option A — Play Online (Easiest)
+You can use the studio directly in your browser without downloading anything:
+🔗 **[Accessible Media Studio - Live Version](https://saifeldeen377.github.io/accessible_media_studio/)**
+
+### Option B — Open locally
 1. Download or clone this project folder.
 2. Double-click `index.html` to open in Chrome, Edge, or Firefox.
 3. Done. No setup, no installation, no internet needed after first load.
 
-### Option B — Local server (recommended)
+### Option C — Local server
 ```bash
 # Using Python (built into most systems)
 python -m http.server 3000
