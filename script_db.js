@@ -81,9 +81,9 @@ async function loadLibraryFromDB() {
  req.onsuccess = () =>{
  const records = req.result || [];
  records.forEach(record =>{
- // Re-create the objectURL from the persisted Blob
- const objectURL = URL.createObjectURL(record.blob);
- assetLibrary.push({ id: record.id, name: record.name, type: record.type, objectURL });
+  // Re-create the objectURL from the persisted Blob
+  const objectURL = URL.createObjectURL(record.blob);
+  assetLibrary.push({ id: record.id, name: record.name, type: record.type, objectURL, file: record.blob });
  // Keep the counter above the max existing ID number
  const num = parseInt(record.id.replace('asset-', '')) || 0;
  if (num >assetIdCounter) assetIdCounter = num;

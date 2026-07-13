@@ -38,32 +38,39 @@ function downloadBlob(blob, filename) {
  setTimeout(() =>URL.revokeObjectURL(url), 10000); // Revoke after allowing browser to start download
 }
 
-async function decodeAudio(objectURL) {
- try {
- const ctx = getAudioCtx();
- const response = await fetch(objectURL);
- 
- // Check headers for content-length as a primary warning
- const contentLength = response.headers.get('content-length');
- if (contentLength && parseInt(contentLength) >50 * 1024 * 1024) {
- const confirmDecode = confirm("Warning: This audio file is larger than 50MB. Decoding it into memory may cause the browser tab to slow down or restart on systems with limited RAM (e.g. 4GB). Do you want to proceed?");
- if (!confirmDecode) throw new Error("Decoding canceled by user due to file size safety.");
- }
+async function decodeAudio(fileOrURL) {
+  try {
+    const ctx = getAudioCtx();
+    let buffer;
 
- const buffer = await response.arrayBuffer();
+    if (typeof fileOrURL === 'string') {
+      const response = await fetch(fileOrURL);
+      const contentLength = response.headers.get('content-length');
+      if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
+        const confirmDecode = confirm("Warning: This audio file is larger than 50MB. Decoding it into memory may cause the browser tab to slow down or restart on systems with limited RAM (e.g. 4GB). Do you want to proceed?");
+        if (!confirmDecode) throw new Error("Decoding canceled by user due to file size safety.");
+      }
+      buffer = await response.arrayBuffer();
+    } else {
+      if (fileOrURL.size > 50 * 1024 * 1024) {
+        const confirmDecode = confirm("Warning: This audio file is larger than 50MB. Decoding it into memory may cause the browser tab to slow down or restart on systems with limited RAM (e.g. 4GB). Do you want to proceed?");
+        if (!confirmDecode) throw new Error("Decoding canceled by user due to file size safety.");
+      }
+      buffer = await fileOrURL.arrayBuffer();
+    }
 
- // Second-line check on raw arrayBuffer size (decompressed size warning)
- if (buffer.byteLength >150 * 1024 * 1024) {
- const confirmDecode = confirm("Warning: The raw data buffer is larger than 150MB. Decoding this might consume substantial RAM. Do you want to proceed?");
- if (!confirmDecode) throw new Error("Decoding canceled by user due to memory size safety.");
- }
+    // Second-line check on raw arrayBuffer size (decompressed size warning)
+    if (buffer.byteLength > 150 * 1024 * 1024) {
+      const confirmDecode = confirm("Warning: The raw data buffer is larger than 150MB. Decoding this might consume substantial RAM. Do you want to proceed?");
+      if (!confirmDecode) throw new Error("Decoding canceled by user due to memory size safety.");
+    }
 
- return await ctx.decodeAudioData(buffer);
- } catch (err) {
- console.error("Audio Decode Error:", err);
- alert("فشل في معالجة الملف الصوتي (Decode Error): "+ err.message);
- throw err;
- }
+    return await ctx.decodeAudioData(buffer);
+  } catch (err) {
+    console.error("Audio Decode Error:", err);
+    alert("Decode Error: " + err.message);
+    throw err;
+  }
 }
 
 /** Encode an AudioBuffer as a 16-bit PCM WAV Blob */

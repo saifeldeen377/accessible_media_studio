@@ -39,9 +39,9 @@ function initLibrary() {
 
  if (!type) { alert('Unsupported file type. Please upload audio, video, or image files.'); return; }
 
- const id = `asset-${++assetIdCounter}`;
- const objectURL = URL.createObjectURL(file);
- assetLibrary.push({ id, name, type, objectURL });
+  const id = `asset-${++assetIdCounter}`;
+  const objectURL = URL.createObjectURL(file);
+  assetLibrary.push({ id, name, type, objectURL, file });
 
  // Persist to IndexedDB so the file survives page refresh
  dbSaveAsset(id, name, type, file);

@@ -105,7 +105,7 @@ function initSuperMode() {
 
  // Live Mixer keys listener
  window.addEventListener('keydown', e =>{
- if (e.repeat) return; // Prevent duplicate triggers when holding keys
+ if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; // Prevent duplicate triggers (allow held arrows)
  if (!smActive || !smBaseAudio) return;
 
  const liveView = document.getElementById('sm-live-view');
@@ -807,126 +807,125 @@ function restartSmPlayback() {
  smSoftPaused = false;
  smLastUpdateTime = getAudioCtx().currentTime;
 
- smBaseAudio.currentTime = 0;
- smBaseAudio.endedTriggered = false;
+  smBaseAudio.currentTime = 0;
+  smBaseAudio.endedTriggered = false;
 
- // Normal replay from 0.0s (do NOT punch in, so we preserve the timeline)
- smResumeBase(false);
+  // Normal replay from 0.0s (do NOT punch in, so we preserve the timeline)
+  smResumeBase(false);
 }
 
 function getSmTotalVirtualDuration() {
- if (!smBaseAudio) return 0;
+  if (!smBaseAudio) return 0;
 
- // Start with base duration, captured recorded duration, and current virtual time
- let maxDur = Math.max(
- smBaseAudio.duration || 0,
- smTotalRecordedDuration || 0,
- smVirtualTime
- );
+  // Start with base duration, captured recorded duration, and current virtual time
+  let maxDur = Math.max(
+    smBaseAudio.duration || 0,
+    smTotalRecordedDuration || 0,
+    smVirtualTime
+  );
 
- // Also check end times of all recorded overlay clips
- smRecordedClips.forEach(c =>{
- const buf = decodedAudioBuffers[c.assetId];
- if (buf) {
- const cs = c.cropStart || 0;
- const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
- const clipEndTime = c.timelineStart + (ce - cs);
- maxDur = Math.max(maxDur, clipEndTime);
- }
- });
+  // Also check end times of all recorded overlay clips
+  smRecordedClips.forEach(c => {
+    const buf = decodedAudioBuffers[c.assetId];
+    if (buf) {
+      const cs = c.cropStart || 0;
+      const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
+      const clipEndTime = c.timelineStart + (ce - cs);
+      maxDur = Math.max(maxDur, clipEndTime);
+    }
+  });
 
- return maxDur;
+  return maxDur;
 }
 
 function seekSmTimeline(seconds) {
- if (!smBaseAudio) return;
+  if (!smBaseAudio) return;
 
- smBaseAudio.endedTriggered = false;
- 
- const oldVirtualTime = smVirtualTime;
- const maxDur = getSmTotalVirtualDuration();
- 
- let newVirtualTime = oldVirtualTime + seconds;
- if (newVirtualTime< 0) newVirtualTime = 0;
- if (maxDur >0 && newVirtualTime >maxDur) newVirtualTime = maxDur;
- 
- const actualSeekAmount = newVirtualTime - oldVirtualTime;
- if (actualSeekAmount === 0) return;
+  smBaseAudio.endedTriggered = false;
+  
+  const oldVirtualTime = smVirtualTime;
+  const maxDur = getSmTotalVirtualDuration();
+  
+  // If seeking forward but already at/past the end → do nothing
+  if (seconds > 0 && smVirtualTime >= maxDur) return;
+  // If seeking backward but already at the start → do nothing
+  if (seconds < 0 && smVirtualTime <= 0) return;
 
- // If we were recording, close the segment BEFORE applying the seek jump
- if (smBaseSegmentStartSource !== null) {
- const segDur = smBaseAudio.currentTime - smBaseSegmentStartSource;
- if (segDur >0) {
- smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration: segDur });
- }
- }
+  let newVirtualTime = oldVirtualTime + seconds;
+  if (newVirtualTime < 0) newVirtualTime = 0;
+  if (maxDur > 0 && newVirtualTime > maxDur) newVirtualTime = maxDur;
 
- // Cap any current live recordings (prevent overlapping timeline corruption)
- capActiveOverlayRecordings(true);
+  const actualSeekAmount = newVirtualTime - oldVirtualTime;
+  if (actualSeekAmount === 0) return;
 
- // Stop ALL live active overlays immediately (so they don't keep playing out of sync)
- Object.keys(activeOverlayAudios).forEach(id =>{
- if (activeOverlayAudios[id] && activeOverlayAudios[id].sourceNode) {
- try { activeOverlayAudios[id].sourceNode.stop(); } catch(_) {}
- }
- delete activeOverlayAudios[id];
- });
- renderSmActiveKeysList();
+  // 1. Cap active recordings cleanly since we are jumping in time
+  capActiveOverlayRecordings(true);
 
- // Stop ALL review overlay playbacks immediately
- reviewOverlayPlaybacks.forEach(p =>stopReviewPlaybackEntry(p));
- reviewOverlayPlaybacks = [];
+  // 2. Stop any actively playing overlays so they don't continue playing out of sync
+  Object.keys(activeOverlayAudios).forEach(id => {
+    if (activeOverlayAudios[id] && activeOverlayAudios[id].sourceNode) {
+      try { activeOverlayAudios[id].sourceNode.stop(); } catch(_) {}
+    }
+    delete activeOverlayAudios[id];
+  });
+  renderSmActiveKeysList();
 
- // Reset review tracking so clips properly re-trigger at the new seeked time
- playedClipIds.clear();
+  // 3. Stop review overlays
+  if (typeof stopReviewPlaybackEntry === 'function') {
+    reviewOverlayPlaybacks.forEach(p => stopReviewPlaybackEntry(p));
+  } else {
+    reviewOverlayPlaybacks.forEach(p => {
+      if (p.sourceNode) {
+        p.sourceNode.onended = null;
+        try { p.sourceNode.stop(); } catch(_) {}
+      }
+      if (p.timerId) clearTimeout(p.timerId);
+    });
+  }
+  reviewOverlayPlaybacks = [];
+  playedClipIds.clear();
 
- smVirtualTime = newVirtualTime;
+  // 4. Update the actual playhead time
+  smVirtualTime = newVirtualTime;
+  smBaseAudio.currentTime = newVirtualTime;
 
- // Sync Base Audio Time precisely to the new virtual time
- const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
- if (activeSeg) {
- smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
- } else {
- // We are seeking into a gap. Set base audio to the end of the nearest past segment.
- const pastSegs = smBaseSegments.filter(seg =>seg.timelineStart<= smVirtualTime);
- if (pastSegs.length >0) {
- const lastSeg = pastSegs[pastSegs.length - 1];
- smBaseAudio.currentTime = lastSeg.sourceStart + lastSeg.duration;
- } else {
- smBaseAudio.currentTime = 0;
- }
- }
+  // 5. Cancel soft-pause only if we rewound BACK into the base audio
+  const baseDur = smBaseAudio.duration || 0;
+  if (smSoftPaused && newVirtualTime < baseDur) {
+    smSoftPaused = false;
+    smWasSoftPaused = false;
+  }
 
- // If we were recording, open a new segment immediately after the jump
- if (smBaseSegmentStartSource !== null) {
- smBaseSegmentStartTimeline = smVirtualTime;
- smBaseSegmentStartSource = smBaseAudio.currentTime;
- }
 
- // CRITICAL FIX: If we were soft-paused (recording a gap), break out of it!
- // Otherwise, the next tick of updateSmTimeline will overwrite our seek with the old wall-clock time!
- if (smSoftPaused) {
- smSoftPaused = false;
- updatePlaybackStateUI('playing');
- }
+  if (smSoftPaused) {
+    smSoftPauseStartVirtual = smVirtualTime;
+    smSoftPauseStartWall = getAudioCtx().currentTime;
+  }
 
- smLastUpdateTime = getAudioCtx().currentTime;
+  smLastUpdateTime = getAudioCtx().currentTime;
 
- const totalVirtualDur = getSmTotalVirtualDuration();
- document.getElementById('sm-current-time').textContent = smVirtualTime.toFixed(3);
- document.getElementById('sm-total-duration').textContent = totalVirtualDur.toFixed(3);
- if (totalVirtualDur) {
- const pct = (smVirtualTime / totalVirtualDur) * 100;
- const progressEl = document.getElementById('sm-progress-bar');
- progressEl.style.width = `${pct}%`;
- progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
- }
+  const totalVirtualDur = getSmTotalVirtualDuration();
+  document.getElementById('sm-current-time').textContent = smVirtualTime.toFixed(3);
+  document.getElementById('sm-total-duration').textContent = totalVirtualDur.toFixed(3);
+  if (totalVirtualDur) {
+    const pct = (smVirtualTime / totalVirtualDur) * 100;
+    const progressEl = document.getElementById('sm-progress-bar');
+    progressEl.style.width = `${pct}%`;
+    progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
+  }
 
- // Auto-resume playback if it was stopped, so the user instantly hears the review
- if (!smTimelineTimer) {
- smResumeBase(false);
- }
+  // If we landed at the end → stop here, don't trigger any playback
+  if (newVirtualTime >= maxDur) return;
+
+  // Auto-resume playing if the audio halted during seek
+  if (!smTimelineTimer) {
+    smResumeBase(false);
+  } else if (smBaseAudio.paused && smBaseAudio.currentTime < smBaseAudio.duration && !smSoftPaused) {
+    smBaseAudio.play().catch(e => console.error(e));
+    updatePlaybackStateUI('playing');
+  }
 }
+
 
 function triggerOverlayStart(overlay) {
  const asset = getAsset(overlay.assetId);

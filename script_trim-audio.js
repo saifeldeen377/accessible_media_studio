@@ -7,7 +7,7 @@ let trimAudioCacheBuffer = null;
 
 async function getTrimBuffer(asset) {
  if (trimAudioCacheId === asset.id && trimAudioCacheBuffer) return trimAudioCacheBuffer;
- trimAudioCacheBuffer = await decodeAudio(asset.objectURL);
+ trimAudioCacheBuffer = await decodeAudio(asset.file);
  trimAudioCacheId = asset.id;
  return trimAudioCacheBuffer;
 }

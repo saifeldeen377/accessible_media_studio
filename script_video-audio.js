@@ -13,7 +13,7 @@ function initVideoToAudio() {
  announce('Extracting audio from video, please wait…');
 
  try {
- const buffer = await decodeAudio(asset.objectURL);
+ const buffer = await decodeAudio(asset.file);
  downloadBlob(await audioBufferToWav(buffer), `${asset.name}_audio.wav`);
  statusEl.textContent = 'Done! Audio extracted and downloaded as WAV.';
  announce('Audio extracted and downloaded as WAV.');

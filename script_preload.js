@@ -14,7 +14,7 @@ async function preloadAssets() {
  }
  const beepWav = await audioBufferToWav(beepBuffer);
  const beepUrl = URL.createObjectURL(beepWav);
- assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Ambient Beep', type: 'audio', objectURL: beepUrl });
+ assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Ambient Beep', type: 'audio', objectURL: beepUrl, file: beepWav });
 
  // 2. Laser Sweep (1.5 seconds, 800Hz to 150Hz)
  const laserBuffer = ctx.createBuffer(1, Math.ceil(1.5 * sr), sr);
@@ -26,7 +26,7 @@ async function preloadAssets() {
  }
  const laserWav = await audioBufferToWav(laserBuffer);
  const laserUrl = URL.createObjectURL(laserWav);
- assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Laser Sweep', type: 'audio', objectURL: laserUrl });
+ assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Laser Sweep', type: 'audio', objectURL: laserUrl, file: laserWav });
 
  // 3. Drum Hit (0.5 seconds, decaying white noise)
  const drumBuffer = ctx.createBuffer(1, Math.ceil(0.5 * sr), sr);
@@ -37,7 +37,7 @@ async function preloadAssets() {
  }
  const drumWav = await audioBufferToWav(drumBuffer);
  const drumUrl = URL.createObjectURL(drumWav);
- assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Drum Hit', type: 'audio', objectURL: drumUrl });
+ assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Drum Hit', type: 'audio', objectURL: drumUrl, file: drumWav });
 
  // 4. Synth Arpeggio (2 seconds)
  const melodyBuffer = ctx.createBuffer(1, 2 * sr, sr);
@@ -51,7 +51,7 @@ async function preloadAssets() {
  }
  const melodyWav = await audioBufferToWav(melodyBuffer);
  const melodyUrl = URL.createObjectURL(melodyWav);
- assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Synth Arpeggio', type: 'audio', objectURL: melodyUrl });
+ assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Synth Arpeggio', type: 'audio', objectURL: melodyUrl, file: melodyWav });
 
  // 5. Studio Logo Image
  const canvas = document.createElement('canvas');
@@ -76,7 +76,7 @@ async function preloadAssets() {
 
  canvas.toBlob(blob =>{
  const logoUrl = URL.createObjectURL(blob);
- assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Studio Logo', type: 'image', objectURL: logoUrl });
+ assetLibrary.push({ id: `asset-pre-${++assetIdCounter}`, name: 'Studio Logo', type: 'image', objectURL: logoUrl, file: blob });
  
  renderLibrary();
  populateAllSelects();

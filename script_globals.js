@@ -58,7 +58,7 @@ async function getDecodedBuffer(assetId) {
  if (decodedAudioBuffers[assetId]) return decodedAudioBuffers[assetId];
  const asset = getAsset(assetId);
  if (!asset) return null;
- const buffer = await decodeAudio(asset.objectURL);
+ const buffer = await decodeAudio(asset.file);
  decodedAudioBuffers[assetId] = buffer;
  return buffer;
 }

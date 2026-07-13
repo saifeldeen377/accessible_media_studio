@@ -73,7 +73,7 @@ async function buildMixedBuffer() {
  if (maClips.length === 0) { alert('Add at least one audio clip first.'); return null; }
 
  const decoded = await Promise.all(maClips.map(async clip =>{
- const buf = await decodeAudio(getAsset(clip.assetId).objectURL);
+ const buf = await decodeAudio(getAsset(clip.assetId).file);
  return { clip, buf };
  }));
 

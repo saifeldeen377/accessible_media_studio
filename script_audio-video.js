@@ -81,7 +81,7 @@ async function exportAudioToVideo() {
  const ctx2d = canvas.getContext('2d');
 
  const actx = getAudioCtx();
- const audioBuffer = await decodeAudio(audioAsset.objectURL);
+ const audioBuffer = await decodeAudio(audioAsset.file);
  const audioSrc = actx.createBufferSource();
  audioSrc.buffer = audioBuffer;
  const audioDest = actx.createMediaStreamDestination();
