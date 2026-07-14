@@ -125,7 +125,7 @@ Join multiple video clips one after another into a single WebM file.
 ### 3. Audio → Video (Slideshow)
 Combine a music track with images to create a timed slideshow video.
 1. Select your audio/music file in Step 1.
-2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image"**.
+2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image Slide"**.
 3. Click **" Generate Slideshow Video"**.
 
 ### 4. Video → Audio (Extract)
@@ -141,8 +141,8 @@ Strip the audio track out of a video and save it as a WAV file.
 3. Click **" Export Trimmed WAV"** to download.
 
 ### 6. Trim Video
-1. Select a video file. Set " Crop from" and " Crop until"(seconds).
-2. Click **" Export Trimmed Video"** to process and download.
+1. Select a video file. Set **" Trim Start"** and **" Trim End"** (seconds).
+2. Click **" Download Trimmed Video (WebM)"** to process and download.
 
 ---
 
@@ -249,6 +249,7 @@ Accessibility is not a feature here — it's the foundation.
 | `←` `→` | Navigate between tabs in the tab bar |
 | `Enter` / `Space` | Activate buttons and checkboxes |
 | `M` | Open Super Merger from anywhere |
+| `T` | Open Super Trim from anywhere |
 
 ### Comparison
 
