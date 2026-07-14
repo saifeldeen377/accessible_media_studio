@@ -202,10 +202,26 @@ function initSuperTrimAudio() {
  btnPlay.addEventListener('click', togglePlay);
  btnStop.addEventListener('click', stopAudio);
 
+ function playClickSound(isStart) {
+ const ctx = getAudioCtx();
+ if (!ctx) return;
+ const osc = ctx.createOscillator();
+ const gain = ctx.createGain();
+ osc.type = 'sine';
+ osc.frequency.setValueAtTime(isStart ? 1200 : 800, ctx.currentTime);
+ osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.03);
+ gain.gain.setValueAtTime(0.5, ctx.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03);
+ osc.connect(gain);
+ gain.connect(ctx.destination);
+ osc.start();
+ osc.stop(ctx.currentTime + 0.03);
+ }
+
  function markStart() {
  const curr = getCurrentTime();
  inputStart.value = curr.toFixed(2);
- announce("Start set to "+ curr.toFixed(2));
+ playClickSound(true);
  inputStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
  setTimeout(() =>inputStart.style.backgroundColor = "", 300);
  }
@@ -213,7 +229,7 @@ function initSuperTrimAudio() {
  function markEnd() {
  const curr = getCurrentTime();
  inputEnd.value = curr.toFixed(2);
- announce("End set to "+ curr.toFixed(2));
+ playClickSound(false);
  inputEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
  setTimeout(() =>inputEnd.style.backgroundColor = "", 300);
  }

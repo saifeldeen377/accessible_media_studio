@@ -99,53 +99,6 @@ Files are saved automatically to your browser's **IndexedDB**. Refresh the page 
 
 ---
 
-## Tools Guide
-
-Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when the tab bar is focused to navigate between tabs.
-
-### 1. Merge Audio
-Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.
-1. Select a file from the library dropdown.
-2. Set **" Start at"** — when this track begins in the final mix (seconds).
-3. Optionally set **" Crop from"** and **" Crop until"** to use a portion of the file.
-4. Set the **Volume** (0–100%).
-5. Click **" Add to Mix"**. Repeat for each track.
-6. Click **" Preview Mix"** to listen, then **" Export WAV"** to download.
-
-> ** Tip:** You can add the same file multiple times with different start times to create loops or layered echoes.
-
-### 2. Merge Video
-Join multiple video clips one after another into a single WebM file.
-1. Select a video, optionally set crop range, click **" Add to Queue"**.
-2. Repeat for all clips (they play in the order you added them).
-3. Click **" Export Video"** to start and download.
-
-> ** Warning:** **Real-time export:** A 5-minute video takes ~5 minutes to process. Don't close the tab during export.
-
-### 3. Audio → Video (Slideshow)
-Combine a music track with images to create a timed slideshow video.
-1. Select your audio/music file in Step 1.
-2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image Slide"**.
-3. Click **" Generate Slideshow Video"**.
-
-### 4. Video → Audio (Extract)
-Strip the audio track out of a video and save it as a WAV file.
-1. Select a video from the library.
-2. Click **" Extract Audio as WAV"**.
-
-> ** Warning:** **Memory note:** Files over 50MB will trigger a warning on systems with 4GB RAM before decoding begins.
-
-### 5. Trim Audio
-1. Select an audio file. Set Start and End times.
-2. Click **" Preview Trim"** to hear the result.
-3. Click **" Export Trimmed WAV"** to download.
-
-### 6. Trim Video
-1. Select a video file. Set **" Trim Start"** and **" Trim End"** (seconds).
-2. Click **" Download Trimmed Video (WebM)"** to process and download.
-
----
-
 ## Super Merger — Live Mixer
 
 Super Merger lets you **perform a live audio mix in real time** using keyboard shortcuts, then **automatically records and exports** everything as a perfectly timed WAV — exactly matching what you heard during your performance.
@@ -235,6 +188,53 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 - **100% Sample-Accurate Sync:** Super Trim bypasses the standard browser audio player and uses the raw `Web Audio API` for playback. This means the time you capture during playback is guaranteed to have **0ms of drift** compared to the final exported file (a common issue when playing MP3s in Chrome/Edge).
 - **International Keyboard Support:** The shortcuts `s` / `[` for start and `e` / `]` for end read physical key codes, meaning they work perfectly on any layout.
 - **Screen Reader Fail-safes:** If your screen reader ever intercepts a keyboard shortcut, the dedicated " Set Start" and " Set End" buttons provide a guaranteed, accessible fallback.
+
+---
+
+## Tools Guide
+
+Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when the tab bar is focused to navigate between tabs.
+
+### 1. Merge Audio
+Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.
+1. Select a file from the library dropdown.
+2. Set **" Start at"** — when this track begins in the final mix (seconds).
+3. Optionally set **" Crop from"** and **" Crop until"** to use a portion of the file.
+4. Set the **Volume** (0–100%).
+5. Click **" Add to Mix"**. Repeat for each track.
+6. Click **" Preview Mix"** to listen, then **" Export WAV"** to download.
+
+> ** Tip:** You can add the same file multiple times with different start times to create loops or layered echoes.
+
+### 2. Merge Video
+Join multiple video clips one after another into a single WebM file.
+1. Select a video, optionally set crop range, click **" Add to Queue"**.
+2. Repeat for all clips (they play in the order you added them).
+3. Click **" Export Video"** to start and download.
+
+> ** Warning:** **Real-time export:** A 5-minute video takes ~5 minutes to process. Don't close the tab during export.
+
+### 3. Audio → Video (Slideshow)
+Combine a music track with images to create a timed slideshow video.
+1. Select your audio/music file in Step 1.
+2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image Slide"**.
+3. Click **" Generate Slideshow Video"**.
+
+### 4. Video → Audio (Extract)
+Strip the audio track out of a video and save it as a WAV file.
+1. Select a video from the library.
+2. Click **" Extract Audio as WAV"**.
+
+> ** Warning:** **Memory note:** Files over 50MB will trigger a warning on systems with 4GB RAM before decoding begins.
+
+### 5. Trim Audio
+1. Select an audio file. Set Start and End times.
+2. Click **" Preview Trim"** to hear the result.
+3. Click **" Export Trimmed WAV"** to download.
+
+### 6. Trim Video
+1. Select a video file. Set **" Trim Start"** and **" Trim End"** (seconds).
+2. Click **" Download Trimmed Video (WebM)"** to process and download.
 
 ---
 

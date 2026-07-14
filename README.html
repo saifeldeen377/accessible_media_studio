@@ -481,71 +481,6 @@ python -m http.server 3000
 </div>
 </section>
 
-<!-- TOOLS GUIDE -->
-<section id="tools">
-<h2> Tools Guide </h2>
-<p> Use the <strong> tab bar </strong> to switch between tools. Press <kbd>←</kbd><kbd>→</kbd> Arrow Keys when the tab bar is focused to navigate between tabs.</p>
-
-<h3 id="merge-audio">1. Merge Audio </h3>
-<p> Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.</p>
-<ol class="steps">
-<li> Select a file from the library dropdown.</li>
-<li> Set <strong>"Start at"</strong>— when this track begins in the final mix (seconds).</li>
-<li> Optionally set <strong>"Crop from"</strong> and <strong>"Crop until"</strong> to use a portion of the file.</li>
-<li> Set the <strong> Volume </strong>(0–100%).</li>
-<li> Click <strong>"Add to Mix"</strong>. Repeat for each track.</li>
-<li> Click <strong>"Preview Mix"</strong> to listen, then <strong>"Export WAV"</strong> to download.</li>
-</ol>
-<div class="callout tip">
-<span class="callout-icon"></span>
-<div class="callout-body"> You can add the same file multiple times with different start times to create loops or layered echoes.</div>
-</div>
-
-<h3 id="merge-video">2. Merge Video </h3>
-<p> Join multiple video clips one after another into a single WebM file.</p>
-<ol class="steps">
-<li> Select a video, optionally set crop range, click <strong>"Add to Queue"</strong>.</li>
-<li> Repeat for all clips (they play in the order you added them).</li>
-<li> Click <strong>"Export Video"</strong> to start and download.</li>
-</ol>
-<div class="callout warning">
-<span class="callout-icon"></span>
-<div class="callout-body"><strong> Real-time export:</strong> A 5-minute video takes ~5 minutes to process. Don't close the tab during export.</div>
-</div>
-
-<h3 id="audio-video">3. Audio → Video (Slideshow)</h3>
-<p> Combine a music track with images to create a timed slideshow video.</p>
-<ol class="steps">
-<li> Select your audio/music file in Step 1.</li>
-<li> For each slide: select an image, set "Show from"and "Show until"(seconds), click <strong>"Add Image Slide"</strong>.</li>
-<li> Click <strong>"Generate Slideshow Video"</strong>.</li>
-</ol>
-
-<h3 id="video-audio">4. Video → Audio (Extract)</h3>
-<p> Strip the audio track out of a video and save it as a WAV file.</p>
-<ol class="steps">
-<li> Select a video from the library.</li>
-<li> Click <strong>"Extract Audio as WAV"</strong>.</li>
-</ol>
-<div class="callout warning">
-<span class="callout-icon"></span>
-<div class="callout-body"><strong> Memory note:</strong> Files over 50MB will trigger a warning on systems with 4GB RAM before decoding begins.</div>
-</div>
-
-<h3 id="trim-audio">5. Trim Audio </h3>
-<ol class="steps">
-<li> Select an audio file. Set Start and End times.</li>
-<li> Click <strong>"Preview Trim"</strong> to hear the result.</li>
-<li> Click <strong>"Export Trimmed WAV"</strong> to download.</li>
-</ol>
-
-<h3 id="trim-video">6. Trim Video </h3>
-<ol class="steps">
-<li> Select a video file. Set <strong>"Trim Start"</strong> and <strong>"Trim End"</strong> (seconds).</li>
-<li> Click <strong>"Download Trimmed Video (WebM)"</strong> to process and download.</li>
-</ol>
-</section>
-
 <!-- Super Merger -->
 <section id="super-mode">
 <h2> Super Merger — Live Mixer </h2>
@@ -675,6 +610,71 @@ python -m http.server 3000
 </section>
 
 <!-- ACCESSIBILITY -->
+<section id="tools">
+<h2> Tools Guide </h2>
+<p> Use the <strong> tab bar </strong> to switch between tools. Press <kbd>←</kbd><kbd>→</kbd> Arrow Keys when the tab bar is focused to navigate between tabs.</p>
+
+<h3 id="merge-audio">1. Merge Audio </h3>
+<p> Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.</p>
+<ol class="steps">
+<li> Select a file from the library dropdown.</li>
+<li> Set <strong>"Start at"</strong>— when this track begins in the final mix (seconds).</li>
+<li> Optionally set <strong>"Crop from"</strong> and <strong>"Crop until"</strong> to use a portion of the file.</li>
+<li> Set the <strong> Volume </strong>(0–100%).</li>
+<li> Click <strong>"Add to Mix"</strong>. Repeat for each track.</li>
+<li> Click <strong>"Preview Mix"</strong> to listen, then <strong>"Export WAV"</strong> to download.</li>
+</ol>
+<div class="callout tip">
+<span class="callout-icon"></span>
+<div class="callout-body"> You can add the same file multiple times with different start times to create loops or layered echoes.</div>
+</div>
+
+<h3 id="merge-video">2. Merge Video </h3>
+<p> Join multiple video clips one after another into a single WebM file.</p>
+<ol class="steps">
+<li> Select a video, optionally set crop range, click <strong>"Add to Queue"</strong>.</li>
+<li> Repeat for all clips (they play in the order you added them).</li>
+<li> Click <strong>"Export Video"</strong> to start and download.</li>
+</ol>
+<div class="callout warning">
+<span class="callout-icon"></span>
+<div class="callout-body"><strong> Real-time export:</strong> A 5-minute video takes ~5 minutes to process. Don't close the tab during export.</div>
+</div>
+
+<h3 id="audio-video">3. Audio → Video (Slideshow)</h3>
+<p> Combine a music track with images to create a timed slideshow video.</p>
+<ol class="steps">
+<li> Select your audio/music file in Step 1.</li>
+<li> For each slide: select an image, set "Show from"and "Show until"(seconds), click <strong>"Add Image Slide"</strong>.</li>
+<li> Click <strong>"Generate Slideshow Video"</strong>.</li>
+</ol>
+
+<h3 id="video-audio">4. Video → Audio (Extract)</h3>
+<p> Strip the audio track out of a video and save it as a WAV file.</p>
+<ol class="steps">
+<li> Select a video from the library.</li>
+<li> Click <strong>"Extract Audio as WAV"</strong>.</li>
+</ol>
+<div class="callout warning">
+<span class="callout-icon"></span>
+<div class="callout-body"><strong> Memory note:</strong> Files over 50MB will trigger a warning on systems with 4GB RAM before decoding begins.</div>
+</div>
+
+<h3 id="trim-audio">5. Trim Audio </h3>
+<ol class="steps">
+<li> Select an audio file. Set Start and End times.</li>
+<li> Click <strong>"Preview Trim"</strong> to hear the result.</li>
+<li> Click <strong>"Export Trimmed WAV"</strong> to download.</li>
+</ol>
+
+<h3 id="trim-video">6. Trim Video </h3>
+<ol class="steps">
+<li> Select a video file. Set <strong>"Trim Start"</strong> and <strong>"Trim End"</strong> (seconds).</li>
+<li> Click <strong>"Download Trimmed Video (WebM)"</strong> to process and download.</li>
+</ol>
+</section>
+
+<!-- Super Merger -->
 <section id="accessibility">
 <h2> Accessibility </h2>
 <p> Accessibility is not a feature here — it's the foundation.</p>

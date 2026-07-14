@@ -1,5 +1,5 @@
-﻿// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TOOL 7 â€” Super Merger (Ø³ÙˆØ¨Ø± Ù…ÙˆØ¯)
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// TOOL 7 — Super Merger (سوبر مود)
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function initSuperMode() {
@@ -267,7 +267,7 @@ function renderSmShortcutsTable() {
 <td><span class="kbd-badge">${item.key.toUpperCase()}</span></td>
 <td>${volPct}%</td>
 <td>${behaviorText}</td>
-<td><button class="btn btn-sm btn-danger"onclick="removeSmOverlay('${item.id}')"aria-label="Remove ${escapeHTML(item.name)}">âœ•</button></td>
+<td><button class="btn btn-sm btn-danger"onclick="removeSmOverlay('${item.id}')"aria-label="Remove ${escapeHTML(item.name)}">✕</button></td>
  `;
  tbody.appendChild(tr);
  });
@@ -1373,34 +1373,7 @@ function capActiveOverlayRecordings(preserveTail = false) {
  renderSmMixLog();
 }
 
-function getEmptyGaps() {
- const gaps = [];
- for (let i = 0; i< smBaseSegments.length - 1; i++) {
- const s1 = smBaseSegments[i];
- const s2 = smBaseSegments[i+1];
- const s1End = s1.timelineStart + s1.duration;
- if (s2.timelineStart >s1End + 0.01) {
- gaps.push({ start: s1End, end: s2.timelineStart, index: i });
- }
- }
- // Open-ended gap
- if (smBaseSegments.length >0) {
- const lastSeg = smBaseSegments[smBaseSegments.length - 1];
- const lastSegEnd = lastSeg.timelineStart + lastSeg.duration;
- if (smVirtualTime >lastSegEnd + 0.01) {
- gaps.push({ start: lastSegEnd, end: smVirtualTime, index: smBaseSegments.length - 1 });
- }
- }
 
- // Filter out gaps that contain overlays
- return gaps.filter(gap =>{
- for (let c of smRecordedClips) {
- const cEnd = c.timelineStart + (c.cropEnd !== null ? (c.cropEnd - c.cropStart) : (decodedAudioBuffers[c.assetId]?.duration || 0) - c.cropStart);
- if (c.timelineStart< gap.end && cEnd >gap.start) return false;
- }
- return true;
- });
-}
 
 function deleteClip(clip) {
  const index = smRecordedClips.indexOf(clip);

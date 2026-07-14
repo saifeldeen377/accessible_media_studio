@@ -163,7 +163,7 @@ async function exportAudioToVideo() {
  }
 
  if (elapsed >= totalDur) {
- audioSrc.stop();
+ try { audioSrc.stop(); } catch (_) {}
  recorder.stop();
  resolve();
  return;
