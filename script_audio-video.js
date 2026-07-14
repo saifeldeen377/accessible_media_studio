@@ -55,13 +55,16 @@ window.removeAvSlide = function(id) {
 };
 
 async function exportAudioToVideo() {
- const audioAssetId = document.getElementById('av-audio-select').value;
- if (!audioAssetId) { alert('Please select an audio file in Step 1.'); return; }
- if (avSlides.length === 0) { alert('Please add at least one image slide in Step 2.'); return; }
+  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
+  const audioAssetId = document.getElementById('av-audio-select').value;
+  if (!audioAssetId) { alert('Please select an audio file in Step 1.'); return; }
+  if (avSlides.length === 0) { alert('Please add at least one image slide in Step 2.'); return; }
 
  const statusEl = document.getElementById('av-status');
  statusEl.textContent = 'Generating slideshow video… please wait.';
  announce('Generating slideshow video, please wait…');
+
+ alert("Important: Please keep this tab active and do not minimize the browser until the export is complete. Switching tabs may cause the video to stutter or fail.");
 
  const audioAsset = getAsset(audioAssetId);
  const totalDur = Math.max(...avSlides.map(s =>s.end));
@@ -72,12 +75,30 @@ async function exportAudioToVideo() {
  const asset = getAsset(slide.assetId);
  const img = new Image();
  img.onload = () =>{ imgCache[slide.id] = img; res(); };
+ img.onerror = () =>{ console.warn('Failed to load image for slide', slide.id); res(); };
  img.src = asset.objectURL;
  })));
 
  // Canvas + Audio setup
  const canvas = document.createElement('canvas');
- canvas.width = 1280; canvas.height = 720;
+ canvas.width = 1280; 
+ canvas.height = 720;
+ // Use first image dimensions if available, but cap at 1080p
+ if (avSlides.length > 0 && imgCache[avSlides[0].id]) {
+ const firstImg = imgCache[avSlides[0].id];
+ let w = firstImg.width;
+ let h = firstImg.height;
+
+ // Cap at 1920x1080 preserving aspect ratio
+ if (w > 1920 || h > 1080) {
+ const scale = Math.min(1920 / w, 1080 / h);
+ w = Math.round(w * scale);
+ h = Math.round(h * scale);
+ }
+
+ canvas.width = w - (w % 2);
+ canvas.height = h - (h % 2);
+ }
  const ctx2d = canvas.getContext('2d');
 
  const actx = getAudioCtx();
@@ -98,6 +119,7 @@ async function exportAudioToVideo() {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
+ canvasStream.getTracks().forEach(t => t.stop()); // Free memory
  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = 'slideshow_video.webm';

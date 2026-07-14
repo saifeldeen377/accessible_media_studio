@@ -15,6 +15,7 @@ function initTrimVideo() {
  });
 
  document.getElementById('btn-tv-export').addEventListener('click', async () =>{
+ if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
  const assetId = document.getElementById('tv-video-select').value;
  if (!assetId) { alert('Please select a video file from the library.'); return; }
 
@@ -45,6 +46,7 @@ function initTrimVideo() {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
+ canvasStream.getTracks().forEach(t => t.stop());
  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = `${asset.name}_trimmed.webm`;

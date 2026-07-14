@@ -9,6 +9,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com"crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script>
+window.onerror = function(msg, url, line, col, error) {
+  alert("ERROR: " + msg + "\nFile: " + (url ? url.split('/').pop() : 'unknown') + "\nLine: " + line);
+};
+</script>
 </head>
 <body class="dark-theme">
 
@@ -39,7 +44,7 @@
 <h2 id="library-title"> Media Library </h2>
 <p class="section-desc">
  Upload your files here once. They will be available in all tools below.
-<span id="lib-db-status" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);"> Connecting to database...</span>
+<span id="lib-db-status" aria-live="polite" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);"> Connecting to database...</span>
 </p>
 </div>
 
@@ -605,8 +610,8 @@
 <script src="script_video-audio.js"></script>
 <script src="script_trim-audio.js"></script>
 <script src="script_trim-video.js"></script>
-<script src="script_super-mode.js?v=1.0"></script>
-<script src="script_super-trim.js?v=1.0"></script>
+<script src="script_super-mode.js?v=1.1"></script>
+<script src="script_super-trim.js?v=1.1"></script>
 <!-- Main Boot -->
 <script src="script_main.js"></script>
 

@@ -39,6 +39,12 @@ function initLibrary() {
 
  if (!type) { alert('Unsupported file type. Please upload audio, video, or image files.'); return; }
 
+ if (file.size > 100 * 1024 * 1024) {
+ if (!confirm(`The file "${file.name}" is over 100MB. Processing very large files might cause the browser to slow down or crash. Are you sure you want to continue?`)) {
+ return;
+ }
+ }
+
   const id = `asset-${++assetIdCounter}`;
   const objectURL = URL.createObjectURL(file);
   assetLibrary.push({ id, name, type, objectURL, file });
@@ -231,15 +237,74 @@ window.toggleLibraryPreview = function(id) {
 };
 
 window.removeAsset = function(id) {
- const idx = assetLibrary.findIndex(a =>a.id === id);
- if (idx !== -1) { 
- URL.revokeObjectURL(assetLibrary[idx].objectURL); 
- assetLibrary.splice(idx, 1); 
+  // Stop preview if this specific asset is currently playing
+  if (activeLibraryAudios[id]) {
+  activeLibraryAudios[id].pause();
+  delete activeLibraryAudios[id];
+  }
+  const videoContainer = document.getElementById(`preview-container-${id}`);
+  if (videoContainer && !videoContainer.hidden) {
+  const vid = videoContainer.querySelector('video');
+  if (vid) { try { vid.pause(); } catch (_) {} }
+  videoContainer.innerHTML = '';
+  videoContainer.hidden = true;
+  }
+
+  const idx = assetLibrary.findIndex(a =>a.id === id);
+  if (idx !== -1) { 
+  URL.revokeObjectURL(assetLibrary[idx].objectURL); 
+  assetLibrary.splice(idx, 1); 
+  }
+
+ // Clean up orphaned data from other tools' timelines
+ if (typeof maClips !== 'undefined') {
+ const initialMa = maClips.length;
+ const remainingMa = maClips.filter(c => c.assetId !== id);
+ maClips.length = 0;
+ maClips.push(...remainingMa);
+ if (initialMa !== maClips.length && typeof renderMaTable === 'function') renderMaTable();
  }
- // Remove decoded buffer from memory to prevent RAM leaks
- if (decodedAudioBuffers[id]) {
- delete decodedAudioBuffers[id];
+ if (typeof mvClips !== 'undefined') {
+ const initialMv = mvClips.length;
+ const remainingMv = mvClips.filter(c => c.assetId !== id);
+ mvClips.length = 0;
+ mvClips.push(...remainingMv);
+ if (initialMv !== mvClips.length && typeof renderMvTable === 'function') renderMvTable();
  }
+ if (typeof avSlides !== 'undefined') {
+ const initialAv = avSlides.length;
+ const remainingAv = avSlides.filter(c => c.assetId !== id);
+ avSlides.length = 0;
+ avSlides.push(...remainingAv);
+ if (initialAv !== avSlides.length && typeof renderAvTable === 'function') renderAvTable();
+ }
+  if (typeof smRecordedClips !== 'undefined') {
+  const remainingSm = smRecordedClips.filter(c => c.assetId !== id);
+  smRecordedClips.length = 0;
+  smRecordedClips.push(...remainingSm);
+  }
+  if (typeof smOverlays !== 'undefined') {
+  const initialSmO = smOverlays.length;
+  const remainingSmO = smOverlays.filter(c => c.assetId !== id);
+  smOverlays.length = 0;
+  smOverlays.push(...remainingSmO);
+  if (initialSmO !== smOverlays.length && typeof renderSmShortcutsTable === 'function') renderSmShortcutsTable();
+  }
+
+  // Remove decoded buffer from memory to prevent RAM leaks
+  if (decodedAudioBuffers[id]) {
+  delete decodedAudioBuffers[id];
+  }
+  
+  // Clear tool-specific memory caches to prevent leaks
+  if (typeof trimAudioCacheId !== 'undefined' && trimAudioCacheId === id) {
+  trimAudioCacheId = null;
+  trimAudioCacheBuffer = null;
+  }
+  if (typeof currentStaAssetId !== 'undefined' && currentStaAssetId === id) {
+  currentStaAssetId = null;
+  trimBuffer = null;
+  }
  // Remove from IndexedDB as well
  dbDeleteAsset(id);
  renderLibrary();

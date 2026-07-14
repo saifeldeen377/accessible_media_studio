@@ -1,6 +1,6 @@
-// ─────────────────────────────────────────────────────────────
-// TOOL 7 — Super Merger (سوبر مود)
-// ─────────────────────────────────────────────────────────────
+﻿// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// TOOL 7 â€” Super Merger (Ø³ÙˆØ¨Ø± Ù…ÙˆØ¯)
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function initSuperMode() {
  const enterBtn = document.getElementById('btn-enter-super-mode');
@@ -119,15 +119,15 @@ function initSuperMode() {
  const isAlt = e.altKey;
  const isCtrl = e.ctrlKey;
 
- // ─── Spacebar ────────────────────────────────────────────────────────────
+ // â”€â”€â”€ Spacebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  if (e.key === ' ' || e.code === 'Space') {
  e.preventDefault();
  
   if (isCtrl && isShift) {
-    // ── Ctrl+Shift+Space: Cancel Silent Gap ────────────────────────────────────
+    // â”€â”€ Ctrl+Shift+Space: Cancel Silent Gap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     handleCancelGap();
   } else if (isCtrl) {
-  // ── Ctrl+Space: Soft Pause / Punch-In ──────────────────────────────────────
+  // â”€â”€ Ctrl+Space: Soft Pause / Punch-In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  if (smSoftPaused) {
  const isActuallyEnded = smBaseAudio.ended || smBaseAudio.endedTriggered || (smBaseAudio.currentTime >= smBaseAudio.duration - 0.05);
  if (isActuallyEnded) {
@@ -146,7 +146,7 @@ function initSuperMode() {
  }
 
  } else if (isShift) {
- // ── Shift+Space: Full Play/Pause (Hard) ───────────────────────────────────────
+ // â”€â”€ Shift+Space: Full Play/Pause (Hard) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  if (smIsActive()) {
  smRegularPauseBase(); // Hard pause everything
  } else {
@@ -154,7 +154,7 @@ function initSuperMode() {
  }
 
  } else {
- // ── bare Space: Restart playback from 0 ──────────────────────────────
+ // â”€â”€ bare Space: Restart playback from 0 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  restartSmPlayback();
  }
 
@@ -267,7 +267,7 @@ function renderSmShortcutsTable() {
 <td><span class="kbd-badge">${item.key.toUpperCase()}</span></td>
 <td>${volPct}%</td>
 <td>${behaviorText}</td>
-<td><button class="btn btn-sm btn-danger"onclick="removeSmOverlay('${item.id}')"aria-label="Remove ${escapeHTML(item.name)}">✕</button></td>
+<td><button class="btn btn-sm btn-danger"onclick="removeSmOverlay('${item.id}')"aria-label="Remove ${escapeHTML(item.name)}">âœ•</button></td>
  `;
  tbody.appendChild(tr);
  });
@@ -369,7 +369,7 @@ class WebAudioPlayer {
  return;
  }
  if (this._ended) {
- // Base finished naturally — do NOT restart it, just resolve.
+ // Base finished naturally â€” do NOT restart it, just resolve.
  // Callers that need to continue the timeline handle this themselves.
  resolve();
  return;
@@ -497,7 +497,7 @@ function updateSmTimeline() {
  const isReplaying = smVirtualTime< smTotalRecordedDuration && !smSoftPaused && smBaseSegmentStartSource === null;
 
  if (isReplaying) {
- // ── REPLAY MODE ──────────────────────────────────────────────
+ // â”€â”€ REPLAY MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
  
  if (activeSeg) {
@@ -556,7 +556,7 @@ function updateSmTimeline() {
  }
 
  } else {
- // ── RECORDING MODE ──────────────────────────────────────────
+ // â”€â”€ RECORDING MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  const baseEnded = smBaseAudio.ended || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05;
  const basePlaying = !smBaseAudio.paused && !baseEnded;
 
@@ -754,10 +754,10 @@ function smSoftPauseBase() {
 function handleCancelGap() {
   if (!smBaseAudio) return;
 
-  // Case 3: Recording stopped → do nothing
+  // Case 3: Recording stopped â†’ do nothing
   if (!smTimelineTimer) return;
 
-  // Base has ended or is extremely close to the end → do nothing
+  // Base has ended or is extremely close to the end â†’ do nothing
   if (smBaseAudio.ended || smBaseAudio.endedTriggered || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.1) {
     return;
   }
@@ -769,10 +769,10 @@ function handleCancelGap() {
                       smBaseAudio.paused &&
                       smVirtualTime < smTotalRecordedDuration;
 
-  // Case 1: base playing normally or base ended → do nothing
+  // Case 1: base playing normally or base ended â†’ do nothing
   if (!isManualSoftPause && !isReplayGap) return;
 
-  // ── Determine gap boundaries ──────────────────────────────────────────────
+  // â”€â”€ Determine gap boundaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let gapStart, gapEnd;
   if (isManualSoftPause) {
     gapStart = smSoftPauseStartVirtual;
@@ -815,7 +815,7 @@ function handleCancelGap() {
 
   const gapDuration = gapEnd - gapStart;
 
-  // ── REPLAY GAP: compress timeline (shift everything after the gap) ──────────
+  // â”€â”€ REPLAY GAP: compress timeline (shift everything after the gap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isReplayGap) {
     smBaseSegments.forEach(seg => {
       if (seg.timelineStart >= gapEnd) seg.timelineStart -= gapDuration;
@@ -833,7 +833,7 @@ function handleCancelGap() {
     return;
   }
 
-  // ── MANUAL SOFT-PAUSE: cancel gap, rewind timeline ──────────────────────────
+  // â”€â”€ MANUAL SOFT-PAUSE: cancel gap, rewind timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const sourcePos = smBaseAudio.currentTime; // pausedOffset while not playing
   smSoftPaused            = false;
   smVirtualTime           = gapStart;
@@ -954,9 +954,9 @@ function seekSmTimeline(seconds) {
   const oldVirtualTime = smVirtualTime;
   const maxDur = getSmTotalVirtualDuration();
   
-  // If seeking forward but already at/past the end → do nothing
+  // If seeking forward but already at/past the end â†’ do nothing
   if (seconds > 0 && smVirtualTime >= maxDur) return;
-  // If seeking backward but already at the start → do nothing
+  // If seeking backward but already at the start â†’ do nothing
   if (seconds < 0 && smVirtualTime <= 0) return;
 
   let newVirtualTime = oldVirtualTime + seconds;
@@ -1022,7 +1022,7 @@ function seekSmTimeline(seconds) {
     progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
   }
 
-  // If we landed at the end → stop here, don't trigger any playback
+  // If we landed at the end â†’ stop here, don't trigger any playback
   if (newVirtualTime >= maxDur) return;
 
   // Auto-resume playing if the audio halted during seek
@@ -1583,7 +1583,7 @@ function renderSmMixLog() {
  if (c.cropStart >0 || c.cropEnd !== null) {
  const startSec = c.cropStart.toFixed(3);
  const endSec = c.cropEnd !== null ? c.cropEnd.toFixed(3) + 's' : 'end';
- cropText = ` (crop: ${startSec}s → ${endSec})`;
+ cropText = ` (crop: ${startSec}s â†’ ${endSec})`;
  }
  li.innerHTML = `<span class="log-time">[${c.timelineStart.toFixed(3)}s]</span>${escapeHTML(c.name)}${cropText}`;
  logUl.appendChild(li);
@@ -1669,124 +1669,119 @@ function resetAndRecordFromScratch() {
 }
 
 async function exportSuperModeWav() {
- if (!smBaseAsset) return;
- // announce('Exporting merged WAV, please wait…');
+  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
+  if (!smBaseAsset) return;
+  
+  isExportingMedia = true;
+  try {
+  // Decode base audio
+  let baseBuffer;
+  try {
+  baseBuffer = await decodeAudio(smBaseAsset.objectURL);
+  } catch (err) {
+  console.error(err);
+  alert('Failed to decode base audio file.');
+  return;
+  }
 
- // Decode base audio
- let baseBuffer;
- try {
- baseBuffer = await decodeAudio(smBaseAsset.objectURL);
- } catch (err) {
- console.error(err);
- alert('Failed to decode base audio file.');
- return;
- }
+  // Decode overlays
+  const uniqueIds = [...new Set(smRecordedClips.map(c =>c.assetId))];
+  const overlayBuffers = {};
 
- // Decode overlays
- const uniqueIds = [...new Set(smRecordedClips.map(c =>c.assetId))];
- const overlayBuffers = {};
+  try {
+  await Promise.all(uniqueIds.map(async id =>{
+  const asset = getAsset(id);
+  if (asset) {
+  overlayBuffers[id] = await decodeAudio(asset.objectURL);
+  }
+  }));
+  } catch (err) {
+  console.error(err);
+  alert('Failed to decode one or more overlay audio files.');
+  return;
+  }
 
- try {
- await Promise.all(uniqueIds.map(async id =>{
- const asset = getAsset(id);
- if (asset) {
- overlayBuffers[id] = await decodeAudio(asset.objectURL);
- }
- }));
- } catch (err) {
- console.error(err);
- alert('Failed to decode one or more overlay audio files.');
- return;
- }
+  // Calculate total duration correctly with crops and segments
+  const exportSegments = [...smBaseSegments];
+  if (smBaseAudio && !smBaseAudio.paused && smBaseSegmentStartSource !== null) {
+  const activeDur = smBaseAudio.currentTime - smBaseSegmentStartSource;
+  if (activeDur >0) {
+  exportSegments.push({
+  timelineStart: smBaseSegmentStartTimeline,
+  sourceStart: smBaseSegmentStartSource,
+  duration: activeDur
+  });
+  }
+  }
 
- // Calculate total duration correctly with crops and segments
- // Compile base segments list for rendering
- const exportSegments = [...smBaseSegments];
- if (smBaseAudio && !smBaseAudio.paused && smBaseSegmentStartSource !== null) {
- const activeDur = smBaseAudio.currentTime - smBaseSegmentStartSource;
- if (activeDur >0) {
- exportSegments.push({
- timelineStart: smBaseSegmentStartTimeline,
- sourceStart: smBaseSegmentStartSource,
- duration: activeDur
- });
- }
- }
+  let totalDuration = Math.max(baseBuffer.duration, smTotalRecordedDuration || 0);
+  exportSegments.forEach(seg =>{
+  totalDuration = Math.max(totalDuration, seg.timelineStart + seg.duration);
+  });
 
- // Total duration = max of:
- // 1. The captured smTotalRecordedDuration (includes silence gaps after base ended)
- // 2. End of the last base segment
- // 3. End of the last overlay clip
- let totalDuration = Math.max(baseBuffer.duration, smTotalRecordedDuration || 0);
- exportSegments.forEach(seg =>{
- totalDuration = Math.max(totalDuration, seg.timelineStart + seg.duration);
- });
+  smRecordedClips.forEach(c =>{
+  const buf = overlayBuffers[c.assetId];
+  if (buf) {
+  const cs = c.cropStart || 0;
+  const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
+  const dur = Math.max(0, ce - cs);
+  totalDuration = Math.max(totalDuration, c.timelineStart + dur);
+  }
+  });
 
- smRecordedClips.forEach(c =>{
- const buf = overlayBuffers[c.assetId];
- if (buf) {
- const cs = c.cropStart || 0;
- const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
- const dur = Math.max(0, ce - cs);
- totalDuration = Math.max(totalDuration, c.timelineStart + dur);
- }
- });
+  totalDuration = Math.max(totalDuration, smVirtualTime, smTotalRecordedDuration || 0);
 
- // Also honour the virtual clock — this captures silence recorded after the base ended
- totalDuration = Math.max(totalDuration, smVirtualTime, smTotalRecordedDuration || 0);
+  const sr = getAudioCtx().sampleRate;
+  const offline = new OfflineAudioContext(2, Math.ceil(totalDuration * sr), sr);
 
- const sr = getAudioCtx().sampleRate;
- const offline = new OfflineAudioContext(2, Math.ceil(totalDuration * sr), sr);
+  const exportCompressor = offline.createDynamicsCompressor();
+  exportCompressor.threshold.setValueAtTime(-2, 0);
+  exportCompressor.knee.setValueAtTime(0, 0);
+  exportCompressor.ratio.setValueAtTime(20, 0);
+  exportCompressor.attack.setValueAtTime(0.005, 0);
+  exportCompressor.release.setValueAtTime(0.05, 0);
+  exportCompressor.connect(offline.destination);
 
- const exportCompressor = offline.createDynamicsCompressor();
- exportCompressor.threshold.setValueAtTime(-2, 0);
- exportCompressor.knee.setValueAtTime(0, 0);
- exportCompressor.ratio.setValueAtTime(20, 0);
- exportCompressor.attack.setValueAtTime(0.005, 0);
- exportCompressor.release.setValueAtTime(0.05, 0);
- exportCompressor.connect(offline.destination);
+  const baseVolume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
 
- // Base audio volume
- const baseVolume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
+  exportSegments.forEach(seg =>{
+  const baseSrc = offline.createBufferSource();
+  baseSrc.buffer = baseBuffer;
+  const baseGain = offline.createGain();
+  baseGain.gain.value = baseVolume;
+  baseSrc.connect(baseGain);
+  baseGain.connect(exportCompressor);
+  baseSrc.start(seg.timelineStart, seg.sourceStart, seg.duration);
+  });
 
- // Render base audio in segments with gain
- exportSegments.forEach(seg =>{
- const baseSrc = offline.createBufferSource();
- baseSrc.buffer = baseBuffer;
- const baseGain = offline.createGain();
- baseGain.gain.value = baseVolume;
- baseSrc.connect(baseGain);
- baseGain.connect(exportCompressor);
- baseSrc.start(seg.timelineStart, seg.sourceStart, seg.duration);
- });
+  smRecordedClips.forEach(c =>{
+  const buf = overlayBuffers[c.assetId];
+  if (buf) {
+  const src = offline.createBufferSource();
+  src.buffer = buf;
+  const gain = offline.createGain();
+  gain.gain.value = (c.volume !== undefined) ? c.volume : 1.0;
+  src.connect(gain);
+  gain.connect(exportCompressor);
 
- // Overlay sources with individual volumes
- smRecordedClips.forEach(c =>{
- const buf = overlayBuffers[c.assetId];
- if (buf) {
- const src = offline.createBufferSource();
- src.buffer = buf;
- const gain = offline.createGain();
- gain.gain.value = (c.volume !== undefined) ? c.volume : 1.0;
- src.connect(gain);
- gain.connect(exportCompressor);
+  const cs = c.cropStart || 0;
+  const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
+  const dur = Math.max(0, ce - cs);
 
- const cs = c.cropStart || 0;
- const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
- const dur = Math.max(0, ce - cs);
+  src.start(c.timelineStart, cs, dur);
+  }
+  });
 
- src.start(c.timelineStart, cs, dur);
- }
- });
-
- try {
- const rendered = await offline.startRendering();
- downloadBlob(await audioBufferToWav(rendered), 'super_mode_mix.wav');
- announce('Merged super mix downloaded successfully.');
- } catch (err) {
- console.error(err);
- alert('Error generating merged WAV file.');
- announce('Export failed.', true);
- }
+  try {
+  const rendered = await offline.startRendering();
+  downloadBlob(await audioBufferToWav(rendered), 'super_mode_mix.wav');
+  announce('Merged super mix downloaded successfully.');
+  } catch (err) {
+  console.error(err);
+  alert('Error generating merged WAV file.');
+  announce('Export failed.', true);
+  }
+  } finally {
+  isExportingMedia = false;
+  }
 }
-

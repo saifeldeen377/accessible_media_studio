@@ -49,11 +49,11 @@ function dbSaveAsset(id, name, type, blob) {
  req.onerror = e =>{
  console.warn('IndexedDB save failed (quota?):', e.target.error);
  setDbStatus('⚠ Save failed — storage may be full', false);
- alert("فشل حفظ الملف في قاعدة البيانات المحلية (قد تكون الذاكرة ممتلئة).");
+ alert("Failed to save file to local database (storage might be full).");
  };
  } catch (err) {
  console.warn('IndexedDB transaction error:', err);
- alert("خطأ أثناء محاولة حفظ الملف في قاعدة البيانات: "+ err.message);
+ alert("Error while attempting to save file to database: "+ err.message);
  }
 }
 
@@ -65,7 +65,7 @@ function dbDeleteAsset(id) {
  store.delete(id);
  } catch (err) {
  console.warn('IndexedDB delete error:', err);
- alert("خطأ أثناء محاولة حذف الملف من قاعدة البيانات: "+ err.message);
+ alert("Error while attempting to delete file from database: "+ err.message);
  }
 }
 
@@ -99,12 +99,12 @@ async function loadLibraryFromDB() {
 
  req.onerror = e =>{
  console.warn('IndexedDB load error:', e.target.error);
- alert("فشل تحميل الملفات من قاعدة البيانات المحلية.");
+ alert("Failed to load files from local database.");
  resolve();
  };
  } catch (err) {
  console.warn('IndexedDB transaction error on load:', err);
- alert("خطأ أثناء محاولة تحميل قاعدة البيانات: "+ err.message);
+ alert("Error while attempting to load database: "+ err.message);
  resolve();
  }
  });

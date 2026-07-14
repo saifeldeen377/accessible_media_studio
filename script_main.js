@@ -3,24 +3,24 @@
 // ─────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () =>{
- initLibrary();
- initTabs();
- initMergeAudio();
- initMergeVideo();
- initAudioToVideo();
- initVideoToAudio();
- initTrimAudio();
- initTrimVideo();
- initSuperMode();
- initSuperTrimAudio();
+  try {
+    initLibrary();
+    initTabs();
+    initMergeAudio();
+    initMergeVideo();
+    initAudioToVideo();
+    initVideoToAudio();
+    initTrimAudio();
+    initTrimVideo();
+    initSuperMode();
+    initSuperTrimAudio();
 
- // Connect to IndexedDB and restore previously saved files
- await initDatabase();
- await loadLibraryFromDB();
+    await initDatabase();
+    await loadLibraryFromDB();
+    await preloadAssets();
 
- // Preload synthesized demo sounds and gradient image
- await preloadAssets();
-
- // Ensure first tab panel is visible
- document.getElementById('panel-merge-audio').hidden = false;
+    document.getElementById('panel-merge-audio').hidden = false;
+  } catch (e) {
+    alert("BOOT ERROR:\n" + e.name + ": " + e.message + "\n\nStack:\n" + e.stack);
+  }
 });

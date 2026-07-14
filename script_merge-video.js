@@ -57,7 +57,8 @@ window.removeMvClip = function(id) {
 };
 
 async function exportMergeVideo() {
- if (mvClips.length === 0) { alert('Add at least one video clip first.'); return; }
+  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
+  if (mvClips.length === 0) { alert('Add at least one video clip first.'); return; }
 
  const statusEl = document.getElementById('mv-status');
  statusEl.textContent = 'Processing… this may take a while depending on video length.';
@@ -81,7 +82,8 @@ async function exportMergeVideo() {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
- const durationMs = Date.now() - recordStart;
+  canvasStream.getTracks().forEach(t => t.stop());
+  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = 'merged_video.webm';
  
@@ -153,9 +155,19 @@ function playVideoClipToCanvas(url, cropStart, cropEnd, canvas, ctx2d, actx, aud
  video.pause();
  };
 
- video.addEventListener('loadedmetadata', () =>{
- const endTime = cropEnd != null ? Math.min(cropEnd, video.duration) : video.duration;
- video.currentTime = cropStart;
+  video.addEventListener('loadedmetadata', () =>{
+  if (cropStart >= video.duration) {
+  alert("Start time cannot exceed video duration.");
+  if (!resolved) { resolved = true; cleanup(); resolve(); }
+  return;
+  }
+  const endTime = cropEnd != null ? Math.min(cropEnd, video.duration) : video.duration;
+  if (endTime <= cropStart) {
+  alert("End time must be after start time.");
+  if (!resolved) { resolved = true; cleanup(); resolve(); }
+  return;
+  }
+  video.currentTime = cropStart;
 
  audioSource = actx.createMediaElementSource(video);
  audioSource.connect(audioDest);
@@ -165,7 +177,18 @@ function playVideoClipToCanvas(url, cropStart, cropEnd, canvas, ctx2d, actx, aud
  if (!resolved) { resolved = true; cleanup(); resolve(); }
  return;
  }
- ctx2d.drawImage(video, 0, 0, canvas.width, canvas.height);
+ 
+ // Calculate letterboxing dimensions
+ const scale = Math.min(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+ const w = video.videoWidth * scale;
+ const h = video.videoHeight * scale;
+ const x = (canvas.width - w) / 2;
+ const y = (canvas.height - h) / 2;
+ 
+ // Draw black background and the centered video frame
+ ctx2d.fillStyle = '#000';
+ ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+ ctx2d.drawImage(video, x, y, w, h);
  if (onProgress) {
  const dur = endTime - cropStart;
  const curr = video.currentTime - cropStart;

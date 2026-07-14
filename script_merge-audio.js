@@ -88,34 +88,41 @@ async function buildMixedBuffer() {
 
  if (totalDuration<= 0) { alert('Clips result in zero duration. Check your crop settings.'); return null; }
 
- const sr = getAudioCtx().sampleRate;
- const offline = new OfflineAudioContext(2, Math.ceil(totalDuration * sr), sr);
+ try {
+  const sr = getAudioCtx().sampleRate;
+  const offline = new OfflineAudioContext(2, Math.ceil(totalDuration * sr), sr);
 
- const exportCompressor = offline.createDynamicsCompressor();
- exportCompressor.threshold.setValueAtTime(-2, 0);
- exportCompressor.knee.setValueAtTime(0, 0);
- exportCompressor.ratio.setValueAtTime(20, 0);
- exportCompressor.attack.setValueAtTime(0.005, 0);
- exportCompressor.release.setValueAtTime(0.05, 0);
- exportCompressor.connect(offline.destination);
+  const exportCompressor = offline.createDynamicsCompressor();
+  exportCompressor.threshold.setValueAtTime(-2, 0);
+  exportCompressor.knee.setValueAtTime(0, 0);
+  exportCompressor.ratio.setValueAtTime(20, 0);
+  exportCompressor.attack.setValueAtTime(0.005, 0);
+  exportCompressor.release.setValueAtTime(0.05, 0);
+  exportCompressor.connect(offline.destination);
 
- decoded.forEach(({ clip, buf }) =>{
- const cs = clip.cropStart;
- const ce = clip.cropEnd != null ? Math.min(clip.cropEnd, buf.duration) : buf.duration;
- const dur = ce - cs;
+  decoded.forEach(({ clip, buf }) =>{
+  const cs = clip.cropStart;
+  const ce = clip.cropEnd != null ? Math.min(clip.cropEnd, buf.duration) : buf.duration;
+  const dur = ce - cs;
+  
+  if (dur<= 0) return; // Prevent negative duration crash
 
- const src = offline.createBufferSource();
- src.buffer = buf;
+  const src = offline.createBufferSource();
+  src.buffer = buf;
 
- const gain = offline.createGain();
- gain.gain.value = clip.volume;
+  const gain = offline.createGain();
+  gain.gain.value = clip.volume;
 
- src.connect(gain);
- gain.connect(exportCompressor);
- src.start(clip.timelineStart, cs, dur);
- });
+  src.connect(gain);
+  gain.connect(exportCompressor);
+  src.start(clip.timelineStart, cs, dur);
+  });
 
- return offline.startRendering();
+  return await offline.startRendering();
+  } catch (e) {
+  alert("Error: The mix is too long or requires too much memory. Try reducing the length or number of clips.");
+  return null;
+  }
 }
 
 async function previewMergeAudio() {
@@ -137,10 +144,15 @@ function stopMergeAudio() {
 }
 
 async function exportMergeAudio() {
- announce('Rendering merged audio, please wait…');
- const buffer = await buildMixedBuffer();
- if (!buffer) return;
- downloadBlob(await audioBufferToWav(buffer), 'merged_audio.wav');
- announce('Merged audio downloaded as WAV.');
+  if (isExportingMedia) { alert("An export is already in progress. Please wait."); return; }
+  isExportingMedia = true;
+  try {
+  announce('Rendering merged audio, please wait…');
+  const buffer = await buildMixedBuffer();
+  if (!buffer) return;
+  downloadBlob(await audioBufferToWav(buffer), 'merged_audio.wav');
+  announce('Merged audio downloaded as WAV.');
+  } finally {
+  isExportingMedia = false;
+  }
 }
-

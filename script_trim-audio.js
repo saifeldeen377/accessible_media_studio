@@ -37,7 +37,9 @@ function initTrimAudio() {
  announce('Loading audio preview…');
 
  const buffer = await getTrimBuffer(asset);
- const end = endRaw ? parseFloat(endRaw) : buffer.duration;
+ let end = endRaw ? parseFloat(endRaw) : buffer.duration;
+ if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
+ if (end > buffer.duration) end = buffer.duration;
  const dur = end - start;
 
  if (dur<= 0) { alert('Trim End must be after Trim Start.'); return; }
@@ -55,6 +57,8 @@ function initTrimAudio() {
  announce(`Playing preview from ${start}s to ${end.toFixed(1)}s.`);
  });
 
+
+
  document.getElementById('btn-ta-stop').addEventListener('click', () =>{
  if (trimPreviewSource) { try { trimPreviewSource.stop(); } catch (_) {} trimPreviewSource = null; }
  statusEl.textContent = 'Stopped.';
@@ -62,6 +66,7 @@ function initTrimAudio() {
  });
 
  document.getElementById('btn-ta-export').addEventListener('click', async () =>{
+ if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
  const assetId = document.getElementById('ta-audio-select').value;
  if (!assetId) { alert('Please select an audio file from the library.'); return; }
 
@@ -73,11 +78,15 @@ function initTrimAudio() {
  announce('Rendering trimmed audio, please wait…');
 
  const buffer = await getTrimBuffer(asset);
- const end = endRaw ? parseFloat(endRaw) : buffer.duration;
+ let end = endRaw ? parseFloat(endRaw) : buffer.duration;
+ if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
+ if (end > buffer.duration) end = buffer.duration;
  const dur = end - start;
 
  if (dur<= 0) { alert('Trim End must be after Trim Start.'); return; }
 
+ isExportingMedia = true;
+ try {
  const sr = buffer.sampleRate;
  const numCh = buffer.numberOfChannels;
  const offline = new OfflineAudioContext(numCh, Math.ceil(dur * sr), sr);
@@ -88,8 +97,15 @@ function initTrimAudio() {
 
  const trimmed = await offline.startRendering();
  downloadBlob(await audioBufferToWav(trimmed), `${asset.name}_trimmed.wav`);
+ } catch (err) {
+ statusEl.textContent = 'Error: Trim duration is too long or requires too much memory.';
+ announce('Error: Trim duration is too long.', true);
+ alert("Error: The trim duration requires too much memory. Try reducing the length.");
+ return;
+ } finally {
+ isExportingMedia = false;
+ }
  statusEl.textContent = 'Done! Trimmed audio downloaded as WAV.';
  announce('Trimmed audio downloaded as WAV.');
  });
 }
-

@@ -12,16 +12,19 @@ function initVideoToAudio() {
  statusEl.textContent = 'Extracting audio track…';
  announce('Extracting audio from video, please wait…');
 
- try {
- const buffer = await decodeAudio(asset.file);
- downloadBlob(await audioBufferToWav(buffer), `${asset.name}_audio.wav`);
- statusEl.textContent = 'Done! Audio extracted and downloaded as WAV.';
- announce('Audio extracted and downloaded as WAV.');
- } catch (err) {
- console.error(err);
- statusEl.textContent = 'Error: Could not extract audio. The video may have no audio track, or the format is not supported by your browser.';
- announce('Error: could not extract audio.', true);
- }
+  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
+  isExportingMedia = true;
+  try {
+  const buffer = await decodeAudio(asset.file);
+  downloadBlob(await audioBufferToWav(buffer), `${asset.name}_audio.wav`);
+  statusEl.textContent = 'Done! Audio extracted and downloaded as WAV.';
+  announce('Audio extracted and downloaded as WAV.');
+  } catch (err) {
+  console.error(err);
+  statusEl.textContent = 'Error: Could not extract audio. The video may have no audio track, or the format is not supported by your browser.';
+  announce('Error: could not extract audio.', true);
+  } finally {
+  isExportingMedia = false;
+  }
  });
 }
-

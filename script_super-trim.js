@@ -321,10 +321,11 @@ function initSuperTrimAudio() {
  const actx = getAudioCtx();
  if (!trimBuffer) trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
  const buffer = trimBuffer;
- 
- const start = parseFloat(inputStart.value) || 0;
- let end = parseFloat(inputEnd.value);
- if (isNaN(end) || end<= start) end = buffer.duration;
+  const start = parseFloat(inputStart.value) || 0;
+  let end = parseFloat(inputEnd.value);
+  if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
+  if (isNaN(end) || end > buffer.duration) end = buffer.duration;
+  if (end <= start) { alert('Trim End must be after Trim Start.'); return; }
 
  previewPlayOffset = 0;
  previewStartTime = actx.currentTime;
@@ -346,8 +347,9 @@ function initSuperTrimAudio() {
  });
 
  btnExport.addEventListener('click', async () =>{
- if (!select.value) return alert("Select a file to trim");
- const asset = getAsset(select.value);
+  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
+  if (!select.value) return alert("Select a file to trim");
+  const asset = getAsset(select.value);
  
  statusEl.textContent = "Processing... please wait.";
  announce("Processing trim... please wait.");
@@ -358,12 +360,14 @@ function initSuperTrimAudio() {
  if (!trimBuffer) trimBuffer = await decodeAudio(asset.objectURL);
  const buffer = trimBuffer;
 
- const start = parseFloat(inputStart.value) || 0;
- const endRaw = inputEnd.value;
- const end = endRaw ? parseFloat(endRaw) : buffer.duration;
- const dur = end - start;
+  const start = parseFloat(inputStart.value) || 0;
+  const endRaw = inputEnd.value;
+  let end = endRaw ? parseFloat(endRaw) : buffer.duration;
+  if (start >= buffer.duration) throw new Error("Start time cannot exceed file duration.");
+  if (end > buffer.duration) end = buffer.duration;
+  const dur = end - start;
 
- if (dur<= 0) throw new Error("Trim End must be after Trim Start.");
+  if (dur<= 0) throw new Error("Trim End must be after Trim Start.");
 
  const sr = buffer.sampleRate;
  const numCh = buffer.numberOfChannels;
