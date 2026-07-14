@@ -7,12 +7,12 @@ function getAudioCtx() {
  if (!audioCtx) {
  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
  masterCompressor = audioCtx.createDynamicsCompressor();
- // Configure compressor to act as a brickwall limiter to prevent digital clipping
- masterCompressor.threshold.setValueAtTime(-2, audioCtx.currentTime);
- masterCompressor.knee.setValueAtTime(0, audioCtx.currentTime);
- masterCompressor.ratio.setValueAtTime(20, audioCtx.currentTime);
- masterCompressor.attack.setValueAtTime(0.005, audioCtx.currentTime);
- masterCompressor.release.setValueAtTime(0.05, audioCtx.currentTime);
+ // Configure compressor as a gentle mixbus glue / soft limiter to prevent clipping without destroying transients
+ masterCompressor.threshold.setValueAtTime(-3, audioCtx.currentTime);
+ masterCompressor.knee.setValueAtTime(20, audioCtx.currentTime); // Soft knee for transparent compression
+ masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+ masterCompressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+ masterCompressor.release.setValueAtTime(0.25, audioCtx.currentTime); // Slower release prevents bass/drum distortion
  masterCompressor.connect(audioCtx.destination);
  }
  if (audioCtx.state === 'suspended') {

@@ -123,8 +123,11 @@ function initSuperMode() {
  if (e.key === ' ' || e.code === 'Space') {
  e.preventDefault();
  
- if (isCtrl) {
- // ── Ctrl+Space: Soft Pause / Punch-In ──────────────────────────────────────
+  if (isCtrl && isShift) {
+    // ── Ctrl+Shift+Space: Cancel Silent Gap ────────────────────────────────────
+    handleCancelGap();
+  } else if (isCtrl) {
+  // ── Ctrl+Space: Soft Pause / Punch-In ──────────────────────────────────────
  if (smSoftPaused) {
  const isActuallyEnded = smBaseAudio.ended || smBaseAudio.endedTriggered || (smBaseAudio.currentTime >= smBaseAudio.duration - 0.05);
  if (isActuallyEnded) {
@@ -498,19 +501,23 @@ function updateSmTimeline() {
  const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
  
  if (activeSeg) {
- // We are inside a recorded segment ->Base audio should play
- if (smBaseAudio.paused && smBaseAudio.currentTime< smBaseAudio.duration) {
- smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
- smBaseAudio.play().catch(e =>console.error(e));
- } else {
- // Smoothly advance using hardware clock to avoid blocky HTML5 updates
- smVirtualTime += elapsed;
- // Drift correction ONLY if base audio is actually playing (not stuck at end)
- if (!smBaseAudio.paused && smBaseAudio.currentTime< smBaseAudio.duration) {
- const expected = activeSeg.timelineStart + (smBaseAudio.currentTime - activeSeg.sourceStart);
- if (Math.abs(smVirtualTime - expected) >0.3) smVirtualTime = expected;
- }
- }
+  // We are inside a recorded segment ->Base audio should play
+  
+  // Smoothly advance using hardware clock unconditionally so we never get stuck
+  smVirtualTime += elapsed;
+
+  if (smBaseAudio.paused) {
+    smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
+    if (smBaseAudio.currentTime < smBaseAudio.duration) {
+      smBaseAudio.play().catch(e => console.error(e));
+    }
+  } else {
+    // Drift correction ONLY if base audio is actually playing (not stuck at end)
+    if (smBaseAudio.currentTime < smBaseAudio.duration) {
+      const expected = activeSeg.timelineStart + (smBaseAudio.currentTime - activeSeg.sourceStart);
+      if (Math.abs(smVirtualTime - expected) > 0.3) smVirtualTime = expected;
+    }
+  }
  } else {
  // We are in a recorded GAP ->Base audio should pause
  if (!smBaseAudio.paused) {
@@ -647,13 +654,13 @@ function smResumeBase(isPunchIn = false) {
  smSoftPauseStartVirtual = smVirtualTime;
  smSoftPauseStartWall = getAudioCtx().currentTime;
  updatePlaybackStateUI('soft-paused');
- } else {
- smBaseAudio.play().then(() =>{
- smBaseSegmentStartTimeline = smVirtualTime;
- smBaseSegmentStartSource = smBaseAudio.currentTime;
- updatePlaybackStateUI('playing');
- }).catch(err =>console.error(err));
- }
+  } else {
+    smBaseSegmentStartTimeline = smVirtualTime;
+    smBaseSegmentStartSource   = smBaseAudio.currentTime;
+    smBaseAudio.play().then(() => {
+      updatePlaybackStateUI('playing');
+    }).catch(err => console.error(err));
+  }
  } else {
  // Normal resume (Space) - Just resume the clock and UI state
  if (smWasSoftPaused) {
@@ -673,7 +680,7 @@ function smResumeBase(isPunchIn = false) {
  smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
  }
  
- if (smBaseAudio.currentTime< smBaseAudio.duration) smBaseAudio.play().catch(e =>console.error(e));
+  if (smBaseAudio.currentTime < smBaseAudio.duration) smBaseAudio.play().catch(e => console.error(e));
  
  // If we were paused outside of any recorded boundary, start recording again
  if (smVirtualTime >= smTotalRecordedDuration && smBaseSegmentStartSource === null) {
@@ -742,6 +749,107 @@ function smSoftPauseBase() {
  smLastUpdateTime = getAudioCtx().currentTime;
  smTimelineTimer = setInterval(updateSmTimeline, 100);
  }
+}
+
+function handleCancelGap() {
+  if (!smBaseAudio) return;
+
+  // Case 3: Recording stopped → do nothing
+  if (!smTimelineTimer) return;
+
+  // Base has ended or is extremely close to the end → do nothing
+  if (smBaseAudio.ended || smBaseAudio.endedTriggered || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.1) {
+    return;
+  }
+
+  const isManualSoftPause = smSoftPaused;
+  // Replay gap: timer running, base physically paused, not soft-paused, still in replay territory
+  const isReplayGap = !smSoftPaused &&
+                      smBaseSegmentStartSource === null &&
+                      smBaseAudio.paused &&
+                      smVirtualTime < smTotalRecordedDuration;
+
+  // Case 1: base playing normally or base ended → do nothing
+  if (!isManualSoftPause && !isReplayGap) return;
+
+  // ── Determine gap boundaries ──────────────────────────────────────────────
+  let gapStart, gapEnd;
+  if (isManualSoftPause) {
+    gapStart = smSoftPauseStartVirtual;
+    gapEnd   = smVirtualTime;
+  } else {
+    // Replay gap: find from smBaseSegments
+    gapStart = 0;
+    gapEnd   = smTotalRecordedDuration;
+    for (const seg of smBaseSegments) {
+      const segEnd = seg.timelineStart + seg.duration;
+      if (segEnd <= smVirtualTime) gapStart = Math.max(gapStart, segEnd);
+      if (seg.timelineStart > smVirtualTime) gapEnd = Math.min(gapEnd, seg.timelineStart);
+    }
+  }
+
+  const setting = document.getElementById('sm-cancel-gap-behavior').value;
+  const clipsInGap  = smRecordedClips.filter(c => c.timelineStart >= gapStart && c.timelineStart < gapEnd);
+  const activeInGap = Object.values(activeOverlayAudios).filter(
+    a => a.startTimeInBase !== null && a.startTimeInBase >= gapStart
+  );
+  const hasOverlaysInGap = clipsInGap.length > 0 || activeInGap.length > 0;
+
+  if (setting === 'empty_only' && hasOverlaysInGap) {
+    announce('Gap not cancelled: overlays exist in the silent period.', true);
+    return;
+  }
+
+  // Remove overlays in the gap
+  if (hasOverlaysInGap) {
+    activeInGap.forEach(active => {
+      try { active.sourceNode.stop(); } catch(_) {}
+      delete activeOverlayAudios[active.clipEntry.id];
+    });
+    clipsInGap.forEach(c => {
+      const idx = smRecordedClips.indexOf(c);
+      if (idx !== -1) smRecordedClips.splice(idx, 1);
+      playedClipIds.delete(c.id);
+    });
+  }
+
+  const gapDuration = gapEnd - gapStart;
+
+  // ── REPLAY GAP: compress timeline (shift everything after the gap) ──────────
+  if (isReplayGap) {
+    smBaseSegments.forEach(seg => {
+      if (seg.timelineStart >= gapEnd) seg.timelineStart -= gapDuration;
+    });
+    smRecordedClips.forEach(c => {
+      if (c.timelineStart >= gapEnd) c.timelineStart -= gapDuration;
+    });
+    smTotalRecordedDuration -= gapDuration;
+    smVirtualTime            = gapStart;
+    playedClipIds.clear();
+    smLastUpdateTime = getAudioCtx().currentTime;
+    smResumeBase(false); // will find the now-shifted segment at gapStart and resume replay
+    renderSmMixLog();
+    announce('Replay gap removed. Continuing from before the gap.');
+    return;
+  }
+
+  // ── MANUAL SOFT-PAUSE: cancel gap, rewind timeline ──────────────────────────
+  const sourcePos = smBaseAudio.currentTime; // pausedOffset while not playing
+  smSoftPaused            = false;
+  smVirtualTime           = gapStart;
+  smTotalRecordedDuration = gapStart;
+  smLastUpdateTime        = getAudioCtx().currentTime;
+
+  smBaseSegmentStartTimeline = gapStart;
+  smBaseSegmentStartSource   = sourcePos;
+
+  smBaseAudio.play().then(() => {
+    updatePlaybackStateUI('playing');
+  }).catch(err => console.error(err));
+
+  renderSmActiveKeysList();
+  renderSmMixLog();
+  announce('Silent gap cancelled. Continuing from before the gap.');
 }
 
 function updatePlaybackStateUI(state) {

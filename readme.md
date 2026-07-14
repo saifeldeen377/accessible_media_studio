@@ -171,6 +171,7 @@ Traditional editors require you to carefully place audio clips on a visual timel
 | `Space` | Restart playback from 0.0s (Replay mode). During replay, any new overlays you trigger will be overdubbed/layered onto the mix without erasing your previous recordings. |
 | `Shift` + `Space` | Hard Pause / Resume all tracks (pauses base, timeline, and all active overlays, seamlessly resuming them together) |
 | `Ctrl` + `Space` | Soft-Pause / **Punch-In**. If you use this during replay, it deletes any future base segments and starts recording a new one. Can also be used to create silent gaps in the base audio where the timeline continues ticking. |
+| `Ctrl` + `Shift` + `Space` | **Cancel Gap.** If in a soft-pause mid-track: rewinds timeline to where the gap started and resumes the base, as if the gap never happened. Behavior depends on the **Cancel Gap** setting. |
 | `←` / `→` | Seek timeline back or forward by 5 seconds. |
 | `Ctrl` + `←` / `→` | Delete the previous/next recorded overlay clip and jump to its position on the timeline. (Does not affect currently active live clips) |
 | `[Your Key]` | Play overlay from beginning (restarts if already playing) |
@@ -190,6 +191,11 @@ Under the Base Audio File selection, you can configure what happens when the bas
 Choose how `Ctrl` + `←` / `→` behaves when deleting an overlay clip:
 - **Delete & Seek (Default):** Deletes the clip and immediately jumps the timeline back to where that clip started, allowing you to seamlessly re-record it in context.
 - **Delete Only:** Deletes the clip but keeps the timeline playing exactly where it is. Useful if you made a mistake but don't want to break the flow of your live recording session.
+
+#### Ctrl+Shift+Space — Cancel Gap Behavior
+Choose how the **Cancel Gap** shortcut works when you are inside a soft-pause silent period:
+- **Only when gap has no overlays (Default):** The gap is cancelled only if no overlay clips were triggered during it. If overlays exist in the gap, the shortcut does nothing and announces a warning.
+- **Always:** Cancels the gap regardless — any overlays that were triggered during the gap are stopped and deleted along with it.
 
 #### Trigger Behavior (Cutoff vs Overlap)
 When assigning a shortcut key to an overlay, you can configure how it behaves when pressed rapidly:

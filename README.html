@@ -581,6 +581,7 @@ python -m http.server 3000
 <tr><td><kbd> Space </kbd></td><td> Restart playback from 0.0s (Replay mode). During replay, any new overlays you trigger will be overdubbed/layered onto the mix without erasing your previous recordings.</td></tr>
 <tr><td><kbd> Shift </kbd>+<kbd> Space </kbd></td><td> Hard Pause / Resume all tracks (pauses base, timeline, and all active overlays, seamlessly resuming them together)</td></tr>
 <tr><td><kbd> Ctrl </kbd>+<kbd> Space </kbd></td><td> Soft-Pause /<strong> Punch-In </strong>. If you use this during replay, it deletes any future base segments and starts recording a new one. Can also be used to create silent gaps in the base audio where the timeline continues ticking.</td></tr>
+<tr><td><kbd> Ctrl </kbd>+<kbd> Shift </kbd>+<kbd> Space </kbd></td><td><strong>Cancel Gap.</strong> If in a soft-pause mid-track: rewinds timeline to where the gap started and resumes the base, as if the gap never happened. Behavior depends on the <strong>Cancel Gap</strong> setting.</td></tr>
 <tr><td><kbd>←</kbd>/<kbd>→</kbd></td><td> Seek timeline back or forward by 5 seconds.</td></tr>
 <tr><td><kbd> Ctrl </kbd>+<kbd>←</kbd>/<kbd>→</kbd></td><td> Delete the previous/next recorded overlay clip and jump to its position on the timeline. (Does not affect currently active live clips)</td></tr>
 <tr><td><kbd> d </kbd>(your key)</td><td> Play overlay from beginning (restarts if already playing)</td></tr>
@@ -611,6 +612,13 @@ python -m http.server 3000
 <ul>
 <li><strong> Delete & Seek (Default):</strong> Deletes the clip and immediately jumps the timeline back to where that clip started, allowing you to seamlessly re-record it in context.</li>
 <li><strong> Delete Only:</strong> Deletes the clip but keeps the timeline playing exactly where it is. Useful if you made a mistake but don't want to break the flow of your live recording session.</li>
+</ul>
+
+<h4 id="sm-cancel-gap-behavior"> Ctrl+Shift+Space — Cancel Gap Behavior </h4>
+<p> Choose how the <strong>Cancel Gap</strong> shortcut works when you are inside a soft-pause silent period:</p>
+<ul>
+<li><strong>Only when gap has no overlays (Default):</strong> The gap is cancelled only if no overlay clips were triggered during it. If overlays exist in the gap, the shortcut does nothing and announces a warning.</li>
+<li><strong>Always:</strong> Cancels the gap regardless — any overlays that were triggered during the gap are stopped and deleted along with it.</li>
 </ul>
 
 <h4 id="sm-trigger-behavior"> Trigger Behavior (Cutoff vs Overlap)</h4>
