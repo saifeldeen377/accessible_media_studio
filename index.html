@@ -38,6 +38,7 @@ window.onerror = function(msg, url, line, col, error) {
 <a href="README.html" class="btn btn-secondary" target="_blank" style="margin-right: 10px; text-decoration: none;" aria-label="Read Documentation"> Readme </a>
 <button id="btn-enter-super-mode" class="btn btn-primary" aria-label="Enter Super Merger, shortcut key m"> Super Merger </button>
 <button id="btn-enter-super-trim" class="btn btn-primary" aria-label="Enter Super Trim, shortcut key t" style="margin-left: 10px;"> Super Trim </button>
+<button id="btn-enter-super-clean" class="btn btn-primary" aria-label="Enter Super Clean, shortcut key c" style="margin-left: 10px;"> Super Clean </button>
 </div>
 </div>
 </header>
@@ -561,10 +562,10 @@ window.onerror = function(msg, url, line, col, error) {
 
 <!-- Live Trim Interface -->
 <div class="super-trim-ui" style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border);">
-<div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
-<button id="btn-sta-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
-<button id="btn-sta-stop" class="btn btn-danger" style="font-size: 1.2rem;"disabled> Stop </button>
-</div>
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
+              <button id="btn-sta-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
+              <button id="btn-sta-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
+            </div>
  
 <div style="text-align: center; margin-bottom: 20px;">
 <div id="sta-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
@@ -601,6 +602,92 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 </div>
 
+<!-- ══════════════════════════════════════════ -->
+<!-- SUPER CLEAN OVERLAY -->
+<!-- ══════════════════════════════════════════ -->
+<div id="super-clean-overlay" class="sm-overlay" hidden>
+<div class="sm-container" role="application" tabindex="-1" aria-label="Super Clean Audio">
+<header class="sm-header">
+<h2 id="scl-title"> Super Clean Audio </h2>
+<div style="display: flex; gap: 8px; align-items: center;">
+<button id="btn-close-super-clean" class="btn btn-danger btn-sm" aria-label="Exit Super Clean">✕ Close </button>
+</div>
+</header>
+
+<div class="sm-view" tabindex="-1">
+<p class="sm-description">
+ Live-clean an audio file by cutting out mistakes. Play the audio and press <kbd>s</kbd> (or <kbd>[</kbd>) to set the Start of a cut, and <kbd>e</kbd> (or <kbd>]</kbd>) to set the End. You can define multiple cuts to remove all mistakes at once.
+</p>
+
+<div class="simple-form">
+<div class="control-group">
+<label for="scl-audio-select"> Select Audio File from Library:</label>
+<select id="scl-audio-select">
+<option value="" disabled selected> Select from library...</option>
+</select>
+</div>
+
+<!-- Live Clean Interface -->
+<div class="super-trim-ui" style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border);">
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
+              <button id="btn-scl-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
+              <button id="btn-scl-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
+            </div>
+
+<div style="text-align: center; margin-bottom: 20px;">
+<div id="scl-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
+<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="scl-sr-announcer"> Ready to play.</p>
+</div>
+
+<div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+<div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
+<h3 style="margin: 0 0 10px 0;"> Cut Start (Delete from)</h3>
+<div style="display: flex; gap: 5px; align-items: center;">
+<input type="number" id="scl-start" min="0" step="0.1" placeholder="Start" readonly style="width: 100%; text-align: center; font-size: 1.2rem; opacity: 0.8; cursor: not-allowed;" aria-label="Current cut start time">
+<button id="btn-scl-set-start" class="btn btn-secondary btn-sm" aria-label="Set Cut Start to current time" style="white-space: nowrap;"> Set Start </button>
+</div>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>s</kbd> (or <kbd>[</kbd>) while playing </p>
+</div>
+<div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
+<h3 style="margin: 0 0 10px 0;"> Cut End (Delete up to)</h3>
+<div style="display: flex; gap: 5px; align-items: center;">
+<input type="number" id="scl-end" min="0" step="0.1" placeholder="End" readonly style="width: 100%; text-align: center; font-size: 1.2rem; opacity: 0.8; cursor: not-allowed;" aria-label="Current cut end time">
+<button id="btn-scl-set-end" class="btn btn-secondary btn-sm" aria-label="Set Cut End to current time" style="white-space: nowrap;"> Set End </button>
+</div>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>e</kbd> (or <kbd>]</kbd>) while playing </p>
+</div>
+</div>
+</div>
+
+<div class="clips-table-wrapper" style="margin-top: 20px;">
+<h3> Defined Cuts (Regions to Delete):</h3>
+<div class="table-scroll">
+<table id="scl-cuts-table" aria-label="List of regions to delete">
+<thead>
+<tr>
+<th scope="col"> Cut # </th>
+<th scope="col"> Start Time </th>
+<th scope="col"> End Time </th>
+<th scope="col"> Remove </th>
+</tr>
+</thead>
+<tbody id="scl-cuts-tbody">
+<tr id="scl-cuts-empty"><td colspan="4" class="empty-cell"> No cuts defined yet.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="panel-actions" style="margin-top: 20px;">
+<button id="btn-scl-preview" class="btn btn-secondary"> Preview Cleaned Audio </button>
+<button id="btn-scl-export" class="btn btn-primary"> Download Cleaned WAV </button>
+</div>
+<p id="scl-status" class="status-text" aria-live="polite"></p>
+</div>
+</div>
+</div>
+</div>
+
 <script src="https://unpkg.com/fix-webm-duration"></script>
 <!-- Core -->
 <script src="script_globals.js"></script>
@@ -618,6 +705,7 @@ window.onerror = function(msg, url, line, col, error) {
 <script src="script_trim-video.js"></script>
 <script src="script_super-mode.js?v=1.1"></script>
 <script src="script_super-trim.js?v=1.1"></script>
+<script src="script_super-clean.js?v=1.0"></script>
 <!-- Main Boot -->
 <script src="script_main.js"></script>
 

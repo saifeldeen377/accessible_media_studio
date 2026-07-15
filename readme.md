@@ -31,6 +31,7 @@ This project was built to answer a simple question: _What if a media studio was 
 
 - [**Super Merger**](#-super-merger---live-mixer): Live-mix audio with keyboard shortcuts. Auto-records and exports as perfectly synced WAV.
 - [**Super Trim**](#-super-trim---live-audio-cropper): Live-trim audio with keyboard shortcuts. Set start and end points instantly.
+- [**Super Clean**](#-super-clean---live-audio-cleaner): Remove multiple mistakes or unwanted sections seamlessly while listening.
 - [**Merge Audio**](#1-merge-audio): Mix unlimited tracks with custom timing, crop ranges, and volume.
 - [**Merge Video**](#2-merge-video): Concatenate video clips in sequence with optional crop ranges.
 - [**Audio → Video**](#3-audio--video-slideshow): Turn images + a music file into a timed slideshow video.
@@ -191,6 +192,36 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 
 ---
 
+## Super Clean — Live Audio Cleaner
+
+Super Clean allows you to listen to an audio file and seamlessly "cut out" multiple mistakes, long pauses, or unwanted sections in real time using simple keyboard shortcuts.
+
+### How to use
+1. Press `C` anywhere on the page to open **" Super Clean"**.
+2. Select your audio file and press `Space` to start playing.
+3. When you hear a mistake or something you want to remove, press **`s`** (or `[`). This sets the start of the cut.
+4. When the mistake ends and the good audio resumes, press **`e`** (or `]`). This sets the end of the cut and finalizes the removal region.
+5. The audio will continue playing. You can repeat this process (press `s` then `e`) as many times as you want to remove all mistakes in a single pass.
+6. Click **" Preview Cleaned Audio"** to hear the file with all your defined cuts automatically skipped.
+7. Click **" Download Cleaned WAV"**.
+
+### Keyboard Shortcuts in Super Clean
+| Key | Action |
+| :--- | :--- |
+| `Space` | Play / Pause main audio and Preview |
+| `S` or `[` | Set Start point (beginning of a mistake) |
+| `E` or `]` | Set End point (end of a mistake) |
+| `←` / `→` | Skip backward or forward by 5 seconds (Works during Preview as well) |
+| `Escape` | Exit Super Clean |
+
+### Smart Edge Cases
+Super Clean's state machine is designed to be forgiving:
+- **Missing End**: If you press `s` to mark a start but never press `e`, it assumes you want to cut everything from that point to the end of the file.
+- **Missing Start**: If you press `e` without ever pressing `s`, it assumes you want to cut everything from the very beginning up to that point.
+- **Modifications**: If you press `s` twice in a row, it just updates the start point of your current cut. If you press `e` twice in a row, it extends or shortens the end point of the cut you just made, without creating a duplicate.
+
+---
+
 ## Tools Guide
 
 Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when the tab bar is focused to navigate between tabs.
@@ -256,6 +287,7 @@ Accessibility is not a feature here — it's the foundation.
 | `Enter` / `Space` | Activate buttons and checkboxes |
 | `M` | Open Super Merger from anywhere |
 | `T` | Open Super Trim from anywhere |
+| `C` | Open Super Clean from anywhere |
 
 ### Comparison
 

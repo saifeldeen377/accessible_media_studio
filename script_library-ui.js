@@ -39,11 +39,13 @@ function initLibrary() {
 
  if (!type) { alert('Unsupported file type. Please upload audio, video, or image files.'); return; }
 
- if (file.size > 100 * 1024 * 1024) {
- if (!confirm(`The file "${file.name}" is over 100MB. Processing very large files might cause the browser to slow down or crash. Are you sure you want to continue?`)) {
- return;
- }
- }
+  if (file.size > 100 * 1024 * 1024) {
+  if (!confirm(`The file "${file.name}" is over 100MB. Processing very large files might cause the browser to slow down or crash. Are you sure you want to continue?`)) {
+  nameInput.value = '';
+  fileInput.value = '';
+  return;
+  }
+  }
 
   const id = `asset-${++assetIdCounter}`;
   const objectURL = URL.createObjectURL(file);
@@ -305,6 +307,12 @@ window.removeAsset = function(id) {
   currentStaAssetId = null;
   trimBuffer = null;
   }
+  if (typeof currentSclAssetId !== 'undefined' && currentSclAssetId === id) {
+  currentSclAssetId = null;
+  if (typeof sclBuffer !== 'undefined') sclBuffer = null;
+  if (typeof sclCutRegions !== 'undefined') sclCutRegions = [];
+  if (typeof sclActiveCut !== 'undefined') sclActiveCut = { start: null, end: null, id: null };
+  }
  // Remove from IndexedDB as well
  dbDeleteAsset(id);
  renderLibrary();
@@ -324,6 +332,7 @@ function populateAllSelects() {
  { id: 'sm-base-select', types: ['audio', 'video'] },
  { id: 'sm-overlay-select', types: ['audio', 'video'] },
  { id: 'sta-audio-select', types: ['audio', 'video'] },
+ { id: 'scl-audio-select', types: ['audio', 'video'] },
  ];
 
  configs.forEach(({ id, types }) =>{

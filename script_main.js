@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () =>{
     initTrimVideo();
     initSuperMode();
     initSuperTrimAudio();
+    initSuperClean();
 
     await initDatabase();
     await loadLibraryFromDB();

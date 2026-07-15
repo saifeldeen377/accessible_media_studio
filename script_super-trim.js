@@ -88,9 +88,10 @@ function initSuperTrimAudio() {
  timeDisplay.textContent = formatTime(getCurrentTime());
  }
 
- function stopAudio() {
- if (trimPlaySource) {
- try { trimPlaySource.stop(); } catch(e) {}
+  function stopAudio() {
+    if (trimPlaySource) {
+      trimPlaySource.onended = null;
+      try { trimPlaySource.stop(); } catch(e) {}
  trimPlaySource = null;
  }
  trimIsPlaying = false;
@@ -143,35 +144,49 @@ function initSuperTrimAudio() {
  updateTimeDisplay();
  }
 
- // Handle Play/Pause
- let currentStaAssetId = null;
- async function togglePlay() {
- if (!select.value) {
- alert("Please select an audio file first.");
- return;
- }
+  // Handle Play/Pause
+  let trimIsLoading = false;
+  let currentStaAssetId = null;
+  async function togglePlay() {
+  if (!select.value) {
+  alert("Please select an audio file first.");
+  return;
+  }
+  if (trimIsLoading) return;
  
- if (trimIsPlaying) {
- // Pause
- trimPlayOffset += getAudioCtx().currentTime - trimPlayStartTime;
- if (trimPlaySource) {
- try { trimPlaySource.stop(); } catch(e) {}
+    if (trimIsPlaying) {
+      // Pause
+      trimPlayOffset += getAudioCtx().currentTime - trimPlayStartTime;
+      if (trimPlaySource) {
+        trimPlaySource.onended = null;
+        try { trimPlaySource.stop(); } catch(e) {}
  trimPlaySource = null;
  }
  trimIsPlaying = false;
  btnPlay.textContent = "Resume (Space)";
  clearInterval(staTimer);
  } else {
- // Play
- statusEl.textContent = "Loading audio engine...";
- if (currentStaAssetId !== select.value || !trimBuffer) {
- trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
- currentStaAssetId = select.value;
- trimPlayOffset = 0;
- }
- statusEl.textContent = "";
+  // Play
+  statusEl.textContent = "Loading audio engine...";
+  btnPlay.disabled = true;
+  trimIsLoading = true;
+  try {
+    if (currentStaAssetId !== select.value || !trimBuffer) {
+    trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
+    currentStaAssetId = select.value;
+    trimPlayOffset = 0;
+    }
+  } catch (err) {
+    statusEl.textContent = "Error loading audio file.";
+    btnPlay.disabled = false;
+    trimIsLoading = false;
+    return;
+  }
+  btnPlay.disabled = false;
+  trimIsLoading = false;
+  statusEl.textContent = "";
 
- if (trimPlayOffset >= trimBuffer.duration) trimPlayOffset = 0;
+  if (trimPlayOffset >= trimBuffer.duration) trimPlayOffset = 0;
 
  const ctx = getAudioCtx();
  trimPlaySource = ctx.createBufferSource();
@@ -218,21 +233,27 @@ function initSuperTrimAudio() {
  osc.stop(ctx.currentTime + 0.03);
  }
 
- function markStart() {
- const curr = getCurrentTime();
- inputStart.value = curr.toFixed(2);
- playClickSound(true);
- inputStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
- setTimeout(() =>inputStart.style.backgroundColor = "", 300);
- }
+  function markStart() {
+    const curr = getCurrentTime();
+    inputStart.value = curr.toFixed(2);
+    if (!inputEnd.value && trimBuffer) {
+      inputEnd.value = trimBuffer.duration.toFixed(2);
+    }
+    playClickSound(true);
+    inputStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
+    setTimeout(() => inputStart.style.backgroundColor = "", 300);
+  }
 
- function markEnd() {
- const curr = getCurrentTime();
- inputEnd.value = curr.toFixed(2);
- playClickSound(false);
- inputEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
- setTimeout(() =>inputEnd.style.backgroundColor = "", 300);
- }
+  function markEnd() {
+    const curr = getCurrentTime();
+    inputEnd.value = curr.toFixed(2);
+    if (!inputStart.value) {
+      inputStart.value = "0.00";
+    }
+    playClickSound(false);
+    inputEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
+    setTimeout(() => inputEnd.style.backgroundColor = "", 300);
+  }
 
  btnSetStart.addEventListener('click', markStart);
  btnSetEnd.addEventListener('click', markEnd);
@@ -324,6 +345,7 @@ function initSuperTrimAudio() {
  
  if (isPreviewing) {
  if (previewSrc) {
+ previewSrc.onended = null;
  try { previewSrc.stop(); } catch(_) {}
  previewSrc = null;
  }
@@ -332,11 +354,28 @@ function initSuperTrimAudio() {
  return;
  }
 
- if (trimIsPlaying) stopAudio();
+  if (trimIsPlaying) stopAudio();
 
- const actx = getAudioCtx();
- if (!trimBuffer) trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
- const buffer = trimBuffer;
+  if (!trimBuffer) {
+    statusEl.textContent = "Loading audio engine...";
+    btnPreview.disabled = true;
+    trimIsLoading = true;
+    try {
+      trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
+      currentStaAssetId = select.value;
+    } catch (err) {
+      statusEl.textContent = "Error loading audio file.";
+      btnPreview.disabled = false;
+      trimIsLoading = false;
+      return;
+    }
+    btnPreview.disabled = false;
+    trimIsLoading = false;
+    statusEl.textContent = "";
+  }
+  
+  const actx = getAudioCtx();
+  const buffer = trimBuffer;
   const start = parseFloat(inputStart.value) || 0;
   let end = parseFloat(inputEnd.value);
   if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
