@@ -51,7 +51,7 @@ window.onerror = function(msg, url, line, col, error) {
 <h2 id="library-title"> Media Library </h2>
 <p class="section-desc">
  Upload your files here once. They will be available in all tools below.
-<span id="lib-db-status" aria-live="polite" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);"> Connecting to database...</span>
+<span id="lib-db-status" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);"> Connecting to database...</span>
 </p>
 </div>
 
@@ -147,6 +147,7 @@ window.onerror = function(msg, url, line, col, error) {
 <button id="btn-ma-play" class="btn btn-success"> Preview Mix </button>
 <button id="btn-ma-stop" class="btn btn-danger"> Stop </button>
 <button id="btn-ma-export" class="btn btn-primary"> Download Merged WAV </button>
+<button id="btn-ma-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 </section>
 
@@ -198,6 +199,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="panel-actions">
 <button id="btn-mv-export" class="btn btn-primary"> Download Merged Video (WebM)</button>
+<button id="btn-mv-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="mv-status" class="status-text" aria-live="polite"></p>
 <progress id="mv-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
@@ -268,6 +270,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="panel-actions">
 <button id="btn-av-export" class="btn btn-primary"> Download Slideshow Video (WebM)</button>
+<button id="btn-av-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="av-status" class="status-text" aria-live="polite"></p>
 <progress id="av-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
@@ -289,6 +292,7 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 <div class="panel-actions">
 <button id="btn-va-export" class="btn btn-primary"> Extract &amp; Download Audio (WAV)</button>
+<button id="btn-va-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="va-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -322,6 +326,7 @@ window.onerror = function(msg, url, line, col, error) {
 <button id="btn-ta-preview" class="btn btn-success"> Preview Trim </button>
 <button id="btn-ta-stop" class="btn btn-danger"> Stop </button>
 <button id="btn-ta-export" class="btn btn-primary"> Download Trimmed WAV </button>
+<button id="btn-ta-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="ta-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -353,6 +358,7 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 <div class="panel-actions">
 <button id="btn-tv-export" class="btn btn-primary"> Download Trimmed Video (WebM)</button>
+<button id="btn-tv-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="tv-status" class="status-text" aria-live="polite"></p>
 <progress id="tv-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
@@ -368,12 +374,13 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ══════════════════════════════════════════ -->
 <!-- SUPER MERGER OVERLAY -->
 <!-- ══════════════════════════════════════════ -->
-<div id="super-mode-overlay" class="sm-overlay"hidden>
+<div id="super-mode-overlay" class="sm-overlay" hidden>
 <div class="sm-container" role="application" tabindex="-1" aria-label="Super Merger Live Mixer">
 <header class="sm-header">
 <h2 id="sm-title"> Super Merger </h2>
 <div style="display: flex; gap: 8px; align-items: center;">
 <button id="btn-sm-export" class="btn btn-primary btn-sm" aria-label="Download Merged WAV" style="display: none;"> Download WAV </button>
+<button id="btn-sm-save" class="btn btn-secondary btn-sm" aria-label="Save Merged to Library" style="display: none;"> Save to Library </button>
 <button id="btn-sm-reset-mix" class="btn btn-danger btn-sm" aria-label="Reset and record from scratch" style="display: none;"> Reset &amp; Restart </button>
 <button id="btn-close-super-mode" class="btn btn-danger btn-sm" aria-label="Exit Super Merger">🚪 Close </button>
 </div>
@@ -538,7 +545,7 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ══════════════════════════════════════════ -->
 <!-- SUPER TRIM OVERLAY -->
 <!-- ══════════════════════════════════════════ -->
-<div id="super-trim-overlay" class="sm-overlay"hidden>
+<div id="super-trim-overlay" class="sm-overlay" hidden>
 <div class="sm-container" role="application" tabindex="-1" aria-label="Super Trim Audio">
 <header class="sm-header">
 <h2 id="sta-title"> Super Trim Audio </h2>
@@ -589,6 +596,7 @@ window.onerror = function(msg, url, line, col, error) {
 <div class="panel-actions">
 <button id="btn-sta-preview" class="btn btn-secondary"> Preview Trimmed Range </button>
 <button id="btn-sta-export" class="btn btn-primary"> Download Trimmed WAV </button>
+<button id="btn-sta-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="sta-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -655,6 +663,7 @@ window.onerror = function(msg, url, line, col, error) {
 <div class="panel-actions" style="margin-top: 20px;">
 <button id="btn-sct-preview" class="btn btn-secondary"> Preview Remaining Audio </button>
 <button id="btn-sct-export" class="btn btn-primary"> Download Remaining WAV </button>
+<button id="btn-sct-save" class="btn btn-secondary"> Save to Library </button>
 </div>
 <p id="sct-status" class="status-text" aria-live="polite"></p>
 </div>

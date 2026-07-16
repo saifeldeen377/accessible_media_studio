@@ -83,23 +83,24 @@ function renderLibrary() {
  btnText = '👁️ Show Image';
  btnAria = `Show image preview for ${escapeHTML(asset.name)}`;
  } else if (asset.type === 'audio') {
- btnText = '️ Play';
+ btnText = '▶️ Play';
  btnAria = `Play preview for ${escapeHTML(asset.name)}`;
  } else if (asset.type === 'video') {
- btnText = '️ Play Video';
+ btnText = '▶️ Play Video';
  btnAria = `Play video preview for ${escapeHTML(asset.name)}`;
  }
-
+ 
  item.innerHTML = `
 <div class="library-item-main">
-<span class="asset-icon">${asset.type === 'audio' ? '' : asset.type === 'video' ? '' : ''}</span>
+<span class="asset-icon">${asset.type === 'audio' ? '🎵' : asset.type === 'video' ? '🎬' : '🖼️'}</span>
 <span class="asset-name">${escapeHTML(asset.name)}</span>
 <span class="asset-type">${asset.type}</span>
 <div class="library-item-actions">
+<button class="btn btn-sm btn-secondary" onclick="downloadAsset('${asset.id}')" aria-label="Download ${escapeHTML(asset.name)}">⬇️ Download</button>
 <button id="btn-prev-${asset.id}"class="btn btn-sm btn-preview"onclick="toggleLibraryPreview('${asset.id}')"aria-label="${btnAria}">${btnText}</button>
 <button class="btn btn-sm btn-danger"
  onclick="removeAsset('${asset.id}')"
- aria-label="Remove ${escapeHTML(asset.name)} from library">✕</button>
+ aria-label="Remove ${escapeHTML(asset.name)} from library">✖</button>
 </div>
 </div>
 <div id="preview-container-${asset.id}"class="library-item-preview"hidden></div>
@@ -107,6 +108,37 @@ function renderLibrary() {
  container.appendChild(item);
  });
 }
+
+window.downloadAsset = function(id) {
+  const asset = getAsset(id);
+  if (!asset) return;
+
+  let ext = '';
+  const mime = asset.file.type ? asset.file.type.toLowerCase() : '';
+  
+  if (mime.includes('audio/mpeg') || mime.includes('audio/mp3')) ext = '.mp3';
+  else if (mime.includes('audio/wav') || mime.includes('audio/x-wav')) ext = '.wav';
+  else if (mime.includes('audio/ogg')) ext = '.ogg';
+  else if (mime.includes('video/webm')) ext = '.webm';
+  else if (mime.includes('video/mp4')) ext = '.mp4';
+  else if (mime.includes('image/png')) ext = '.png';
+  else if (mime.includes('image/jpeg')) ext = '.jpg';
+  else if (mime.includes('image/webp')) ext = '.webp';
+  else if (mime.includes('image/gif')) ext = '.gif';
+  else {
+    // Fallback if MIME type is missing or unknown
+    if (asset.type === 'audio') ext = '.wav';
+    else if (asset.type === 'video') ext = '.webm';
+    else if (asset.type === 'image') ext = '.png';
+  }
+
+  // Check if asset.name already ends with an extension (e.g. .mp3, .wav, .mp4)
+  const hasExt = /\.[a-z0-9]{3,4}$/i.test(asset.name);
+  const filename = hasExt ? asset.name : `${asset.name}${ext}`;
+  
+  downloadBlob(asset.file, filename);
+  announce(`Downloading ${asset.name}.`);
+};
 
 const activeLibraryAudios = {};
 
@@ -117,7 +149,7 @@ function stopAllLibraryPreviews() {
  const otherBtn = document.getElementById(`btn-prev-${key}`);
  const otherAsset = getAsset(key);
  if (otherBtn && otherAsset) {
- otherBtn.textContent = otherAsset.type === 'audio' ? '️ Play' : '️ Play Video';
+ otherBtn.textContent = otherAsset.type === 'audio' ? '▶️ Play' : '▶️ Play Video';
  otherBtn.setAttribute('aria-label', `Play preview for ${otherAsset.name}`);
  }
  const otherContainer = document.getElementById(`preview-container-${key}`);
@@ -139,7 +171,7 @@ function stopAllLibraryPreviews() {
  otherContainer.hidden = true;
  const otherBtn = document.getElementById(`btn-prev-${asset.id}`);
  if (otherBtn) {
- otherBtn.textContent = '️ Play Video';
+ otherBtn.textContent = '▶️ Play Video';
  otherBtn.setAttribute('aria-label', `Play video preview for ${asset.name}`);
  }
  }
@@ -161,7 +193,7 @@ window.toggleLibraryPreview = function(id) {
  if (isPlaying) {
  isPlaying.pause();
  delete activeLibraryAudios[id];
- btn.textContent = '️ Play';
+ btn.textContent = '▶️ Play';
  btn.setAttribute('aria-label', `Play preview for ${asset.name}`);
  container.innerHTML = '';
  container.hidden = true;
@@ -172,12 +204,12 @@ window.toggleLibraryPreview = function(id) {
  const aud = new Audio(asset.objectURL);
  aud.play().catch(err =>console.error("Preview play failed:", err));
  activeLibraryAudios[id] = aud;
- btn.textContent = '️ Stop';
+ btn.textContent = '⏹️ Stop';
  btn.setAttribute('aria-label', `Stop preview for ${asset.name}`);
 
  aud.onended = () =>{
  delete activeLibraryAudios[id];
- btn.textContent = '️ Play';
+ btn.textContent = '▶️ Play';
  btn.setAttribute('aria-label', `Play preview for ${asset.name}`);
  container.innerHTML = '';
  container.hidden = true;
@@ -191,7 +223,7 @@ window.toggleLibraryPreview = function(id) {
  if (isVisible) {
  const vid = container.querySelector('video');
  if (vid) { try { vid.pause(); } catch (_) {} }
- btn.textContent = '️ Play Video';
+ btn.textContent = '▶️ Play Video';
  btn.setAttribute('aria-label', `Play video preview for ${asset.name}`);
  container.innerHTML = '';
  container.hidden = true;
@@ -203,13 +235,13 @@ window.toggleLibraryPreview = function(id) {
  container.innerHTML = `
 <video id="vid-prev-${id}"src="${asset.objectURL}"autoplay controls playsinline></video>
  `;
- btn.textContent = '️ Stop';
+ btn.textContent = '⏹️ Stop';
  btn.setAttribute('aria-label', `Stop video preview for ${asset.name}`);
  
  const vid = document.getElementById(`vid-prev-${id}`);
  if (vid) {
  vid.onended = () =>{
- btn.textContent = '️ Play Video';
+ btn.textContent = '▶️ Play Video';
  btn.setAttribute('aria-label', `Play video preview for ${asset.name}`);
  container.innerHTML = '';
  container.hidden = true;
@@ -292,6 +324,13 @@ window.removeAsset = function(id) {
   smOverlays.push(...remainingSmO);
   if (initialSmO !== smOverlays.length && typeof renderSmShortcutsTable === 'function') renderSmShortcutsTable();
   }
+  if (typeof smBaseAsset !== 'undefined' && smBaseAsset && smBaseAsset.id === id) {
+    smBaseAsset = null;
+    const goBtn = document.getElementById('btn-sm-go');
+    if (goBtn) goBtn.disabled = true;
+    const baseVolVal = document.getElementById('sm-base-vol-val');
+    if (baseVolVal) baseVolVal.textContent = '100';
+  }
 
   // Remove decoded buffer from memory to prevent RAM leaks
   if (decodedAudioBuffers[id]) {
@@ -353,3 +392,18 @@ function populateAllSelects() {
  });
 }
 
+window.saveBlobToLibrary = function(blob, name, type) {
+  const file = new File([blob], name, { type: blob.type });
+  const id = `asset-${++assetIdCounter}`;
+  const objectURL = URL.createObjectURL(file);
+  assetLibrary.push({ id, name, type, objectURL, file });
+  
+  // Persist to IndexedDB so the file survives page refresh
+  if (typeof dbSaveAsset === 'function') {
+    dbSaveAsset(id, name, type, file);
+  }
+  
+  renderLibrary();
+  populateAllSelects();
+  announce(`"${name}" saved directly to the library.`);
+};

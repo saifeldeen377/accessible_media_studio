@@ -682,7 +682,7 @@ function initSuperCut() {
     statusEl.textContent = "Previewing remaining audio...";
   }
 
-  btnExport.addEventListener('click', async () => {
+  const performSuperCutExport = async (isSaveToLib) => {
     if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
     if (!select.value) return alert("Select a file to process");
     
@@ -719,9 +719,14 @@ function initSuperCut() {
       const cutBuffer = await offline.startRendering();
       const wavBlob = await audioBufferToWav(cutBuffer);
       
-      downloadBlob(wavBlob, `${asset.name}_super_cut.wav`);
-      statusEl.textContent = "Export complete!";
-      announce("Export complete.");
+      if (isSaveToLib) {
+        saveBlobToLibrary(wavBlob, `${asset.name}_super_cut`, 'audio');
+        statusEl.textContent = "Saved to Library!";
+      } else {
+        downloadBlob(wavBlob, `${asset.name}_super_cut.wav`);
+        statusEl.textContent = "Export complete!";
+        announce("Export complete.");
+      }
     } catch (err) {
       statusEl.textContent = "Error: " + err.message;
       announce("Error during export.");
@@ -729,6 +734,9 @@ function initSuperCut() {
       isExportingMedia = false;
       btnExport.textContent = "Download Remaining WAV";
     }
-  });
+  };
+
+  btnExport.addEventListener('click', () => performSuperCutExport(false));
+  document.getElementById('btn-sct-save').addEventListener('click', () => performSuperCutExport(true));
 
 }

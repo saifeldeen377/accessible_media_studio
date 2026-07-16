@@ -81,7 +81,8 @@ function initSuperMode() {
  });
 
  goBtn.addEventListener('click', startSuperModeLive);
- exportBtn.addEventListener('click', exportSuperModeWav);
+ exportBtn.addEventListener('click', () => exportSuperModeWav(false));
+ document.getElementById('btn-sm-save').addEventListener('click', () => exportSuperModeWav(true));
  resetMixBtn.addEventListener('click', resetAndRecordFromScratch);
  exitToSetupBtn.addEventListener('click', exitToSetupView);
 
@@ -211,6 +212,7 @@ function enterSuperMode() {
 
  // Hide header control buttons initially
  document.getElementById('btn-sm-export').style.display = 'none';
+ document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
 
  // Reset setup state
@@ -243,6 +245,7 @@ function exitSuperMode() {
  smActive = false;
  document.getElementById('super-mode-overlay').hidden = true;
  document.getElementById('btn-sm-export').style.display = 'none';
+ document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
  setAppBackgroundInert(false);
  stopSmAudio();
@@ -425,6 +428,7 @@ async function startSuperModeLive() {
 
  // Show header control buttons when live mixer is active
  document.getElementById('btn-sm-export').style.display = 'inline-block';
+ document.getElementById('btn-sm-save').style.display = 'inline-block';
  document.getElementById('btn-sm-reset-mix').style.display = 'inline-block';
 
  renderSmActiveKeysList();
@@ -1594,6 +1598,7 @@ function exitToSetupView() {
 
  // Hide header control buttons
  document.getElementById('btn-sm-export').style.display = 'none';
+ document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
 
  // Focus setup view to enable smooth NVDA transition
@@ -1645,7 +1650,7 @@ function resetAndRecordFromScratch() {
  smResumeBase();
 }
 
-async function exportSuperModeWav() {
+async function exportSuperModeWav(isSaveToLib = false) {
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
   if (!smBaseAsset) return;
   
@@ -1751,8 +1756,13 @@ async function exportSuperModeWav() {
 
   try {
   const rendered = await offline.startRendering();
-  downloadBlob(await audioBufferToWav(rendered), 'super_mode_mix.wav');
-  announce('Merged super mix downloaded successfully.');
+  const wavBlob = await audioBufferToWav(rendered);
+  if (isSaveToLib) {
+    saveBlobToLibrary(wavBlob, 'super_mode_mix', 'audio');
+  } else {
+    downloadBlob(wavBlob, 'super_mode_mix.wav');
+    announce('Merged super mix downloaded successfully.');
+  }
   } catch (err) {
   console.error(err);
   alert('Error generating merged WAV file.');

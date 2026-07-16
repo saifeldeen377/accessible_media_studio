@@ -65,7 +65,7 @@ function initTrimAudio() {
  announce('Preview stopped.');
  });
 
- document.getElementById('btn-ta-export').addEventListener('click', async () =>{
+  const performTrimAudioExport = async (isSaveToLib) =>{
  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
  const assetId = document.getElementById('ta-audio-select').value;
  if (!assetId) { alert('Please select an audio file from the library.'); return; }
@@ -96,7 +96,15 @@ function initTrimAudio() {
  src.start(0, start, dur);
 
  const trimmed = await offline.startRendering();
- downloadBlob(await audioBufferToWav(trimmed), `${asset.name}_trimmed.wav`);
+ const wavBlob = await audioBufferToWav(trimmed);
+ if (isSaveToLib) {
+   saveBlobToLibrary(wavBlob, `${asset.name}_trimmed`, 'audio');
+   statusEl.textContent = 'Saved to Library!';
+ } else {
+   downloadBlob(wavBlob, `${asset.name}_trimmed.wav`);
+   statusEl.textContent = 'Done! Trimmed audio downloaded as WAV.';
+   announce('Trimmed audio downloaded as WAV.');
+ }
  } catch (err) {
  statusEl.textContent = 'Error: Trim duration is too long or requires too much memory.';
  announce('Error: Trim duration is too long.', true);
@@ -105,7 +113,8 @@ function initTrimAudio() {
  } finally {
  isExportingMedia = false;
  }
- statusEl.textContent = 'Done! Trimmed audio downloaded as WAV.';
- announce('Trimmed audio downloaded as WAV.');
- });
+ };
+
+ document.getElementById('btn-ta-export').addEventListener('click', () => performTrimAudioExport(false));
+ document.getElementById('btn-ta-save').addEventListener('click', () => performTrimAudioExport(true));
 }

@@ -14,7 +14,7 @@ function initTrimVideo() {
  }
  });
 
- document.getElementById('btn-tv-export').addEventListener('click', async () =>{
+  const performTrimVideoExport = async (isSaveToLib) =>{
  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
  const assetId = document.getElementById('tv-video-select').value;
  if (!assetId) { alert('Please select a video file from the library.'); return; }
@@ -50,21 +50,28 @@ function initTrimVideo() {
  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = `${asset.name}_trimmed.webm`;
+ const baseName = `${asset.name}_trimmed`;
  
  if (window.ysFixWebmDuration && blob.type.includes('webm')) {
  window.ysFixWebmDuration(blob, durationMs, fixedBlob =>{
- downloadBlob(fixedBlob, fileName);
+  if (isSaveToLib) saveBlobToLibrary(fixedBlob, baseName, 'video');
+  else downloadBlob(fixedBlob, fileName);
  });
  } else {
  if (!window.ysFixWebmDuration && blob.type.includes('webm')) {
  console.warn('fix-webm-duration library not loaded. Video duration might be inaccurate.');
  announce('Warning: Video duration might be inaccurate because the fix-webm-duration library is missing.');
  }
- downloadBlob(blob, fileName);
+  if (isSaveToLib) saveBlobToLibrary(blob, baseName, 'video');
+  else downloadBlob(blob, fileName);
  }
 
- statusEl.textContent = 'Done! Trimmed video downloaded.';
- announce('Trimmed video downloaded.');
+  if (isSaveToLib) {
+    statusEl.textContent = 'Saved to Library!';
+  } else {
+    statusEl.textContent = 'Done! Trimmed video downloaded.';
+    announce('Trimmed video downloaded.');
+  }
  };
 
  recordStart = Date.now();
@@ -90,6 +97,9 @@ function initTrimVideo() {
  isExportingMedia = false;
  if (progressEl) progressEl.style.display = 'none';
  }
- });
+ };
+
+ document.getElementById('btn-tv-export').addEventListener('click', () => performTrimVideoExport(false));
+ document.getElementById('btn-tv-save').addEventListener('click', () => performTrimVideoExport(true));
 }
 

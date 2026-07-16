@@ -73,6 +73,9 @@ function initSuperTrimAudio() {
  if (trimIsPlaying) {
  return trimPlayOffset + (getAudioCtx().currentTime - trimPlayStartTime);
  }
+ if (isPreviewing) {
+ return trimStart + previewPlayOffset + (getAudioCtx().currentTime - previewStartTime);
+ }
  return trimPlayOffset;
  }
 
@@ -164,8 +167,7 @@ function initSuperTrimAudio() {
  clearInterval(staTimer);
  } else {
   // Play
-
-  btnPlay.disabled = true;
+  btnPlay.textContent = "Loading...";
   trimIsLoading = true;
   try {
     if (currentStaAssetId !== select.value || !trimBuffer) {
@@ -175,11 +177,10 @@ function initSuperTrimAudio() {
     }
   } catch (err) {
     statusEl.textContent = "Error loading audio file.";
-    btnPlay.disabled = false;
+    btnPlay.textContent = "Play (Space)";
     trimIsLoading = false;
     return;
   }
-  btnPlay.disabled = false;
   trimIsLoading = false;
   statusEl.textContent = "";
 
@@ -356,18 +357,18 @@ function initSuperTrimAudio() {
 
   if (!trimBuffer) {
  
-    btnPreview.disabled = true;
+    btnPreview.textContent = "Loading...";
     trimIsLoading = true;
     try {
       trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
       currentStaAssetId = select.value;
     } catch (err) {
       statusEl.textContent = "Error loading audio file.";
-      btnPreview.disabled = false;
+      btnPreview.textContent = "Preview Trim";
       trimIsLoading = false;
       return;
     }
-    btnPreview.disabled = false;
+    btnPreview.textContent = "Preview Trim";
     trimIsLoading = false;
     statusEl.textContent = "";
   }
@@ -399,7 +400,7 @@ function initSuperTrimAudio() {
  };
  });
 
- btnExport.addEventListener('click', async () =>{
+  const performSuperTrimExport = async (isSaveToLib) =>{
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
   if (!select.value) return alert("Select a file to trim");
   const asset = getAsset(select.value);
@@ -433,10 +434,14 @@ function initSuperTrimAudio() {
  const trimmed = await offline.startRendering();
  const wavBlob = await audioBufferToWav(trimmed);
  
- downloadBlob(wavBlob, `${asset.name}_super_trimmed.wav`);
- 
- statusEl.textContent = "Trim completed successfully!";
- announce("Trim completed successfully");
+  if (isSaveToLib) {
+    saveBlobToLibrary(wavBlob, `${asset.name}_super_trimmed`, 'audio');
+    statusEl.textContent = "Saved to Library!";
+  } else {
+    downloadBlob(wavBlob, `${asset.name}_super_trimmed.wav`);
+    statusEl.textContent = "Trim completed successfully!";
+    announce("Trim completed successfully");
+  }
  } catch(err) {
  statusEl.textContent = "Error: "+ err.message;
  announce("Error during trim: "+ err.message, true);
@@ -444,7 +449,10 @@ function initSuperTrimAudio() {
  } finally {
  isExportingMedia = false;
  }
- });
+  };
+
+  btnExport.addEventListener('click', () => performSuperTrimExport(false));
+  document.getElementById('btn-sta-save').addEventListener('click', () => performSuperTrimExport(true));
 
  select.addEventListener('change', () => {
    stopAudio();

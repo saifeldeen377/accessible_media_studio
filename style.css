@@ -995,3 +995,5 @@ tbody tr:hover { background: var(--bg-main); }
 }
 
 
+
+[hidden] { display: none !important; }

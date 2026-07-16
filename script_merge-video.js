@@ -26,7 +26,8 @@ function initMergeVideo() {
  announce(`"${asset.name}"added to the video merge queue.`);
  });
 
- document.getElementById('btn-mv-export').addEventListener('click', exportMergeVideo);
+ document.getElementById('btn-mv-export').addEventListener('click', () => exportMergeVideo(false));
+ document.getElementById('btn-mv-save').addEventListener('click', () => exportMergeVideo(true));
 }
 
 function renderMvTable() {
@@ -56,7 +57,7 @@ window.removeMvClip = function(id) {
  renderMvTable();
 };
 
-async function exportMergeVideo() {
+async function exportMergeVideo(isSaveToLib = false) {
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
   if (mvClips.length === 0) { alert('Add at least one video clip first.'); return; }
 
@@ -87,21 +88,27 @@ async function exportMergeVideo() {
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = 'merged_video.webm';
  
- if (window.ysFixWebmDuration && blob.type.includes('webm')) {
- window.ysFixWebmDuration(blob, durationMs, fixedBlob =>{
- downloadBlob(fixedBlob, fileName);
- });
- } else {
- if (!window.ysFixWebmDuration && blob.type.includes('webm')) {
- console.warn('fix-webm-duration library not loaded. Video duration might be inaccurate.');
- announce('Warning: Video duration might be inaccurate because the fix-webm-duration library is missing.');
- }
- downloadBlob(blob, fileName);
- }
- 
- statusEl.textContent = 'Done! Merged video downloaded.';
- announce('Merged video downloaded.');
- };
+  if (window.ysFixWebmDuration && blob.type.includes('webm')) {
+  window.ysFixWebmDuration(blob, durationMs, fixedBlob =>{
+  if (isSaveToLib) saveBlobToLibrary(fixedBlob, 'merged_video', 'video');
+  else downloadBlob(fixedBlob, fileName);
+  });
+  } else {
+  if (!window.ysFixWebmDuration && blob.type.includes('webm')) {
+  console.warn('fix-webm-duration library not loaded. Video duration might be inaccurate.');
+  announce('Warning: Video duration might be inaccurate because the fix-webm-duration library is missing.');
+  }
+  if (isSaveToLib) saveBlobToLibrary(blob, 'merged_video', 'video');
+  else downloadBlob(blob, fileName);
+  }
+  
+  if (isSaveToLib) {
+    statusEl.textContent = 'Saved to Library!';
+  } else {
+    statusEl.textContent = 'Done! Merged video downloaded.';
+    announce('Merged video downloaded.');
+  }
+  };
 
  recordStart = Date.now();
  recorder.start(100);

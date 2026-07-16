@@ -38,7 +38,8 @@ function initMergeAudio() {
 
  document.getElementById('btn-ma-play').addEventListener('click', previewMergeAudio);
  document.getElementById('btn-ma-stop').addEventListener('click', stopMergeAudio);
- document.getElementById('btn-ma-export').addEventListener('click', exportMergeAudio);
+ document.getElementById('btn-ma-export').addEventListener('click', () => exportMergeAudio(false));
+ document.getElementById('btn-ma-save').addEventListener('click', () => exportMergeAudio(true));
 }
 
 function renderMaTable() {
@@ -143,15 +144,20 @@ function stopMergeAudio() {
  if (previewSource) { try { previewSource.stop(); } catch (_) {} previewSource = null; }
 }
 
-async function exportMergeAudio() {
+async function exportMergeAudio(isSaveToLib = false) {
   if (isExportingMedia) { alert("An export is already in progress. Please wait."); return; }
   isExportingMedia = true;
   try {
   announce('Rendering merged audio, please wait…');
   const buffer = await buildMixedBuffer();
   if (!buffer) return;
-  downloadBlob(await audioBufferToWav(buffer), 'merged_audio.wav');
-  announce('Merged audio downloaded as WAV.');
+  const blob = await audioBufferToWav(buffer);
+  if (isSaveToLib) {
+    saveBlobToLibrary(blob, 'merged_audio', 'audio');
+  } else {
+    downloadBlob(blob, 'merged_audio.wav');
+    announce('Merged audio downloaded as WAV.');
+  }
   } finally {
   isExportingMedia = false;
   }

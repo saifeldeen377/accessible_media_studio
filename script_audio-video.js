@@ -25,7 +25,8 @@ function initAudioToVideo() {
  announce(`"${asset.name}"added: shown from ${start}s to ${end}s.`);
  });
 
- document.getElementById('btn-av-export').addEventListener('click', exportAudioToVideo);
+ document.getElementById('btn-av-export').addEventListener('click', () => exportAudioToVideo(false));
+ document.getElementById('btn-av-save').addEventListener('click', () => exportAudioToVideo(true));
 }
 
 function renderAvTable() {
@@ -54,7 +55,7 @@ window.removeAvSlide = function(id) {
  renderAvTable();
 };
 
-async function exportAudioToVideo() {
+async function exportAudioToVideo(isSaveToLib = false) {
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
   const audioAssetId = document.getElementById('av-audio-select').value;
   if (!audioAssetId) { alert('Please select an audio file in Step 1.'); return; }
@@ -126,18 +127,24 @@ async function exportAudioToVideo() {
  
  if (window.ysFixWebmDuration && blob.type.includes('webm')) {
  window.ysFixWebmDuration(blob, durationMs, fixedBlob =>{
- downloadBlob(fixedBlob, fileName);
+  if (isSaveToLib) saveBlobToLibrary(fixedBlob, 'slideshow_video', 'video');
+  else downloadBlob(fixedBlob, fileName);
  });
  } else {
  if (!window.ysFixWebmDuration && blob.type.includes('webm')) {
  console.warn('fix-webm-duration library not loaded. Video duration might be inaccurate.');
  announce('Warning: Video duration might be inaccurate because the fix-webm-duration library is missing.');
  }
- downloadBlob(blob, fileName);
+  if (isSaveToLib) saveBlobToLibrary(blob, 'slideshow_video', 'video');
+  else downloadBlob(blob, fileName);
  }
 
- statusEl.textContent = 'Done! Slideshow video downloaded.';
- announce('Slideshow video downloaded.');
+ if (isSaveToLib) {
+   statusEl.textContent = 'Saved to Library!';
+ } else {
+   statusEl.textContent = 'Done! Slideshow video downloaded.';
+   announce('Slideshow video downloaded.');
+ }
  };
 
  audioSrc.start(actx.currentTime);

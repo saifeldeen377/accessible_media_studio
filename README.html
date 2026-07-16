@@ -457,6 +457,14 @@ python -m http.server 3000
 <li> Click <strong>"Add to Library"</strong>. It immediately appears in all tool dropdowns.</li>
 </ol>
 
+<h3> Managing Files </h3>
+<p>Each file in your library has three action buttons:</p>
+<ol>
+<li><strong>⬇️ Download</strong>: Download the file directly to your device. The correct extension (e.g., <code>.wav</code>, <code>.mp3</code>, <code>.webm</code>) is automatically applied based on the file's exact MIME type.</li>
+<li><strong>▶️ Preview/Show</strong>: Play the audio/video or view the image directly in the library.</li>
+<li><strong>❌ Remove</strong>: Delete the file from the library to free up space.</li>
+</ol>
+
 <h3> Persistence </h3>
 <p> Files are saved automatically to your browser's <strong> IndexedDB </strong>. Refresh the page and they're still there. The status badge below the library title always shows the current state:</p>
 <div class="table-wrap">
@@ -568,7 +576,7 @@ python -m http.server 3000
 <h3 id="sm-export"> Live Session Actions </h3>
 <p> During the live performance, you can use the actions located in the <strong> Super Merger Header </strong>(right next to the Close button):</p>
 <ul>
-<li><strong> Download WAV:</strong> Click this button to render and download your current live mix. The app processes the base audio and overlays via <code> OfflineAudioContext </code>(much faster than real-time) and downloads a WAV file with exact timing.</li>
+<li><strong> Download WAV:</strong> Click this button to render and download your current live mix. The app processes the base audio and overlays via <code> OfflineAudioContext </code>(much faster than real-time) and downloads a WAV file with exact timing. You can also use <strong>Save to Library</strong> to keep the result in the studio without downloading.</li>
 <li><strong> Reset &amp; Restart:</strong> Click this to clear all recorded overlays, base track segments, and logs, seek the base audio back to 0.0s, and restart the recording from scratch.</li>
 </ul>
 </section>
@@ -585,7 +593,7 @@ python -m http.server 3000
 <li> Listen to the audio. Exactly when you hear the start point, press <strong><kbd> s </kbd></strong>(or <kbd>[</kbd>).</li>
 <li> Exactly when you hear the end point, press <strong><kbd> e </kbd></strong>(or <kbd>]</kbd>).</li>
 <li> Click <strong>"Preview Trimmed Range"</strong> to hear the exact cut.</li>
-<li> Click <strong>"Download Trimmed WAV"</strong>.</li>
+<li> Click <strong>"Download Trimmed WAV"</strong> to download, or <strong>"Save to Library"</strong> to keep it in the app.</li>
 </ol>
 
 <h3> Keyboard Shortcuts in Super Trim </h3>
@@ -622,8 +630,8 @@ python -m http.server 3000
 <li> When the mistake ends and the good audio resumes, press <strong><kbd> e </kbd></strong>(or <kbd>]</kbd>). This sets the end of the cut and finalizes the removal region.</li>
 <li> The audio will continue playing. You can repeat this process (press <kbd> s </kbd> then <kbd> e </kbd>) as many times as you want to remove all mistakes in a single pass.</li>
 <li> If you want to review or remove any of your cuts, click the <strong>"Manage Cuts"</strong> button to open a dialog showing all your selected regions.</li>
-<li> Click <strong>"Preview Cleaned Audio"</strong> to hear the file with all your defined cuts automatically skipped.</li>
-<li> Click <strong>"Download Cleaned WAV"</strong>.</li>
+<li> Click <strong>"Preview Remaining Audio"</strong> to hear the file with all your defined cuts automatically skipped.</li>
+<li> Click <strong>"Download Remaining WAV"</strong> to export to your device, or <strong>"Save to Library"</strong> to save it directly into the app's library.</li>
 </ol>
 
 <h3> Keyboard Shortcuts in Super Cut </h3>
@@ -662,7 +670,7 @@ python -m http.server 3000
 <li> Optionally set <strong>"Crop from"</strong> and <strong>"Crop until"</strong> to use a portion of the file.</li>
 <li> Set the <strong> Volume </strong>(0–100%).</li>
 <li> Click <strong>"Add to Mix"</strong>. Repeat for each track.</li>
-<li> Click <strong>"Preview Mix"</strong> to listen, then <strong>"Export WAV"</strong> to download.</li>
+<li> Click <strong>"Preview Mix"</strong> to listen, then <strong>"Export WAV"</strong> or <strong>"Save to Library"</strong>.</li>
 </ol>
 <div class="callout tip">
 <span class="callout-icon"></span>
@@ -674,7 +682,7 @@ python -m http.server 3000
 <ol class="steps">
 <li> Select a video, optionally set crop range, click <strong>"Add to Queue"</strong>.</li>
 <li> Repeat for all clips (they play in the order you added them).</li>
-<li> Click <strong>"Export Video"</strong> to start and download.</li>
+<li> Click <strong>"Export Video"</strong> or <strong>"Save to Library"</strong> to start processing.</li>
 </ol>
 <div class="callout warning">
 <span class="callout-icon"></span>
@@ -686,14 +694,14 @@ python -m http.server 3000
 <ol class="steps">
 <li> Select your audio/music file in Step 1.</li>
 <li> For each slide: select an image, set "Show from"and "Show until"(seconds), click <strong>"Add Image Slide"</strong>.</li>
-<li> Click <strong>"Generate Slideshow Video"</strong>.</li>
+<li> Click <strong>"Generate Slideshow Video"</strong> or <strong>"Save to Library"</strong>.</li>
 </ol>
 
 <h3 id="video-audio">4. Video → Audio (Extract)</h3>
 <p> Strip the audio track out of a video and save it as a WAV file.</p>
 <ol class="steps">
 <li> Select a video from the library.</li>
-<li> Click <strong>"Extract Audio as WAV"</strong>.</li>
+<li> Click <strong>"Extract Audio as WAV"</strong> or <strong>"Save to Library"</strong>.</li>
 </ol>
 <div class="callout warning">
 <span class="callout-icon"></span>
@@ -710,7 +718,7 @@ python -m http.server 3000
 <h3 id="trim-video">6. Trim Video </h3>
 <ol class="steps">
 <li> Select a video file. Set <strong>"Trim Start"</strong> and <strong>"Trim End"</strong> (seconds).</li>
-<li> Click <strong>"Download Trimmed Video (WebM)"</strong> to process and download.</li>
+<li> Click <strong>"Download Trimmed Video (WebM)"</strong> or <strong>"Save to Library"</strong> to process.</li>
 </ol>
 </section>
 

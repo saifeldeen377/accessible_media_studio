@@ -3,22 +3,28 @@
 // ─────────────────────────────────────────────────────────────
 
 function initVideoToAudio() {
- document.getElementById('btn-va-export').addEventListener('click', async () =>{
- const assetId = document.getElementById('va-video-select').value;
- if (!assetId) { alert('Please select a video file from the library.'); return; }
+  const performVideoToAudioExport = async (isSaveToLib) =>{
+  const assetId = document.getElementById('va-video-select').value;
+  if (!assetId) { alert('Please select a video file from the library.'); return; }
 
- const asset = getAsset(assetId);
- const statusEl = document.getElementById('va-status');
- statusEl.textContent = 'Extracting audio track…';
- announce('Extracting audio from video, please wait…');
+  const asset = getAsset(assetId);
+  const statusEl = document.getElementById('va-status');
+  statusEl.textContent = 'Extracting audio track…';
+  announce('Extracting audio from video, please wait…');
 
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
   isExportingMedia = true;
   try {
   const buffer = await decodeAudio(asset.file);
-  downloadBlob(await audioBufferToWav(buffer), `${asset.name}_audio.wav`);
-  statusEl.textContent = 'Done! Audio extracted and downloaded as WAV.';
-  announce('Audio extracted and downloaded as WAV.');
+  const wavBlob = await audioBufferToWav(buffer);
+  if (isSaveToLib) {
+    saveBlobToLibrary(wavBlob, `${asset.name}_audio`, 'audio');
+    statusEl.textContent = 'Saved to Library!';
+  } else {
+    downloadBlob(wavBlob, `${asset.name}_audio.wav`);
+    statusEl.textContent = 'Done! Audio extracted and downloaded as WAV.';
+    announce('Audio extracted and downloaded as WAV.');
+  }
   } catch (err) {
   console.error(err);
   statusEl.textContent = 'Error: Could not extract audio. The video may have no audio track, or the format is not supported by your browser.';
@@ -26,5 +32,8 @@ function initVideoToAudio() {
   } finally {
   isExportingMedia = false;
   }
- });
+  };
+
+  document.getElementById('btn-va-export').addEventListener('click', () => performVideoToAudioExport(false));
+  document.getElementById('btn-va-save').addEventListener('click', () => performVideoToAudioExport(true));
 }

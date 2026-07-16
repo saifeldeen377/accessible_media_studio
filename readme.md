@@ -82,6 +82,12 @@ The Media Library is the central hub. Upload once, and every tool can immediatel
 2. Give it a short name (e.g., `background_music`).
 3. Click **" Add to Library"**. It immediately appears in all tool dropdowns.
 
+### Managing Files
+Each file in your library has three action buttons:
+1. **⬇️ Download**: Download the file directly to your device. The correct extension (e.g., `.wav`, `.mp3`, `.webm`) is automatically applied based on the file's exact MIME type.
+2. **▶️ Preview/Show**: Play the audio/video or view the image directly in the library.
+3. **❌ Remove**: Delete the file from the library to free up space.
+
 ### Persistence
 Files are saved automatically to your browser's **IndexedDB**. Refresh the page and they're still there. The status badge below the library title always shows the current state:
 
@@ -158,8 +164,8 @@ When assigning a shortcut key to an overlay, you can configure how it behaves wh
 
 ### Live Session Actions
 During the live performance, you can use the actions located in the **Super Merger Header** (right next to the Close button):
-- ** Download WAV:** Click this button to render and download your current live mix. The app processes the base audio and overlays via `OfflineAudioContext` (much faster than real-time) and downloads a WAV file with exact timing.
-- ** Reset & Restart:** Click this to clear all recorded overlays, base track segments, and logs, seek the base audio back to 0.0s, and restart the recording from scratch.
+ - ** Download WAV:** Click this button to render and download your current live mix. The app processes the base audio and overlays via `OfflineAudioContext` (much faster than real-time) and downloads a WAV file with exact timing. You can also use **Save to Library** to keep the result in the studio without downloading.
+ - ** Reset & Restart:** Click this to clear all recorded overlays, base track segments, and logs, seek the base audio back to 0.0s, and restart the recording from scratch.
 
 ---
 
@@ -173,7 +179,7 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 3. Listen to the audio. Exactly when you hear the start point, press **`s`** (or `[`).
 4. Exactly when you hear the end point, press **`e`** (or `]`).
 5. Click **" Preview Trimmed Range"** to hear the exact cut.
-7. Click **" Download Trimmed WAV"**.
+ 7. Click **" Download Trimmed WAV"** to download, or **" Save to Library"** to keep it in the app.
 
 ### Keyboard Shortcuts in Super Trim
 | Key | Action |
@@ -201,8 +207,8 @@ Super Cut allows you to listen to an audio file and seamlessly "cut out" multipl
 4. When the mistake ends and the good audio resumes, press **`e`** (or `]`). This sets the end of the cut and finalizes the removal region.
 5. The audio will continue playing. You can repeat this process (press `s` then `e`) as many times as you want to remove all mistakes in a single pass.
 6. If you want to review or remove any of your cuts, click the **"Manage Cuts"** button to open a dialog showing all your selected regions.
-7. Click **" Preview Cleaned Audio"** to hear the file with all your defined cuts automatically skipped.
-7. Click **" Download Cleaned WAV"**.
+ 7. Click **" Preview Remaining Audio"** to hear the file with all your defined cuts automatically skipped.
+ 8. Click **" Download Remaining WAV"** to export to your device, or **" Save to Library"** to save it directly into the app's library.
 
 ### Keyboard Shortcuts in Super Cut
 | Key | Action |
@@ -232,7 +238,7 @@ Mix multiple audio tracks into one WAV file. All tracks play simultaneously, pos
 3. Optionally set **" Crop from"** and **" Crop until"** to use a portion of the file.
 4. Set the **Volume** (0–100%).
 5. Click **" Add to Mix"**. Repeat for each track.
-6. Click **" Preview Mix"** to listen, then **" Export WAV"** to download.
+ 6. Click **" Preview Mix"** to listen, then **" Export WAV"** or **" Save to Library"**.
 
 > ** Tip:** You can add the same file multiple times with different start times to create loops or layered echoes.
 
@@ -240,7 +246,7 @@ Mix multiple audio tracks into one WAV file. All tracks play simultaneously, pos
 Join multiple video clips one after another into a single WebM file.
 1. Select a video, optionally set crop range, click **" Add to Queue"**.
 2. Repeat for all clips (they play in the order you added them).
-3. Click **" Export Video"** to start and download.
+ 3. Click **" Export Video"** or **" Save to Library"** to start processing.
 
 > ** Warning:** **Real-time export:** A 5-minute video takes ~5 minutes to process. Don't close the tab during export.
 
@@ -248,23 +254,23 @@ Join multiple video clips one after another into a single WebM file.
 Combine a music track with images to create a timed slideshow video.
 1. Select your audio/music file in Step 1.
 2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image Slide"**.
-3. Click **" Generate Slideshow Video"**.
+ 3. Click **" Generate Slideshow Video"** or **" Save to Library"**.
 
 ### 4. Video → Audio (Extract)
 Strip the audio track out of a video and save it as a WAV file.
 1. Select a video from the library.
-2. Click **" Extract Audio as WAV"**.
+ 2. Click **" Extract Audio as WAV"** or **" Save to Library"**.
 
 > ** Warning:** **Memory note:** Files over 50MB will trigger a warning on systems with 4GB RAM before decoding begins.
 
 ### 5. Trim Audio
 1. Select an audio file. Set Start and End times.
 2. Click **" Preview Trim"** to hear the result.
-3. Click **" Export Trimmed WAV"** to download.
+ 3. Click **" Export Trimmed WAV"** or **" Save to Library"**.
 
 ### 6. Trim Video
 1. Select a video file. Set **" Trim Start"** and **" Trim End"** (seconds).
-2. Click **" Download Trimmed Video (WebM)"** to process and download.
+ 2. Click **" Download Trimmed Video (WebM)"** or **" Save to Library"** to process.
 
 ---
 
