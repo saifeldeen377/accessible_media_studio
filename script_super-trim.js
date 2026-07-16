@@ -445,4 +445,22 @@ function initSuperTrimAudio() {
  isExportingMedia = false;
  }
  });
+
+ select.addEventListener('change', () => {
+   stopAudio();
+   // Stop preview and reset values
+   if (isPreviewing) {
+     if (previewSrc) {
+       previewSrc.onended = null;
+       try { previewSrc.stop(); } catch(_) {}
+       previewSrc = null;
+     }
+     isPreviewing = false;
+   }
+   trimStart = 0;
+   trimEnd = null;
+   displayStart.textContent = 'Not set';
+   displayEnd.textContent = 'Not set';
+   statusEl.textContent = '';
+ });
 }
