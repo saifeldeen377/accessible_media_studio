@@ -4,6 +4,8 @@
 
 function initSuperMode() {
  const enterBtn = document.getElementById('btn-enter-super-mode');
+ const overlay = document.getElementById('super-mode-overlay');
+ setupFocusTrap(overlay);
  const closeBtn = document.getElementById('btn-close-super-mode');
  const baseSelect = document.getElementById('sm-base-select');
  const overlayForm = document.getElementById('form-sm-overlay');
@@ -205,6 +207,7 @@ function enterSuperMode() {
  document.getElementById('super-mode-overlay').hidden = false;
  document.getElementById('sm-setup-view').hidden = false;
  document.getElementById('sm-live-view').hidden = true;
+ setAppBackgroundInert(true);
 
  // Hide header control buttons initially
  document.getElementById('btn-sm-export').style.display = 'none';
@@ -241,6 +244,7 @@ function exitSuperMode() {
  document.getElementById('super-mode-overlay').hidden = true;
  document.getElementById('btn-sm-export').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
+ setAppBackgroundInert(false);
  stopSmAudio();
  const trigger = document.getElementById('btn-enter-super-mode');
  if (trigger) trigger.focus();

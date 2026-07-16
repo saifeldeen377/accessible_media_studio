@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Accessible Media Studio | Free Offline Audio & Video Editor for the Blind</title>
+<title>Accessible Media Studio: Free Offline Audio & Video Editor for the Blind</title>
 <meta name="description" content="A privacy-first, 100% accessible media studio designed for screen reader users. Merge, trim, and mix audio and video offline in your browser.">
 <meta name="keywords" content="accessible media editor, audio editor for blind, NVDA compatible editor, screen reader friendly audio mixer, offline video merger, accessible video trimmer, web audio API, privacy first media tools">
 <meta name="author" content="Accessible Media Studio">
@@ -38,7 +38,7 @@ window.onerror = function(msg, url, line, col, error) {
 <a href="README.html" class="btn btn-secondary" target="_blank" style="margin-right: 10px; text-decoration: none;" aria-label="Read Documentation"> Readme </a>
 <button id="btn-enter-super-mode" class="btn btn-primary" aria-label="Enter Super Merger, shortcut key m"> Super Merger </button>
 <button id="btn-enter-super-trim" class="btn btn-primary" aria-label="Enter Super Trim, shortcut key t" style="margin-left: 10px;"> Super Trim </button>
-<button id="btn-enter-super-clean" class="btn btn-primary" aria-label="Enter Super Clean, shortcut key c" style="margin-left: 10px;"> Super Clean </button>
+<button id="btn-enter-super-cut" class="btn btn-primary" aria-label="Enter Super Cut, shortcut key c" style="margin-left: 10px;"> Super Cut </button>
 </div>
 </div>
 </header>
@@ -575,18 +575,12 @@ window.onerror = function(msg, url, line, col, error) {
 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
 <h3 style="margin: 0 0 10px 0;"> Start Point (In)</h3>
-<div style="display: flex; gap: 5px; align-items: center;">
-<input type="number" id="sta-start" min="0" step="0.1" value="0" style="width: 100%; text-align: center; font-size: 1.2rem;">
-<button id="btn-sta-set-start" class="btn btn-secondary btn-sm" aria-label="Set Start to current time" style="white-space: nowrap;"> Set Start </button>
-</div>
+<div id="sta-start-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">0.00s</div>
 <p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd> s </kbd>(or <kbd>[</kbd>) while playing </p>
 </div>
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
 <h3 style="margin: 0 0 10px 0;"> End Point (Out)</h3>
-<div style="display: flex; gap: 5px; align-items: center;">
-<input type="number" id="sta-end" min="0" step="0.1" placeholder="End" style="width: 100%; text-align: center; font-size: 1.2rem;">
-<button id="btn-sta-set-end" class="btn btn-secondary btn-sm" aria-label="Set End to current time" style="white-space: nowrap;"> Set End </button>
-</div>
+<div id="sta-end-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
 <p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd> e </kbd>(or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
@@ -603,89 +597,94 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 
 <!-- ══════════════════════════════════════════ -->
-<!-- SUPER CLEAN OVERLAY -->
+<!-- SUPER CUT OVERLAY -->
 <!-- ══════════════════════════════════════════ -->
-<div id="super-clean-overlay" class="sm-overlay" hidden>
-<div class="sm-container" role="application" tabindex="-1" aria-label="Super Clean Audio">
+<div id="super-cut-overlay" class="sm-overlay" hidden>
+<div class="sm-container" role="application" tabindex="-1" aria-label="Super Cut Audio">
 <header class="sm-header">
-<h2 id="scl-title"> Super Clean Audio </h2>
+<h2 id="sct-title"> Super Cut Audio </h2>
 <div style="display: flex; gap: 8px; align-items: center;">
-<button id="btn-close-super-clean" class="btn btn-danger btn-sm" aria-label="Exit Super Clean">✕ Close </button>
+<button id="btn-close-super-cut" class="btn btn-danger btn-sm" aria-label="Exit Super Cut">✕ Close </button>
 </div>
 </header>
 
 <div class="sm-view" tabindex="-1">
 <p class="sm-description">
- Live-clean an audio file by cutting out mistakes. Play the audio and press <kbd>s</kbd> (or <kbd>[</kbd>) to set the Start of a cut, and <kbd>e</kbd> (or <kbd>]</kbd>) to set the End. You can define multiple cuts to remove all mistakes at once.
+ Live-cut an audio file by cutting out mistakes. Play the audio and press <kbd>s</kbd> (or <kbd>[</kbd>) to set the Start of a cut, and <kbd>e</kbd> (or <kbd>]</kbd>) to set the End. You can define multiple cuts to remove all mistakes at once.
 </p>
 
 <div class="simple-form">
 <div class="control-group">
-<label for="scl-audio-select"> Select Audio File from Library:</label>
-<select id="scl-audio-select">
+<label for="sct-audio-select"> Select Audio File from Library:</label>
+<select id="sct-audio-select">
 <option value="" disabled selected> Select from library...</option>
 </select>
 </div>
 
-<!-- Live Clean Interface -->
+<!-- Live Cut Interface -->
 <div class="super-trim-ui" style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
-              <button id="btn-scl-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
-              <button id="btn-scl-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
+              <button id="btn-sct-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
+              <button id="btn-sct-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
             </div>
 
 <div style="text-align: center; margin-bottom: 20px;">
-<div id="scl-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
-<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="scl-sr-announcer"> Ready to play.</p>
+<div id="sct-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
+<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="sct-sr-announcer"> Ready to play.</p>
 </div>
 
 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
 <h3 style="margin: 0 0 10px 0;"> Cut Start (Delete from)</h3>
-<div style="display: flex; gap: 5px; align-items: center;">
-<input type="number" id="scl-start" min="0" step="0.1" placeholder="Start" readonly style="width: 100%; text-align: center; font-size: 1.2rem; opacity: 0.8; cursor: not-allowed;" aria-label="Current cut start time">
-<button id="btn-scl-set-start" class="btn btn-secondary btn-sm" aria-label="Set Cut Start to current time" style="white-space: nowrap;"> Set Start </button>
-</div>
+<div id="sct-start-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
 <p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>s</kbd> (or <kbd>[</kbd>) while playing </p>
 </div>
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
 <h3 style="margin: 0 0 10px 0;"> Cut End (Delete up to)</h3>
-<div style="display: flex; gap: 5px; align-items: center;">
-<input type="number" id="scl-end" min="0" step="0.1" placeholder="End" readonly style="width: 100%; text-align: center; font-size: 1.2rem; opacity: 0.8; cursor: not-allowed;" aria-label="Current cut end time">
-<button id="btn-scl-set-end" class="btn btn-secondary btn-sm" aria-label="Set Cut End to current time" style="white-space: nowrap;"> Set End </button>
-</div>
+<div id="sct-end-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
 <p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>e</kbd> (or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
 </div>
 
-<div class="clips-table-wrapper" style="margin-top: 20px;">
-<h3> Defined Cuts (Regions to Delete):</h3>
-<div class="table-scroll">
-<table id="scl-cuts-table" aria-label="List of regions to delete">
-<thead>
-<tr>
-<th scope="col"> Cut # </th>
-<th scope="col"> Start Time </th>
-<th scope="col"> End Time </th>
-<th scope="col"> Remove </th>
-</tr>
-</thead>
-<tbody id="scl-cuts-tbody">
-<tr id="scl-cuts-empty"><td colspan="4" class="empty-cell"> No cuts defined yet.</td></tr>
-</tbody>
-</table>
-</div>
+<div class="clips-table-wrapper" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+<h3> Defined Cuts: <span id="sct-cuts-count">0</span></h3>
+<button id="btn-sct-manage-cuts" class="btn btn-secondary btn-sm" aria-label="Manage defined cuts"> Manage Cuts </button>
 </div>
 
 <div class="panel-actions" style="margin-top: 20px;">
-<button id="btn-scl-preview" class="btn btn-secondary"> Preview Cleaned Audio </button>
-<button id="btn-scl-export" class="btn btn-primary"> Download Cleaned WAV </button>
+<button id="btn-sct-preview" class="btn btn-secondary"> Preview Remaining Audio </button>
+<button id="btn-sct-export" class="btn btn-primary"> Download Remaining WAV </button>
 </div>
-<p id="scl-status" class="status-text" aria-live="polite"></p>
+<p id="sct-status" class="status-text" aria-live="polite"></p>
 </div>
 </div>
 </div>
+
+<dialog id="sct-manage-dialog" role="application" aria-label="Manage Defined Cuts" style="padding: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text); max-width: 600px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <div class="dialog-content">
+    <h3 id="sct-manage-title" style="margin-top: 0;">Manage Defined Cuts</h3>
+    <div class="table-scroll">
+      <table id="sct-cuts-table" aria-label="List of regions to delete">
+        <thead>
+          <tr>
+            <th scope="col"> Cut # </th>
+            <th scope="col"> Start Time </th>
+            <th scope="col"> End Time </th>
+            <th scope="col"> Actions </th>
+          </tr>
+        </thead>
+        <tbody id="sct-cuts-tbody">
+          <tr id="sct-cuts-empty"><td colspan="4" class="empty-cell"> No cuts defined yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+      <button id="btn-sct-manage-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>
+      <button id="btn-sct-delete-all" class="btn btn-danger btn-sm" style="display: none;">Delete All</button>
+    </div>
+  </div>
+</dialog>
 </div>
 
 <script src="https://unpkg.com/fix-webm-duration"></script>
@@ -705,7 +704,7 @@ window.onerror = function(msg, url, line, col, error) {
 <script src="script_trim-video.js"></script>
 <script src="script_super-mode.js?v=1.1"></script>
 <script src="script_super-trim.js?v=1.1"></script>
-<script src="script_super-clean.js?v=1.0"></script>
+<script src="script_super-cut.js?v=1.0"></script>
 <!-- Main Boot -->
 <script src="script_main.js"></script>
 

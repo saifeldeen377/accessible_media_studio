@@ -307,11 +307,11 @@ window.removeAsset = function(id) {
   currentStaAssetId = null;
   trimBuffer = null;
   }
-  if (typeof currentSclAssetId !== 'undefined' && currentSclAssetId === id) {
-  currentSclAssetId = null;
-  if (typeof sclBuffer !== 'undefined') sclBuffer = null;
-  if (typeof sclCutRegions !== 'undefined') sclCutRegions = [];
-  if (typeof sclActiveCut !== 'undefined') sclActiveCut = { start: null, end: null, id: null };
+  if (typeof currentsctAssetId !== 'undefined' && currentsctAssetId === id) {
+  currentsctAssetId = null;
+  if (typeof sctBuffer !== 'undefined') sctBuffer = null;
+  if (typeof sctCutRegions !== 'undefined') sctCutRegions = [];
+  if (typeof sctActiveCut !== 'undefined') sctActiveCut = { start: null, end: null, id: null };
   }
  // Remove from IndexedDB as well
  dbDeleteAsset(id);
@@ -332,7 +332,7 @@ function populateAllSelects() {
  { id: 'sm-base-select', types: ['audio', 'video'] },
  { id: 'sm-overlay-select', types: ['audio', 'video'] },
  { id: 'sta-audio-select', types: ['audio', 'video'] },
- { id: 'scl-audio-select', types: ['audio', 'video'] },
+ { id: 'sct-audio-select', types: ['audio', 'video'] },
  ];
 
  configs.forEach(({ id, types }) =>{

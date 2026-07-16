@@ -11,28 +11,20 @@ let trimPlayOffset = 0;
 let trimIsPlaying = false;
 let trimBuffer = null;
 
+let trimStart = 0;
+let trimEnd = null;
+
 function initSuperTrimAudio() {
  const select = document.getElementById('sta-audio-select');
  const btnPlay = document.getElementById('btn-sta-play');
  const btnStop = document.getElementById('btn-sta-stop');
  const timeDisplay = document.getElementById('sta-time-display');
- const inputStart = document.getElementById('sta-start');
- const inputEnd = document.getElementById('sta-end');
-
- inputStart.addEventListener('input', () =>{
- const start = parseFloat(inputStart.value) || 0;
- inputEnd.min = (start + 0.1).toFixed(1);
- if (inputEnd.value && parseFloat(inputEnd.value)<= start) {
- inputEnd.value = (start + 0.1).toFixed(1);
- }
- });
+ const displayStart = document.getElementById('sta-start-display');
+ const displayEnd = document.getElementById('sta-end-display');
  const btnPreview = document.getElementById('btn-sta-preview');
  const btnExport = document.getElementById('btn-sta-export');
  const statusEl = document.getElementById('sta-status');
  const announcer = document.getElementById('sta-sr-announcer');
-
- const btnSetStart = document.getElementById('btn-sta-set-start');
- const btnSetEnd = document.getElementById('btn-sta-set-end');
 
  const btnEnter = document.getElementById('btn-enter-super-trim');
  const btnClose = document.getElementById('btn-close-super-trim');
@@ -41,14 +33,15 @@ function initSuperTrimAudio() {
  const footerApp = document.querySelector('footer');
  const container = overlay.querySelector('.sm-container');
 
- btnEnter.addEventListener('click', () =>{
- overlay.hidden = false;
- overlay.style.display = 'flex';
- mainApp.setAttribute('aria-hidden', 'true');
- footerApp.setAttribute('aria-hidden', 'true');
- container.focus();
- announce('Entered Super Trim Audio. Application mode active.');
- });
+ setupFocusTrap(overlay);
+
+ btnEnter.addEventListener('click', () => {
+    overlay.hidden = false;
+    overlay.style.display = 'flex';
+    setAppBackgroundInert(true);
+    container.focus();
+    announce('Entered Super Trim Audio. Application mode active.');
+  });
 
  // Global key listener for t
  window.addEventListener('keydown', e =>{
@@ -63,15 +56,14 @@ function initSuperTrimAudio() {
  }
  });
 
- btnClose.addEventListener('click', () =>{
- stopAudio();
- overlay.hidden = true;
- overlay.style.display = 'none';
- mainApp.removeAttribute('aria-hidden');
- footerApp.removeAttribute('aria-hidden');
- btnEnter.focus();
- announce('Exited Super Trim Audio.');
- });
+ btnClose.addEventListener('click', () => {
+    stopAudio();
+    overlay.hidden = true;
+    overlay.style.display = 'none';
+    setAppBackgroundInert(false);
+    btnEnter.focus();
+    announce('Exited Super Trim Audio.');
+  });
 
  function formatTime(secs) {
  return Number(secs).toFixed(3) + "s";
@@ -99,6 +91,7 @@ function initSuperTrimAudio() {
  clearInterval(staTimer);
  updateTimeDisplay();
  btnPlay.textContent = "Play (Space)";
+ if (document.activeElement === btnStop) { btnPlay.focus(); }
  btnStop.disabled = true;
  }
 
@@ -136,6 +129,7 @@ function initSuperTrimAudio() {
  trimIsPlaying = false;
  trimPlayOffset = trimBuffer.duration;
  btnPlay.textContent = "Play (Space)";
+ if (document.activeElement === btnStop) { btnPlay.focus(); }
  btnStop.disabled = true;
  clearInterval(staTimer);
  updateTimeDisplay();
@@ -152,7 +146,10 @@ function initSuperTrimAudio() {
   alert("Please select an audio file first.");
   return;
   }
-  if (trimIsLoading) return;
+  if (trimIsLoading) {
+      alert("Please wait, the track is still loading...");
+      return;
+  }
  
     if (trimIsPlaying) {
       // Pause
@@ -167,7 +164,7 @@ function initSuperTrimAudio() {
  clearInterval(staTimer);
  } else {
   // Play
-  statusEl.textContent = "Loading audio engine...";
+
   btnPlay.disabled = true;
   trimIsLoading = true;
   try {
@@ -207,6 +204,7 @@ function initSuperTrimAudio() {
  trimIsPlaying = false;
  trimPlayOffset = trimBuffer.duration;
  btnPlay.textContent = "Play (Space)";
+ if (document.activeElement === btnStop) { btnPlay.focus(); }
  btnStop.disabled = true;
  clearInterval(staTimer);
  updateTimeDisplay();
@@ -233,32 +231,28 @@ function initSuperTrimAudio() {
  osc.stop(ctx.currentTime + 0.03);
  }
 
-  function markStart() {
-    const curr = getCurrentTime();
-    inputStart.value = curr.toFixed(2);
-    if (!inputEnd.value && trimBuffer) {
-      inputEnd.value = trimBuffer.duration.toFixed(2);
-    }
-    playClickSound(true);
-    inputStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
-    setTimeout(() => inputStart.style.backgroundColor = "", 300);
-  }
+   function markStart() {
+     const curr = getCurrentTime();
+     trimStart = curr;
+     displayStart.textContent = curr.toFixed(2) + "s";
+     if (trimEnd === null && trimBuffer) {
+       trimEnd = trimBuffer.duration;
+       displayEnd.textContent = trimEnd.toFixed(2) + "s";
+     }
+     playClickSound(true);
+     displayStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
+     setTimeout(() => displayStart.style.backgroundColor = "", 300);
+   }
+ 
+   function markEnd() {
+     const curr = getCurrentTime();
+     trimEnd = curr;
+     displayEnd.textContent = curr.toFixed(2) + "s";
+     playClickSound(false);
+     displayEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
+     setTimeout(() => displayEnd.style.backgroundColor = "", 300);
+   }
 
-  function markEnd() {
-    const curr = getCurrentTime();
-    inputEnd.value = curr.toFixed(2);
-    if (!inputStart.value) {
-      inputStart.value = "0.00";
-    }
-    playClickSound(false);
-    inputEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
-    setTimeout(() => inputEnd.style.backgroundColor = "", 300);
-  }
-
- btnSetStart.addEventListener('click', markStart);
- btnSetEnd.addEventListener('click', markEnd);
-
- // Global Keyboard listener ONLY when overlay is active
  document.addEventListener('keydown', (e) =>{
  if (overlay.hidden) return;
 
@@ -303,16 +297,16 @@ function initSuperTrimAudio() {
  if (!previewSrc && previewStartTime === 0) return;
  
  const actx = getAudioCtx();
- let currentRelativeTime = previewPlayOffset;
- if (isPreviewing) {
- currentRelativeTime += (actx.currentTime - previewStartTime);
- }
- let newRelativeOffset = currentRelativeTime + seconds;
- 
- const start = parseFloat(inputStart.value) || 0;
- let end = parseFloat(inputEnd.value);
- if (isNaN(end) || end<= start) end = trimBuffer.duration;
- const trimDuration = end - start;
+  let currentRelativeTime = previewPlayOffset;
+  if (isPreviewing) {
+  currentRelativeTime += (actx.currentTime - previewStartTime);
+  }
+  let newRelativeOffset = currentRelativeTime + seconds;
+  
+  const start = trimStart;
+  let end = trimEnd;
+  if (end === null || end <= start) end = trimBuffer.duration;
+  const trimDuration = end - start;
 
  if (newRelativeOffset< 0) newRelativeOffset = 0;
  if (newRelativeOffset >= trimDuration) newRelativeOffset = trimDuration - 0.1;
@@ -341,7 +335,11 @@ function initSuperTrimAudio() {
  }
 
  btnPreview.addEventListener('click', async () =>{
- if (!select.value) return alert("Select a file");
+  if (!select.value) return alert("Select a file");
+  if (trimIsLoading) {
+      alert("Please wait, the track is still loading...");
+      return;
+  }
  
  if (isPreviewing) {
  if (previewSrc) {
@@ -357,7 +355,7 @@ function initSuperTrimAudio() {
   if (trimIsPlaying) stopAudio();
 
   if (!trimBuffer) {
-    statusEl.textContent = "Loading audio engine...";
+ 
     btnPreview.disabled = true;
     trimIsLoading = true;
     try {
@@ -376,10 +374,10 @@ function initSuperTrimAudio() {
   
   const actx = getAudioCtx();
   const buffer = trimBuffer;
-  const start = parseFloat(inputStart.value) || 0;
-  let end = parseFloat(inputEnd.value);
+  const start = trimStart;
+  let end = trimEnd;
   if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
-  if (isNaN(end) || end > buffer.duration) end = buffer.duration;
+  if (end === null || end > buffer.duration) end = buffer.duration;
   if (end <= start) { alert('Trim End must be after Trim Start.'); return; }
 
  previewPlayOffset = 0;
@@ -415,9 +413,9 @@ function initSuperTrimAudio() {
  if (!trimBuffer) trimBuffer = await decodeAudio(asset.objectURL);
  const buffer = trimBuffer;
 
-  const start = parseFloat(inputStart.value) || 0;
-  const endRaw = inputEnd.value;
-  let end = endRaw ? parseFloat(endRaw) : buffer.duration;
+  const start = trimStart;
+  let end = trimEnd;
+  if (end === null || end > buffer.duration) end = buffer.duration;
   if (start >= buffer.duration) throw new Error("Start time cannot exceed file duration.");
   if (end > buffer.duration) end = buffer.duration;
   const dur = end - start;

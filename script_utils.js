@@ -27,6 +27,49 @@ function announce(msg, assertive = false) {
  setTimeout(() =>{ el.textContent = msg; }, 50);
 }
 
+function setAppBackgroundInert(isInert) {
+  const elements = [
+    document.querySelector('.app-header'),
+    document.querySelector('.library-section'),
+    document.querySelector('.main-content')
+  ];
+  elements.forEach(el => {
+    if (el) {
+      el.inert = isInert;
+      if (isInert) el.setAttribute('aria-hidden', 'true');
+      else el.removeAttribute('aria-hidden');
+    }
+  });
+}
+
+function setupFocusTrap(container) {
+  if (!container) return;
+  container.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      const focusableElements = Array.from(container.querySelectorAll(
+        'button:not([disabled]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      
+      if (focusableElements.length === 0) return;
+      
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) { 
+        if (document.activeElement === firstElement || document.activeElement === container) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else { 
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  });
+}
+
 function downloadBlob(blob, filename) {
  const url = URL.createObjectURL(blob);
  const a = document.createElement('a');

@@ -92,7 +92,6 @@ async function loadLibraryFromDB() {
  if (records.length >0) {
  renderLibrary();
  populateAllSelects();
- setDbStatus(`✓ ${records.length} file(s) restored from browser`, true);
  }
  resolve();
  };
