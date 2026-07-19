@@ -330,16 +330,18 @@
 <a href="#library"> Media Library </a>
 <div class="sep"></div>
 <a href="#tools"> Tools Guide </a>
-<a href="#super-merger" class="sub"> 1. Super Merger </a>
-<a href="#super-trim" class="sub"> 2. Super Trim </a>
-<a href="#super-cut" class="sub"> 3. Super Cut </a>
+<a href="#super-tools" class="sub" style="font-weight:600; color:var(--text);"> Super Tools </a>
+<a href="#super-merger" class="sub" style="padding-left:32px;"> 1. Super Merger </a>
+<a href="#super-trim" class="sub" style="padding-left:32px;"> 2. Super Trim </a>
+<a href="#super-cut" class="sub" style="padding-left:32px;"> 3. Super Cut </a>
 <div class="sep"></div>
-<a href="#merge-audio" class="sub"> 1. Merge Audio </a>
-<a href="#merge-video" class="sub"> 2. Merge Video </a>
-<a href="#audio-video" class="sub"> 3. Audio + Video </a>
-<a href="#video-audio" class="sub"> 4. Video + Audio </a>
-<a href="#trim-audio" class="sub"> 5. Trim Audio </a>
-<a href="#trim-video" class="sub"> 6. Trim Video </a>
+<a href="#standard-tools" class="sub" style="font-weight:600; color:var(--text);"> Standard Tools </a>
+<a href="#merge-audio" class="sub" style="padding-left:32px;"> 1. Merge Audio </a>
+<a href="#merge-video" class="sub" style="padding-left:32px;"> 2. Merge Video </a>
+<a href="#audio-video" class="sub" style="padding-left:32px;"> 3. Audio + Video </a>
+<a href="#video-audio" class="sub" style="padding-left:32px;"> 4. Video + Audio </a>
+<a href="#trim-audio" class="sub" style="padding-left:32px;"> 5. Trim Audio </a>
+<a href="#trim-video" class="sub" style="padding-left:32px;"> 6. Trim Video </a>
 <div class="sep"></div>
 <a href="#accessibility"> Accessibility </a>
 <a href="#comparison" class="sub"> Comparison </a>
@@ -504,9 +506,9 @@ python -m http.server 3000
 
 <hr>
 
-<h3> Super Tools </h3>
+<h2 id="super-tools"> Super Tools </h2>
 
-<h2 id="super-merger"> 1. Super Merger - Live Mixer </h2>
+<h3 id="super-merger"> 1. Super Merger - Live Mixer </h3>
 <p>
  Super Merger lets you <strong> perform a live audio mix in real time </strong> using keyboard shortcuts,
  then <strong> automatically records and exports </strong> everything as a perfectly timed WAV — exactly
@@ -609,7 +611,7 @@ python -m http.server 3000
 
 <!-- SUPER TRIM -->
 <section id="super-trim">
-<h2 id="super-trim"> 2. Super Trim - Live Audio Cropper </h2>
+<h3 id="super-trim"> 2. Super Trim - Live Audio Cropper </h3>
 <p> Super Trim is the fastest, most precise way to crop audio files using only your keyboard. It was designed to solve the problem of visual timeline dependency in traditional editors.</p>
 
 <h3> How to use </h3>
@@ -645,7 +647,7 @@ python -m http.server 3000
 
 <!-- Super Cut -->
 <section id="super-cut">
-<h2 id="super-cut"> 3. Super Cut - Live Audio Cleaner </h2>
+<h3 id="super-cut"> 3. Super Cut - Live Audio Cleaner </h3>
 <p> Super Cut allows you to listen to an audio file and seamlessly "cut out" multiple mistakes, long pauses, or unwanted sections in real time using simple keyboard shortcuts.</p>
 
 <h3> How to use </h3>
@@ -688,7 +690,7 @@ python -m http.server 3000
 
 <hr>
 
-<h3> Standard Tools </h3>
+<h2 id="standard-tools"> Standard Tools </h2>
 
 <h3 id="merge-audio"> 1. Merge Audio </h3>
 <p> Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.</p>

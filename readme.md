@@ -117,9 +117,9 @@ Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when t
 
 ---
 
-### Super Tools
+## Super Tools
 
-## 1. Super Merger — Live Mixer
+### 1. Super Merger — Live Mixer
 
 Super Merger lets you **perform a live audio mix in real time** using keyboard shortcuts, then **automatically records and exports** everything as a perfectly timed WAV — exactly matching what you heard during your performance.
 
@@ -191,9 +191,7 @@ During the live performance, you can use the actions located in the **Super Merg
  - ** Download WAV:** Click this button to render and download your current live mix. The app processes the base audio and overlays via `OfflineAudioContext` (much faster than real-time) and downloads a WAV file with exact timing. You can also use **Save to Library** to keep the result in the studio without downloading.
  - ** Reset & Restart:** Click this to clear all recorded overlays, base track segments, and logs, seek the base audio back to 0.0s, and restart the recording from scratch.
 
----
-
-## 2. Super Trim — Live Audio Cropper
+### 2. Super Trim — Live Audio Cropper
 
 Super Trim is the fastest, most precise way to crop audio files using only your keyboard. It was designed to solve the problem of visual timeline dependency in traditional editors.
 
@@ -218,9 +216,7 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 - **100% Sample-Accurate Sync:** Super Trim bypasses the standard browser audio player and uses the raw `Web Audio API` for playback. This means the time you capture during playback is guaranteed to have **0ms of drift** compared to the final exported file (a common issue when playing MP3s in Chrome/Edge).
 - **International Keyboard Support:** The shortcuts `s` / `[` for start and `e` / `]` for end read physical key codes, meaning they work perfectly on any layout.
 
----
-
-## 3. Super Cut — Live Audio Cleaner
+### 3. Super Cut — Live Audio Cleaner
 
 Super Cut allows you to listen to an audio file and seamlessly "cut out" multiple mistakes, long pauses, or unwanted sections in real time using simple keyboard shortcuts.
 
@@ -251,7 +247,7 @@ Super Cut's state machine is designed to be forgiving:
 
 ---
 
-### Standard Tools
+## Standard Tools
 
 ### 1. Merge Audio
 Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.
