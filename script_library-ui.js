@@ -213,12 +213,10 @@ window.toggleLibraryPreview = function(id) {
      isPlaying.pause();
      btn.textContent = '▶️ Resume';
      btn.setAttribute('aria-label', `Resume preview for ${asset.name}`);
-     announce(`Preview paused.`);
    } else {
      isPlaying.play();
      btn.textContent = '⏸️ Pause';
      btn.setAttribute('aria-label', `Pause preview for ${asset.name}`);
-     announce(`Preview resumed.`);
    }
  } else {
  stopAllLibraryPreviews();
@@ -243,9 +241,7 @@ window.toggleLibraryPreview = function(id) {
  }
  container.innerHTML = '';
  container.hidden = true;
- announce(`Preview ended.`);
  };
- announce(`Previewing...`);
  }
  } else if (asset.type === 'video') {
  const isVisible = !container.hidden;
@@ -256,12 +252,10 @@ window.toggleLibraryPreview = function(id) {
      vid.pause();
      btn.textContent = '▶️ Resume Video';
      btn.setAttribute('aria-label', `Resume video preview for ${asset.name}`);
-     announce(`Preview paused.`);
    } else {
      vid.play();
      btn.textContent = '⏸️ Pause Video';
      btn.setAttribute('aria-label', `Pause video preview for ${asset.name}`);
-     announce(`Preview resumed.`);
    }
  } else {
  stopAllLibraryPreviews();
@@ -288,10 +282,8 @@ window.toggleLibraryPreview = function(id) {
  }
  container.innerHTML = '';
  container.hidden = true;
- announce(`Preview ended.`);
  };
  }
- announce(`Previewing...`);
  }
  } else if (asset.type === 'image') {
  const isVisible = !container.hidden;
@@ -300,7 +292,6 @@ window.toggleLibraryPreview = function(id) {
  container.hidden = true;
  btn.textContent = '👁️ Show Image';
  btn.setAttribute('aria-label', `Show image preview for ${asset.name}`);
- announce(`Preview ended.`);
  } else {
  container.hidden = false;
  container.innerHTML = `
@@ -308,7 +299,6 @@ window.toggleLibraryPreview = function(id) {
  `;
  btn.textContent = '👁️ Hide Image';
  btn.setAttribute('aria-label', `Hide image preview for ${asset.name}`);
- announce(`Previewing...`);
  }
  }
 };
@@ -326,7 +316,6 @@ window.replayLibraryPreview = function(id) {
       isPlaying.play();
       if (btn) btn.textContent = '⏸️ Pause';
       if (btn) btn.setAttribute('aria-label', `Pause preview for ${asset.name}`);
-      announce('Preview replayed.');
     }
   } else if (asset.type === 'video') {
     const vid = document.getElementById(`vid-prev-${id}`);

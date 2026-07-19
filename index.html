@@ -696,20 +696,8 @@ window.onerror = function(msg, url, line, col, error) {
 <dialog id="sct-manage-dialog" role="application" aria-label="Manage Defined Cuts" style="padding: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text); max-width: 600px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
   <div class="dialog-content">
     <h3 id="sct-manage-title" style="margin-top: 0;">Manage Defined Cuts</h3>
-    <div class="table-scroll">
-      <table id="sct-cuts-table" aria-label="List of regions to delete">
-        <thead>
-          <tr>
-            <th scope="col"> Cut # </th>
-            <th scope="col"> Start Time </th>
-            <th scope="col"> End Time </th>
-            <th scope="col"> Actions </th>
-          </tr>
-        </thead>
-        <tbody id="sct-cuts-tbody">
-          <tr id="sct-cuts-empty"><td colspan="4" class="empty-cell"> No cuts defined yet.</td></tr>
-        </tbody>
-      </table>
+    <div id="sct-manage-cuts-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+      <p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No cuts defined yet.</p>
     </div>
     <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
       <button id="btn-sct-manage-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>

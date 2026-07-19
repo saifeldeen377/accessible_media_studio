@@ -85,7 +85,7 @@ function initVideoToAudio() {
         btnPreview.textContent = '▶️ Resume Preview';
         btnPreview.setAttribute('aria-label', `Resume preview`);
         statusEl.textContent = 'Preview paused.';
-        announce('Preview paused.');
+
         return;
       }
 
@@ -126,7 +126,7 @@ function initVideoToAudio() {
         if (!vaIsPreviewing) return; // paused
         stopVaPreview();
         statusEl.textContent = 'Preview finished.';
-        announce('Preview finished.');
+
       };
     });
   }
@@ -141,15 +141,13 @@ function initVideoToAudio() {
         vaIsPreviewing = false;
       }
       if (btnPreview) btnPreview.click();
-      announce('Preview replayed.');
     });
   }
 
   if (btnStop) {
     btnStop.addEventListener('click', () => {
       stopVaPreview();
-      statusEl.textContent = 'Stopped.';
-      announce('Preview stopped.');
+      statusEl.textContent = 'Preview stopped.';
     });
   }
 }

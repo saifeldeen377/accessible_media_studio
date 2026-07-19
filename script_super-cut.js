@@ -29,7 +29,7 @@ function initSuperCut() {
   const timeDisplay = document.getElementById('sct-time-display');
   const displayStart = document.getElementById('sct-start-display');
   const displayEnd = document.getElementById('sct-end-display');
-  const tbody = document.getElementById('sct-cuts-tbody');
+  const manageList = document.getElementById('sct-manage-cuts-list');
   const cutsCountDisplay = document.getElementById('sct-cuts-count');
   
   const btnManageCuts = document.getElementById('btn-sct-manage-cuts');
@@ -67,7 +67,7 @@ function initSuperCut() {
     }
     
     // Focus the first remove button, or fallback to close button
-    const firstRemoveBtn = document.querySelector('#sct-cuts-tbody button.btn-danger');
+    const firstRemoveBtn = document.querySelector('#sct-manage-cuts-list button.btn-danger');
     if (firstRemoveBtn) {
       firstRemoveBtn.focus();
     } else {
@@ -88,6 +88,7 @@ function initSuperCut() {
     displayStart.textContent = 'Not set';
     displayEnd.textContent = 'Not set';
     renderCutsTable();
+    announce('All cuts have been deleted.');
     btnManageClose.focus();
   });
 
@@ -381,37 +382,96 @@ function initSuperCut() {
     }
 
     if (sctCutRegions.length === 0 && sctActiveCut.start === null) {
-      tbody.innerHTML = '<tr id="sct-cuts-empty"><td colspan="4" class="empty-cell"> No cuts defined yet.</td></tr>';
+      manageList.innerHTML = '<p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No cuts defined yet.</p>';
       return;
     }
 
-    tbody.innerHTML = '';
+    manageList.innerHTML = '';
     
     let count = 1;
     sctCutRegions.forEach((cut) => {
-      const tr = document.createElement('tr');
+      const item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.justifyContent = 'space-between';
+      item.style.alignItems = 'center';
+      item.style.padding = '10px';
+      item.style.borderBottom = '1px solid var(--border)';
+      
       const isCurrentActive = (cut.id === sctActiveCut.id);
       if (isCurrentActive) {
-        tr.style.backgroundColor = "rgba(124, 111, 255, 0.1)"; 
+        item.style.backgroundColor = "rgba(124, 111, 255, 0.1)"; 
       }
       
-      tr.innerHTML = `
-        <td>${count++}</td>
-        <td>${cut.start.toFixed(2)} s</td>
-        <td>${cut.end.toFixed(2)} s</td>
-        <td>
-          <button class="btn btn-danger btn-sm" aria-label="Remove cut from ${cut.start.toFixed(2)} to ${cut.end.toFixed(2)}">Remove</button>
-        </td>
-      `;
-      tr.querySelector('button').addEventListener('click', () => {
-        sctCutRegions = sctCutRegions.filter(c => c.id !== cut.id);
+      const infoSpan = document.createElement('span');
+      infoSpan.textContent = `Cut ${count++}: ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`;
+      
+      const actionsDiv = document.createElement('div');
+      actionsDiv.style.display = 'flex';
+      actionsDiv.style.gap = '10px';
+      
+      const btnPreviewCut = document.createElement('button');
+      btnPreviewCut.className = 'btn btn-success btn-sm';
+      btnPreviewCut.textContent = 'Preview';
+      btnPreviewCut.setAttribute('aria-label', `Preview cut from ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`);
+      
+      let localCutPreviewSrc = null;
+      let localCutIsPreviewing = false;
+      
+      btnPreviewCut.addEventListener('click', async () => {
+        if (localCutIsPreviewing) {
+            if (localCutPreviewSrc) {
+                localCutPreviewSrc.onended = null;
+                try { localCutPreviewSrc.stop(); } catch(e) {}
+                localCutPreviewSrc = null;
+            }
+            localCutIsPreviewing = false;
+            btnPreviewCut.textContent = 'Preview';
+            btnPreviewCut.setAttribute('aria-label', `Preview cut from ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`);
+            return;
+        }
         
-        let nextFocus = tr.nextElementSibling?.querySelector('button');
-        if (!nextFocus) nextFocus = tr.previousElementSibling?.querySelector('button');
+        if (sctIsPlaying) stopAudio();
+        if (issctPreviewing) stopPreview();
+
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') { await ctx.resume(); }
+
+        localCutPreviewSrc = ctx.createBufferSource();
+        localCutPreviewSrc.buffer = sctBuffer;
+        localCutPreviewSrc.connect(masterCompressor);
+        
+        let playDur = cut.end - cut.start;
+        localCutPreviewSrc.start(0, cut.start, playDur);
+        localCutIsPreviewing = true;
+        
+        btnPreviewCut.textContent = 'Stop';
+        btnPreviewCut.setAttribute('aria-label', `Stop preview of cut from ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`);
+        
+        localCutPreviewSrc.onended = () => {
+            localCutIsPreviewing = false;
+            localCutPreviewSrc = null;
+            btnPreviewCut.textContent = 'Preview';
+            btnPreviewCut.setAttribute('aria-label', `Preview cut from ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`);
+        };
+      });
+      
+      const btnRemove = document.createElement('button');
+      btnRemove.className = 'btn btn-danger btn-sm';
+      btnRemove.textContent = 'Remove';
+      btnRemove.setAttribute('aria-label', `Remove cut from ${cut.start.toFixed(2)} to ${cut.end.toFixed(2)}`);
+      
+      btnRemove.addEventListener('click', () => {
+        sctCutRegions = sctCutRegions.filter(c => c.id !== cut.id);
+        announce(`Removed cut from ${cut.start.toFixed(2)} to ${cut.end.toFixed(2)}`);
+        if (localCutPreviewSrc) {
+            try { localCutPreviewSrc.stop(); } catch(e) {}
+        }
+        
+        let nextFocus = item.nextElementSibling?.querySelector('.btn-danger');
+        if (!nextFocus) nextFocus = item.previousElementSibling?.querySelector('.btn-danger');
         if (!nextFocus) nextFocus = btnManageClose;
 
-        tr.remove();
-
+        item.remove();
         cutsCountDisplay.textContent = sctCutRegions.length;
 
         if (cut.id === sctActiveCut.id) {
@@ -426,39 +486,57 @@ function initSuperCut() {
             btnManageClose.focus();
         } else {
             let counter = 1;
-            tbody.querySelectorAll('tr').forEach(row => {
-                const td = row.querySelector('td:first-child');
-                if (td && !td.textContent.includes('Active')) {
-                    td.textContent = counter++;
+            manageList.querySelectorAll('div > span').forEach(span => {
+                if (!span.textContent.includes('Active')) {
+                    const textParts = span.textContent.split(':');
+                    textParts[0] = `Cut ${counter++}`;
+                    span.textContent = textParts.join(':');
                 }
             });
             nextFocus?.focus();
         }
       });
-      tbody.appendChild(tr);
+      
+      actionsDiv.appendChild(btnPreviewCut);
+      actionsDiv.appendChild(btnRemove);
+      
+      item.appendChild(infoSpan);
+      item.appendChild(actionsDiv);
+      manageList.appendChild(item);
     });
 
     if (sctActiveCut.start !== null && !sctCutRegions.find(c => c.id === sctActiveCut.id)) {
-      const tr = document.createElement('tr');
-      tr.style.backgroundColor = "rgba(124, 111, 255, 0.1)"; 
-      tr.innerHTML = `
-        <td>${count} (Active)</td>
-        <td>${sctActiveCut.start.toFixed(2)} s</td>
-        <td>...</td>
-        <td>
-          <button class="btn btn-danger btn-sm" aria-label="Cancel active cut starting at ${sctActiveCut.start.toFixed(2)}">Cancel</button>
-        </td>
-      `;
-      tr.querySelector('button').addEventListener('click', () => {
+      const item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.justifyContent = 'space-between';
+      item.style.alignItems = 'center';
+      item.style.padding = '10px';
+      item.style.borderBottom = '1px solid var(--border)';
+      item.style.backgroundColor = "rgba(124, 111, 255, 0.1)"; 
+      
+      const infoSpan = document.createElement('span');
+      infoSpan.textContent = `Cut ${count} (Active): ${sctActiveCut.start.toFixed(2)}s to ...`;
+      
+      const actionsDiv = document.createElement('div');
+      actionsDiv.style.display = 'flex';
+      actionsDiv.style.gap = '10px';
+      
+      const btnCancel = document.createElement('button');
+      btnCancel.className = 'btn btn-danger btn-sm';
+      btnCancel.textContent = 'Cancel';
+      btnCancel.setAttribute('aria-label', `Cancel active cut starting at ${sctActiveCut.start.toFixed(2)}`);
+      
+      btnCancel.addEventListener('click', () => {
+        announce(`Cancelled active cut starting at ${sctActiveCut.start.toFixed(2)}`);
         sctActiveCut = { start: null, end: null, id: null };
         sctLastAction = null;
         displayStart.textContent = 'Not set';
         displayEnd.textContent = 'Not set';
         
-        let nextFocus = tr.previousElementSibling?.querySelector('button');
+        let nextFocus = item.previousElementSibling?.querySelector('.btn-danger');
         if (!nextFocus) nextFocus = btnManageClose;
         
-        tr.remove();
+        item.remove();
         
         if (sctCutRegions.length === 0) {
             renderCutsTable();
@@ -467,7 +545,11 @@ function initSuperCut() {
             nextFocus?.focus();
         }
       });
-      tbody.appendChild(tr);
+      
+      actionsDiv.appendChild(btnCancel);
+      item.appendChild(infoSpan);
+      item.appendChild(actionsDiv);
+      manageList.appendChild(item);
     }
   }
 
@@ -570,7 +652,7 @@ function initSuperCut() {
       btnPreview.textContent = '▶️ Resume Preview';
       btnPreview.setAttribute('aria-label', `Resume preview`);
       statusEl.textContent = "Preview paused.";
-      announce('Preview paused.');
+
       return;
     }
 
@@ -654,7 +736,6 @@ function initSuperCut() {
           btnReplayPreview.style.display = 'none';
         }
         statusEl.textContent = "Preview finished.";
-        announce("Preview finished.");
       };
     }
 
@@ -677,7 +758,6 @@ function initSuperCut() {
         issctPreviewing = false;
       }
       btnPreview.click();
-      announce('Preview replayed.');
     });
   }
 

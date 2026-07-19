@@ -152,7 +152,7 @@ async function previewMergeAudio() {
     maIsPreviewing = false;
     btnPreview.textContent = '▶️ Resume Mix';
     btnPreview.setAttribute('aria-label', `Resume mix preview`);
-    announce('Preview paused.');
+
     return;
   }
 
@@ -191,7 +191,7 @@ async function previewMergeAudio() {
       if (document.activeElement === btnReplay) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
-    announce('Preview finished.');
+
   };
 }
 
@@ -221,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
       maIsPreviewing = false;
       if (previewSource) { try { previewSource.stop(); } catch (_) {} }
       document.getElementById('btn-ma-play').click();
-      announce('Preview replayed.');
     });
   }
 });

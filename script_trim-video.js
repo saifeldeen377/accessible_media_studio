@@ -47,13 +47,13 @@ function initTrimVideo() {
           btnPreview.textContent = '▶️ Resume Trim';
           btnPreview.setAttribute('aria-label', `Resume trim preview`);
           statusEl.textContent = 'Preview paused.';
-          announce('Preview paused.');
+
         } else {
           vid.play();
           btnPreview.textContent = '⏸️ Pause Trim';
           btnPreview.setAttribute('aria-label', `Pause trim preview`);
           statusEl.textContent = 'Preview resumed.';
-          announce('Preview resumed.');
+
         }
       }
       return;
@@ -85,14 +85,14 @@ function initTrimVideo() {
         vid.pause();
         stopTvPreview();
         statusEl.textContent = 'Preview finished.';
-        announce('Preview finished.');
+
       }
     };
 
     vid.onended = () => {
       stopTvPreview();
       statusEl.textContent = 'Preview finished.';
-      announce('Preview finished.');
+
     };
   });
 
@@ -104,14 +104,12 @@ function initTrimVideo() {
       vid.play();
       btnPreview.textContent = '⏸️ Pause Trim';
       btnPreview.setAttribute('aria-label', `Pause trim preview`);
-      announce('Preview replayed.');
     }
   });
 
   btnStop.addEventListener('click', () => {
     stopTvPreview();
     statusEl.textContent = 'Stopped.';
-    announce('Preview stopped.');
   });
 
   const performTrimVideoExport = async (isSaveToLib) =>{

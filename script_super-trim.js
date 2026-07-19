@@ -381,7 +381,7 @@ function initSuperTrimAudio() {
       btnPreview.textContent = '▶️ Resume Trim';
       btnPreview.setAttribute('aria-label', `Resume trim preview`);
       statusEl.textContent = "Preview paused.";
-      announce('Preview paused.');
+
       return;
     }
 
@@ -442,7 +442,7 @@ function initSuperTrimAudio() {
         btnReplayPreview.style.display = 'none';
       }
       statusEl.textContent = "Preview finished.";
-      announce("Preview finished.");
+
     };
   });
 
@@ -457,7 +457,6 @@ function initSuperTrimAudio() {
         isPreviewing = false;
       }
       btnPreview.click();
-      announce('Preview replayed.');
     });
   }
 

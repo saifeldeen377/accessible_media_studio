@@ -58,7 +58,7 @@ function initMergeVideo() {
     if (mvPreviewClipIndex >= mvClips.length) {
       stopMvPreview();
       statusEl.textContent = 'Preview finished.';
-      announce('Preview finished.');
+
       return;
     }
 
@@ -108,13 +108,13 @@ function initMergeVideo() {
           btnPreview.textContent = '▶️ Resume Mix';
           btnPreview.setAttribute('aria-label', `Resume video mix preview`);
           statusEl.textContent = 'Preview paused.';
-          announce('Preview paused.');
+
         } else {
           mvActiveVideoElement.play();
           btnPreview.textContent = '⏸️ Pause Mix';
           btnPreview.setAttribute('aria-label', `Pause video mix preview`);
           statusEl.textContent = `Previewing clip ${mvPreviewClipIndex + 1} of ${mvClips.length}...`;
-          announce('Preview resumed.');
+
         }
       }
       return;
@@ -135,13 +135,11 @@ function initMergeVideo() {
     }
     btnPreview.textContent = '⏸️ Pause Mix';
     playNextMvClip();
-    announce('Preview replayed.');
   });
 
   btnStop.addEventListener('click', () => {
     stopMvPreview();
     statusEl.textContent = 'Stopped.';
-    announce('Preview stopped.');
   });
 }
 

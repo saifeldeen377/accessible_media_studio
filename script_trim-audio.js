@@ -60,7 +60,7 @@ function initTrimAudio() {
     btnPreview.textContent = '▶️ Resume Trim';
     btnPreview.setAttribute('aria-label', `Resume trim preview`);
     statusEl.textContent = 'Preview paused.';
-    announce('Preview paused.');
+
     return;
   }
 
@@ -92,7 +92,7 @@ function initTrimAudio() {
       btnReplay.style.display = 'none';
     }
     statusEl.textContent = 'Preview finished.'; 
-    announce('Preview finished.');
+
   };
 
   statusEl.textContent = 'Previewing...';
@@ -103,7 +103,6 @@ function initTrimAudio() {
     taIsPreviewing = false;
     if (trimPreviewSource) { try { trimPreviewSource.stop(); } catch (_) {} }
     btnPreview.click();
-    announce('Preview replayed.');
   });
 
   document.getElementById('btn-ta-stop').addEventListener('click', () =>{
@@ -117,7 +116,6 @@ function initTrimAudio() {
     btnReplay.style.display = 'none';
   }
   statusEl.textContent = 'Stopped.';
-  announce('Preview stopped.');
   });
 
   const performTrimAudioExport = async (isSaveToLib) =>{

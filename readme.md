@@ -230,7 +230,7 @@ Super Cut allows you to listen to an audio file and seamlessly "cut out" multipl
 3. When you hear a mistake or something you want to remove, press **`s`** (or `[`). This sets the start of the cut.
 4. When the mistake ends and the good audio resumes, press **`e`** (or `]`). This sets the end of the cut and finalizes the removal region.
 5. The audio will continue playing. You can repeat this process (press `s` then `e`) as many times as you want to remove all mistakes in a single pass.
-6. If you want to review or remove any of your cuts, click the **"Manage Cuts"** button to open a dialog showing all your selected regions.
+6. If you want to review or remove any of your cuts, click the **"Manage Cuts"** button to open a dialog showing all your selected regions. Here you can **"Preview"** exactly what audio will be removed, or **"Remove"** the cut to restore that section.
  7. Click **" Preview Remaining Audio"** to hear the file with all your defined cuts automatically skipped.
  8. Click **" Download Remaining WAV"** to export to your device, or **" Save to Library"** to save it directly into the app's library.
 
