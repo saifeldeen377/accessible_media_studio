@@ -59,7 +59,7 @@ function initTrimAudio() {
     taIsPreviewing = false;
     btnPreview.textContent = '▶️ Resume Trim';
     btnPreview.setAttribute('aria-label', `Resume trim preview`);
-    statusEl.textContent = 'Preview paused.';
+    statusEl.textContent = '';
 
     return;
   }
@@ -91,11 +91,11 @@ function initTrimAudio() {
       if (document.activeElement === btnReplay) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
-    statusEl.textContent = 'Preview finished.'; 
+    statusEl.textContent = ''; 
 
   };
 
-  statusEl.textContent = 'Previewing...';
+  statusEl.textContent = '';
   });
 
   btnReplay.addEventListener('click', async () => {

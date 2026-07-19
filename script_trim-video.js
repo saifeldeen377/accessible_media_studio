@@ -46,7 +46,7 @@ function initTrimVideo() {
           vid.pause();
           btnPreview.textContent = '▶️ Resume Trim';
           btnPreview.setAttribute('aria-label', `Resume trim preview`);
-          statusEl.textContent = 'Preview paused.';
+          statusEl.textContent = '';
 
         } else {
           vid.play();
@@ -78,20 +78,20 @@ function initTrimVideo() {
     btnPreview.setAttribute('aria-label', `Pause trim preview`);
     btnReplay.style.display = 'inline-block';
     btnStop.style.display = 'inline-block';
-    statusEl.textContent = 'Previewing...';
+    statusEl.textContent = '';
 
     vid.ontimeupdate = () => {
       if (vid.currentTime >= end) {
         vid.pause();
         stopTvPreview();
-        statusEl.textContent = 'Preview finished.';
+        statusEl.textContent = '';
 
       }
     };
 
     vid.onended = () => {
       stopTvPreview();
-      statusEl.textContent = 'Preview finished.';
+      statusEl.textContent = '';
 
     };
   });

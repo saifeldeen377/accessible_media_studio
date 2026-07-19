@@ -57,7 +57,7 @@ function initMergeVideo() {
   function playNextMvClip() {
     if (mvPreviewClipIndex >= mvClips.length) {
       stopMvPreview();
-      statusEl.textContent = 'Preview finished.';
+      statusEl.textContent = '';
 
       return;
     }
@@ -107,7 +107,7 @@ function initMergeVideo() {
           mvActiveVideoElement.pause();
           btnPreview.textContent = '▶️ Resume Mix';
           btnPreview.setAttribute('aria-label', `Resume video mix preview`);
-          statusEl.textContent = 'Preview paused.';
+          statusEl.textContent = '';
 
         } else {
           mvActiveVideoElement.play();

@@ -515,7 +515,7 @@ function initSuperCut() {
       item.style.backgroundColor = "rgba(124, 111, 255, 0.1)"; 
       
       const infoSpan = document.createElement('span');
-      infoSpan.textContent = `Cut ${count} (Active): ${sctActiveCut.start.toFixed(2)}s to ...`;
+      infoSpan.textContent = `Cut ${count} (Active): ${sctActiveCut.start.toFixed(2)}s to end of file`;
       
       const actionsDiv = document.createElement('div');
       actionsDiv.style.display = 'flex';
@@ -524,7 +524,7 @@ function initSuperCut() {
       const btnCancel = document.createElement('button');
       btnCancel.className = 'btn btn-danger btn-sm';
       btnCancel.textContent = 'Cancel';
-      btnCancel.setAttribute('aria-label', `Cancel active cut starting at ${sctActiveCut.start.toFixed(2)}`);
+      btnCancel.setAttribute('aria-label', `Cancel active cut from ${sctActiveCut.start.toFixed(2)} to the end of the file`);
       
       btnCancel.addEventListener('click', () => {
         announce(`Cancelled active cut starting at ${sctActiveCut.start.toFixed(2)}`);
@@ -595,7 +595,11 @@ function initSuperCut() {
   });
 
   function getKeepRegions(bufferDuration) {
-    let sortedCuts = [...sctCutRegions].sort((a, b) => a.start - b.start);
+    let cutsToProcess = [...sctCutRegions];
+    if (sctActiveCut.start !== null) {
+      cutsToProcess.push(sctActiveCut);
+    }
+    let sortedCuts = cutsToProcess.sort((a, b) => a.start - b.start);
     let keepRegions = [];
     let currentPos = 0;
 
@@ -629,7 +633,7 @@ function initSuperCut() {
       if (document.activeElement === btnReplayPreview) btnPreview.focus();
       btnReplayPreview.style.display = 'none';
     }
-    statusEl.textContent = "Preview stopped.";
+    statusEl.textContent = "";
   }
 
   btnPreview.addEventListener('click', async () => {
@@ -651,7 +655,7 @@ function initSuperCut() {
       issctPreviewing = false;
       btnPreview.textContent = '▶️ Resume Preview';
       btnPreview.setAttribute('aria-label', `Resume preview`);
-      statusEl.textContent = "Preview paused.";
+      statusEl.textContent = "";
 
       return;
     }
@@ -735,7 +739,7 @@ function initSuperCut() {
           if (document.activeElement === btnReplayPreview) btnPreview.focus();
           btnReplayPreview.style.display = 'none';
         }
-        statusEl.textContent = "Preview finished.";
+        statusEl.textContent = "";
       };
     }
 
@@ -743,7 +747,7 @@ function initSuperCut() {
     btnPreview.textContent = "⏸️ Pause Preview";
     btnPreview.setAttribute('aria-label', `Pause preview`);
     if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
-    statusEl.textContent = "Previewing remaining audio...";
+    statusEl.textContent = "";
   });
 
   if (btnReplayPreview) {
@@ -829,14 +833,14 @@ function initSuperCut() {
         issctPreviewing = false;
         btnPreview.textContent = "Preview Remaining Audio";
         btnPreview.setAttribute('aria-label', `Preview remaining audio`);
-        statusEl.textContent = "Preview finished.";
+        statusEl.textContent = "";
       };
     }
     
     sctLastPlayedWasPreview = true;
     btnPreview.textContent = "⏸️ Pause Preview";
     btnPreview.setAttribute('aria-label', `Pause preview`);
-    statusEl.textContent = "Previewing remaining audio...";
+    statusEl.textContent = "";
   }
 
   const performSuperCutExport = async (isSaveToLib) => {

@@ -80,7 +80,7 @@ function initAudioToVideo() {
         avIsPreviewing = false;
         btnPreview.textContent = '▶️ Resume Preview';
         btnPreview.setAttribute('aria-label', `Resume preview`);
-        statusEl.textContent = 'Preview paused.';
+        statusEl.textContent = '';
 
         return;
       }
@@ -142,12 +142,12 @@ function initAudioToVideo() {
       if (btnReplay) btnReplay.style.display = 'inline-block';
       if (btnStop) btnStop.style.display = 'inline-block';
 
-      statusEl.textContent = 'Previewing...';
+      statusEl.textContent = '';
 
       avPreviewAudioSrc.onended = () => {
         if (!avIsPreviewing) return; // paused
         stopAvPreview();
-        statusEl.textContent = 'Preview finished.';
+        statusEl.textContent = '';
 
       };
 
@@ -155,7 +155,7 @@ function initAudioToVideo() {
         const elapsed = avPreviewOffset + (actx.currentTime - avPreviewStartTime);
         if (elapsed >= totalDur) {
           stopAvPreview();
-          statusEl.textContent = 'Preview finished.';
+          statusEl.textContent = '';
 
           return;
         }
@@ -194,7 +194,7 @@ function initAudioToVideo() {
   if (btnStop) {
     btnStop.addEventListener('click', () => {
       stopAvPreview();
-      statusEl.textContent = 'Preview stopped.';
+      statusEl.textContent = '';
     });
   }
 }

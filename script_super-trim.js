@@ -162,7 +162,7 @@ function initSuperTrimAudio() {
       previewSrc = null;
     }
     isPreviewing = false;
-    statusEl.textContent = "Preview stopped.";
+    statusEl.textContent = '';
     btnPreview.textContent = "Preview Trim";
     btnPreview.setAttribute('aria-label', `Preview trim`);
     return;
@@ -355,7 +355,7 @@ function initSuperTrimAudio() {
  previewSrc.onended = () =>{
  isPreviewing = false;
  previewPlayOffset = trimDuration;
- statusEl.textContent = "Preview finished.";
+ statusEl.textContent = '';
  };
  }
 
@@ -380,7 +380,7 @@ function initSuperTrimAudio() {
       isPreviewing = false;
       btnPreview.textContent = '▶️ Resume Trim';
       btnPreview.setAttribute('aria-label', `Resume trim preview`);
-      statusEl.textContent = "Preview paused.";
+      statusEl.textContent = '';
 
       return;
     }
@@ -429,7 +429,7 @@ function initSuperTrimAudio() {
     btnPreview.setAttribute('aria-label', `Pause trim preview`);
     if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
     
-    statusEl.textContent = 'Previewing...';
+    statusEl.textContent = '';
     
     previewSrc.onended = () =>{
       if (!isPreviewing) return; // Means it was paused
@@ -441,7 +441,7 @@ function initSuperTrimAudio() {
         if (document.activeElement === btnReplayPreview) btnPreview.focus();
         btnReplayPreview.style.display = 'none';
       }
-      statusEl.textContent = "Preview finished.";
+      statusEl.textContent = '';
 
     };
   });

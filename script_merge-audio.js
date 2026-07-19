@@ -157,8 +157,7 @@ async function previewMergeAudio() {
   }
 
   if (!maPreviewBuffer || maPreviewOffset === 0) {
-    announce('Rendering preview…');
-    btnPreview.textContent = 'Rendering...';
+    // btnPreview.textContent = 'Rendering...';
     maPreviewBuffer = await buildMixedBuffer();
     if (!maPreviewBuffer) {
       btnPreview.textContent = 'Preview Mix';
@@ -179,7 +178,7 @@ async function previewMergeAudio() {
   btnPreview.textContent = '⏸️ Pause Mix';
   btnPreview.setAttribute('aria-label', `Pause mix preview`);
   btnReplay.style.display = 'inline-block';
-  announce('Playing merged audio preview.');
+  
 
   previewSource.onended = () => {
     if (!maIsPreviewing) return; // Means it was paused

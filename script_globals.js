@@ -164,3 +164,62 @@ function triggerReviewPlaybacksAtCurrentTime() {
  });
 }
 
+
+// Global Preview Arrow Key Handler for Standard Tools & Library
+window.addEventListener('keydown', (e) => {
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+
+  // Ignore Super Tools as they have their own handlers
+  if (document.getElementById('panel-super-merger') && !document.getElementById('panel-super-merger').hidden) return;
+  if (document.getElementById('panel-super-trim') && !document.getElementById('panel-super-trim').hidden) return;
+  if (document.getElementById('panel-super-cut') && !document.getElementById('panel-super-cut').hidden) return;
+
+  const seconds = e.key === 'ArrowRight' ? 5 : -5;
+  
+  // 1. Check Trim Audio
+  const panelTrimAudio = document.getElementById('panel-trim-audio');
+  if (panelTrimAudio && !panelTrimAudio.hidden && typeof window.seekTrimAudio === 'function') {
+    e.preventDefault();
+    window.seekTrimAudio(seconds);
+    return;
+  }
+  
+  // 2. Check Video Audio
+  const panelVideoAudio = document.getElementById('panel-video-to-audio');
+  if (panelVideoAudio && !panelVideoAudio.hidden && typeof window.seekVideoAudio === 'function') {
+    e.preventDefault();
+    window.seekVideoAudio(seconds);
+    return;
+  }
+  
+  // 3. Check Merge Audio
+  const panelMergeAudio = document.getElementById('panel-merge-audio');
+  if (panelMergeAudio && !panelMergeAudio.hidden && typeof window.seekMergeAudio === 'function') {
+    e.preventDefault();
+    window.seekMergeAudio(seconds);
+    return;
+  }
+  
+    // 4. Check Audio Video
+  const panelAudioVideo = document.getElementById('panel-audio-to-video');
+  if (panelAudioVideo && !panelAudioVideo.hidden && typeof window.seekAudioVideo === 'function') {
+    e.preventDefault();
+    window.seekAudioVideo(seconds);
+    return;
+  }
+  
+  // 5. Handle HTMLMediaElements (for Trim Video, Merge Video, Audio Video, and Library UI)
+  const medias = document.querySelectorAll('audio, video');
+  let handled = false;
+  medias.forEach(media => {
+     if (!media.paused && media.duration) {
+        media.currentTime = Math.max(0, Math.min(media.duration, media.currentTime + seconds));
+        handled = true;
+     }
+  });
+  if (handled) {
+    e.preventDefault();
+  }
+});
