@@ -98,7 +98,7 @@ function initSuperTrimAudio() {
  btnStop.disabled = true;
  }
 
- function seekAudio(seconds) {
+ async function seekAudio(seconds) {
  if (!trimBuffer) return;
  
  let current = trimIsPlaying ? getCurrentTime() : trimPlayOffset;
@@ -112,6 +112,7 @@ function initSuperTrimAudio() {
  }
  
  const ctx = getAudioCtx();
+ if (ctx.state === 'suspended') { await ctx.resume(); }
  trimPlaySource = ctx.createBufferSource();
  trimPlaySource.buffer = trimBuffer;
  trimPlaySource.connect(masterCompressor);
@@ -154,7 +155,20 @@ function initSuperTrimAudio() {
       return;
   }
  
-    if (trimIsPlaying) {
+  if (isPreviewing) {
+    if (previewSrc) {
+      previewSrc.onended = null;
+      try { previewSrc.stop(); } catch(_) {}
+      previewSrc = null;
+    }
+    isPreviewing = false;
+    statusEl.textContent = "Preview stopped.";
+    btnPreview.textContent = "Preview Trim";
+    btnPreview.setAttribute('aria-label', `Preview trim`);
+    return;
+  }
+
+  if (trimIsPlaying) {
       // Pause
       trimPlayOffset += getAudioCtx().currentTime - trimPlayStartTime;
       if (trimPlaySource) {
@@ -187,6 +201,7 @@ function initSuperTrimAudio() {
   if (trimPlayOffset >= trimBuffer.duration) trimPlayOffset = 0;
 
  const ctx = getAudioCtx();
+ if (ctx.state === 'suspended') { await ctx.resume(); }
  trimPlaySource = ctx.createBufferSource();
  trimPlaySource.buffer = trimBuffer;
  trimPlaySource.connect(masterCompressor); // Route through master
@@ -232,27 +247,35 @@ function initSuperTrimAudio() {
  osc.stop(ctx.currentTime + 0.03);
  }
 
-   function markStart() {
-     const curr = getCurrentTime();
-     trimStart = curr;
-     displayStart.textContent = curr.toFixed(2) + "s";
-     if (trimEnd === null && trimBuffer) {
-       trimEnd = trimBuffer.duration;
-       displayEnd.textContent = trimEnd.toFixed(2) + "s";
-     }
-     playClickSound(true);
-     displayStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
-     setTimeout(() => displayStart.style.backgroundColor = "", 300);
-   }
- 
-   function markEnd() {
-     const curr = getCurrentTime();
-     trimEnd = curr;
-     displayEnd.textContent = curr.toFixed(2) + "s";
-     playClickSound(false);
-     displayEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
-     setTimeout(() => displayEnd.style.backgroundColor = "", 300);
-   }
+    function markStart() {
+      const curr = getCurrentTime();
+      if (trimEnd !== null && curr >= trimEnd) {
+        announce("Start time cannot be after end time.");
+        return;
+      }
+      trimStart = curr;
+      displayStart.textContent = curr.toFixed(2) + "s";
+      if (trimEnd === null && trimBuffer) {
+        trimEnd = trimBuffer.duration;
+        displayEnd.textContent = trimEnd.toFixed(2) + "s";
+      }
+      playClickSound(true);
+      displayStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
+      setTimeout(() => displayStart.style.backgroundColor = "", 300);
+    }
+  
+    function markEnd() {
+      const curr = getCurrentTime();
+      if (curr <= trimStart) {
+        announce("End time cannot be before start time.");
+        return;
+      }
+      trimEnd = curr;
+      displayEnd.textContent = curr.toFixed(2) + "s";
+      playClickSound(false);
+      displayEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
+      setTimeout(() => displayEnd.style.backgroundColor = "", 300);
+    }
 
  document.addEventListener('keydown', (e) =>{
  if (overlay.hidden) return;
@@ -279,11 +302,11 @@ function initSuperTrimAudio() {
  markEnd();
  } else if (code === 'ArrowRight') {
  e.preventDefault();
- if (lastPlayedWasPreview) seekPreview(5);
+ if (lastPlayedWasPreview) seekPreviewTrim(5);
  else seekAudio(5);
  } else if (code === 'ArrowLeft') {
  e.preventDefault();
- if (lastPlayedWasPreview) seekPreview(-5);
+ if (lastPlayedWasPreview) seekPreviewTrim(-5);
  else seekAudio(-5);
  }
  });
@@ -294,10 +317,11 @@ function initSuperTrimAudio() {
  let previewPlayOffset = 0;
  let lastPlayedWasPreview = false;
 
- function seekPreview(seconds) {
- if (!previewSrc && previewStartTime === 0) return;
+ async function seekPreviewTrim(seconds) {
+ if (!isPreviewing && previewStartTime === 0) return;
  
  const actx = getAudioCtx();
+ if (actx.state === 'suspended') { await actx.resume(); }
   let currentRelativeTime = previewPlayOffset;
   if (isPreviewing) {
   currentRelativeTime += (actx.currentTime - previewStartTime);
@@ -335,70 +359,107 @@ function initSuperTrimAudio() {
  };
  }
 
- btnPreview.addEventListener('click', async () =>{
-  if (!select.value) return alert("Select a file");
-  if (trimIsLoading) {
-      alert("Please wait, the track is still loading...");
-      return;
-  }
- 
- if (isPreviewing) {
- if (previewSrc) {
- previewSrc.onended = null;
- try { previewSrc.stop(); } catch(_) {}
- previewSrc = null;
- }
- isPreviewing = false;
- statusEl.textContent = "Preview stopped.";
- return;
- }
+  const btnReplayPreview = document.getElementById('btn-sta-replay-preview');
 
-  if (trimIsPlaying) stopAudio();
+  btnPreview.addEventListener('click', async () =>{
+    if (!select.value) return alert("Select a file");
+    if (trimIsLoading) {
+        alert("Please wait, the track is still loading...");
+        return;
+    }
+   
+    if (trimIsPlaying) stopAudio();
 
-  if (!trimBuffer) {
- 
-    btnPreview.textContent = "Loading...";
-    trimIsLoading = true;
-    try {
-      trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
-      currentStaAssetId = select.value;
-    } catch (err) {
-      statusEl.textContent = "Error loading audio file.";
-      btnPreview.textContent = "Preview Trim";
-      trimIsLoading = false;
+    if (isPreviewing) {
+      if (previewSrc) {
+        previewSrc.onended = null;
+        try { previewSrc.stop(); } catch(_) {}
+        previewPlayOffset += (getAudioCtx().currentTime - previewStartTime);
+        previewSrc = null;
+      }
+      isPreviewing = false;
+      btnPreview.textContent = '▶️ Resume Trim';
+      btnPreview.setAttribute('aria-label', `Resume trim preview`);
+      statusEl.textContent = "Preview paused.";
+      announce('Preview paused.');
       return;
     }
-    btnPreview.textContent = "Preview Trim";
-    trimIsLoading = false;
-    statusEl.textContent = "";
-  }
-  
-  const actx = getAudioCtx();
-  const buffer = trimBuffer;
-  const start = trimStart;
-  let end = trimEnd;
-  if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
-  if (end === null || end > buffer.duration) end = buffer.duration;
-  if (end <= start) { alert('Trim End must be after Trim Start.'); return; }
 
- previewPlayOffset = 0;
- previewStartTime = actx.currentTime;
- 
- previewSrc = actx.createBufferSource();
- previewSrc.buffer = buffer;
- previewSrc.connect(masterCompressor);
- previewSrc.start(0, start, end - start);
- isPreviewing = true;
- lastPlayedWasPreview = true;
- 
- statusEl.textContent = "Previewing trimmed audio...";
- 
- previewSrc.onended = () =>{
- isPreviewing = false;
- previewPlayOffset = end - start;
- statusEl.textContent = "Preview finished.";
- };
- });
+    if (!trimBuffer) {
+      btnPreview.textContent = "Loading...";
+      trimIsLoading = true;
+      try {
+        trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
+        currentStaAssetId = select.value;
+      } catch (err) {
+        statusEl.textContent = "Error loading audio file.";
+        btnPreview.textContent = "Preview Trim";
+        btnPreview.setAttribute('aria-label', `Preview trim`);
+        trimIsLoading = false;
+        return;
+      }
+      btnPreview.textContent = "Preview Trim";
+      btnPreview.setAttribute('aria-label', `Preview trim`);
+      trimIsLoading = false;
+      statusEl.textContent = "";
+    }
+    
+    const actx = getAudioCtx();
+    if (actx.state === 'suspended') { await actx.resume(); }
+    const buffer = trimBuffer;
+    const start = trimStart;
+    let end = trimEnd;
+    if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
+    if (end === null || end > buffer.duration) end = buffer.duration;
+    if (end <= start) { alert('Trim End must be after Trim Start.'); return; }
+    const trimDuration = end - start;
+
+    if (previewPlayOffset >= trimDuration) previewPlayOffset = 0;
+
+    previewStartTime = actx.currentTime;
+    
+    previewSrc = actx.createBufferSource();
+    previewSrc.buffer = buffer;
+    previewSrc.connect(masterCompressor);
+    previewSrc.start(0, start + previewPlayOffset, trimDuration - previewPlayOffset);
+    isPreviewing = true;
+    lastPlayedWasPreview = true;
+    
+    btnPreview.textContent = '⏸️ Pause Trim';
+    btnPreview.setAttribute('aria-label', `Pause trim preview`);
+    if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
+    
+    statusEl.textContent = 'Previewing...';
+    
+    previewSrc.onended = () =>{
+      if (!isPreviewing) return; // Means it was paused
+      isPreviewing = false;
+      previewPlayOffset = 0;
+      btnPreview.textContent = "Preview Trimmed Range";
+      btnPreview.setAttribute('aria-label', `Preview trimmed range`);
+      if (btnReplayPreview) {
+        if (document.activeElement === btnReplayPreview) btnPreview.focus();
+        btnReplayPreview.style.display = 'none';
+      }
+      statusEl.textContent = "Preview finished.";
+      announce("Preview finished.");
+    };
+  });
+
+  if (btnReplayPreview) {
+    btnReplayPreview.addEventListener('click', () => {
+      previewPlayOffset = 0;
+      if (isPreviewing) {
+        if (previewSrc) {
+          previewSrc.onended = null;
+          try { previewSrc.stop(); } catch(_) {}
+        }
+        isPreviewing = false;
+      }
+      btnPreview.click();
+      announce('Preview replayed.');
+    });
+  }
 
   const performSuperTrimExport = async (isSaveToLib) =>{
   if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
@@ -454,21 +515,23 @@ function initSuperTrimAudio() {
   btnExport.addEventListener('click', () => performSuperTrimExport(false));
   document.getElementById('btn-sta-save').addEventListener('click', () => performSuperTrimExport(true));
 
- select.addEventListener('change', () => {
-   stopAudio();
-   // Stop preview and reset values
-   if (isPreviewing) {
-     if (previewSrc) {
-       previewSrc.onended = null;
-       try { previewSrc.stop(); } catch(_) {}
-       previewSrc = null;
-     }
-     isPreviewing = false;
-   }
-   trimStart = 0;
-   trimEnd = null;
-   displayStart.textContent = 'Not set';
-   displayEnd.textContent = 'Not set';
-   statusEl.textContent = '';
- });
+  select.addEventListener('change', () => {
+    stopAudio();
+    // Stop preview and reset values
+    if (isPreviewing) {
+      if (previewSrc) {
+        previewSrc.onended = null;
+        try { previewSrc.stop(); } catch(_) {}
+        previewSrc = null;
+      }
+      isPreviewing = false;
+    }
+    trimBuffer = null;
+    trimStart = 0;
+    trimEnd = null;
+    displayStart.textContent = 'Not set';
+    displayEnd.textContent = 'Not set';
+    statusEl.textContent = '';
+
+  });
 }

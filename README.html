@@ -312,9 +312,9 @@
 <div class="hero-chips">
 <span class="chip"> Fully local — No Server </span>
 <span class="chip"> NVDA / JAWS / VoiceOver </span>
-<span class="chip">🎹 Keyboard First </span>
+<span class="chip"> Keyboard First </span>
 <span class="chip"> Persistent Library </span>
-<span class="chip">🎚️ Live Mixer (Super Merger)</span>
+<span class="chip"> Live Mixer (Super Merger)</span>
 </div>
 </div>
 
@@ -324,22 +324,22 @@
 <aside class="sidebar">
 <div class="sidebar-title"> On this page </div>
 <nav>
-<a href="#why"> Why This Project?</a>
+<a href="#why"> Why This Project? </a>
 <a href="#features"> Features </a>
 <a href="#start"> Getting Started </a>
 <a href="#library"> Media Library </a>
 <div class="sep"></div>
-<a href="#super-mode"> Super Merger </a>
-<a href="#super-trim"> Super Trim </a>
-<a href="#super-cut"> Super Cut </a>
-<div class="sep"></div>
 <a href="#tools"> Tools Guide </a>
-<a href="#merge-audio" class="sub"> Merge Audio </a>
-<a href="#merge-video" class="sub"> Merge Video </a>
-<a href="#audio-video" class="sub"> Audio &rarr; Video </a>
-<a href="#video-audio" class="sub"> Video &rarr; Audio </a>
-<a href="#trim-audio" class="sub"> Trim Audio </a>
-<a href="#trim-video" class="sub"> Trim Video </a>
+<a href="#super-merger" class="sub"> 1. Super Merger </a>
+<a href="#super-trim" class="sub"> 2. Super Trim </a>
+<a href="#super-cut" class="sub"> 3. Super Cut </a>
+<div class="sep"></div>
+<a href="#merge-audio" class="sub"> 1. Merge Audio </a>
+<a href="#merge-video" class="sub"> 2. Merge Video </a>
+<a href="#audio-video" class="sub"> 3. Audio + Video </a>
+<a href="#video-audio" class="sub"> 4. Video + Audio </a>
+<a href="#trim-audio" class="sub"> 5. Trim Audio </a>
+<a href="#trim-video" class="sub"> 6. Trim Video </a>
 <div class="sep"></div>
 <a href="#accessibility"> Accessibility </a>
 <a href="#comparison" class="sub"> Comparison </a>
@@ -376,7 +376,7 @@
 <p> Your files never leave your device. No uploads, no accounts, no cloud. Everything is processed locally in your browser.</p>
 </div>
 <div class="why-item cyan">
-<h4>🚫 No Installation Required </h4>
+<h4> No Installation Required </h4>
 <p> Open a single HTML file and it works. No Python, no Node.js, no app stores. Just your browser.</p>
 </div>
 <div class="why-item">
@@ -395,33 +395,38 @@
 
 <!-- FEATURES -->
 <section id="features">
-<h2>✨ Features at a Glance </h2>
-<div class="card-grid">
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#super-mode"> Super Merger </a></div><div class="card-desc"> Live-mix audio with keyboard shortcuts. Auto-records and exports as perfectly synced WAV.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#super-trim"> Super Trim </a></div><div class="card-desc"> Live-trim audio with keyboard shortcuts. Set start and end points instantly.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#super-cut"> Super Cut </a></div><div class="card-desc"> Remove multiple mistakes or unwanted sections seamlessly while listening.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#merge-audio"> Merge Audio </a></div><div class="card-desc"> Mix unlimited tracks with custom timing, crop ranges, and volume.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#merge-video"> Merge Video </a></div><div class="card-desc"> Concatenate video clips in sequence with optional crop ranges.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#audio-video"> Audio → Video </a></div><div class="card-desc"> Turn images + a music file into a timed slideshow video.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#video-audio"> Video → Audio </a></div><div class="card-desc"> Extract the audio track from any video as a clean WAV file.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#trim-audio"> Trim Audio </a></div><div class="card-desc"> Crop audio to exact in/out points. Preview before you download.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#trim-video"> Trim Video </a></div><div class="card-desc"> Crop video to exact timestamps and export as WebM.</div></div>
-<div class="card"><div class="card-icon"></div><div class="card-title"><a href="#library"> Persistent Library </a></div><div class="card-desc"> Files saved locally in IndexedDB — survive page refresh.</div></div>
-</div>
-</section>
+<h2 id="features"> Features at a Glance </h2>
 
-<!-- GETTING STARTED -->
-<section id="start">
-<h2> Getting Started </h2>
+<h3> Super Tools </h3>
+<div class="grid">
+  <div class="card"><div class="card-title"><a href="#super-merger"> 1. Super Merger </a></div><div class="card-desc"> Live-mix audio with keyboard shortcuts. Auto-records and exports as a perfectly synced WAV.</div></div>
+  <div class="card"><div class="card-title"><a href="#super-trim"> 2. Super Trim </a></div><div class="card-desc"> Live-trim audio with keyboard shortcuts. Set start and end points instantly.</div></div>
+  <div class="card"><div class="card-title"><a href="#super-cut"> 3. Super Cut </a></div><div class="card-desc"> Remove multiple mistakes or unwanted sections seamlessly while listening.</div></div>
+</div>
+
+<h3> Standard Tools </h3>
+<div class="grid">
+  <div class="card"><div class="card-title"><a href="#merge-audio"> 1. Merge Audio </a></div><div class="card-desc"> Mix unlimited tracks with custom timing, crop ranges, and volume.</div></div>
+  <div class="card"><div class="card-title"><a href="#merge-video"> 2. Merge Video </a></div><div class="card-desc"> Concatenate video clips in sequence with optional crop ranges.</div></div>
+  <div class="card"><div class="card-title"><a href="#audio-video"> 3. Audio + Video </a></div><div class="card-desc"> Turn images and a music file into a timed slideshow video.</div></div>
+  <div class="card"><div class="card-title"><a href="#video-audio"> 4. Video + Audio </a></div><div class="card-desc"> Extract the audio track from any video as a clean WAV file.</div></div>
+  <div class="card"><div class="card-title"><a href="#trim-audio"> 5. Trim Audio </a></div><div class="card-desc"> Crop audio to exact in/out points. Preview before you download.</div></div>
+  <div class="card"><div class="card-title"><a href="#trim-video"> 6. Trim Video </a></div><div class="card-desc"> Crop video to exact timestamps and export as WebM.</div></div>
+</div>
+
+<p><strong>Persistent Library:</strong> Files saved locally in IndexedDB, surviving page refreshes.</p>
+
+<h2 id="start"> Getting Started </h2>
 <h3> Option A — Play Online (Easiest)</h3>
 <p style="margin-bottom: 8px;"> You can use the studio directly in your browser without downloading anything:</p>
-<p style="margin-bottom: 24px;">🔗<strong><a href="https://saifeldeen377.github.io/accessible_media_studio/" target="_blank"> Accessible Media Studio - Live Version </a></strong></p>
+<p style="margin-bottom: 24px;"><strong><a href="https://saifeldeen377.github.io/accessible_media_studio/" target="_blank"> Accessible Media Studio - Live Version </a></strong></p>
 
-<h3> Option B — Open locally </h3>
+<h3> Option B - Open locally </h3>
 <ol class="steps">
 <li> Download or clone this project folder.</li>
 <li> Double-click <code> index.html </code> to open in Chrome, Edge, or Firefox.</li>
-<li> Done. No setup, no installation, no internet needed after first load.</li>
+<li> Done. No setup, no installation.<br><br>
+<strong>Note:</strong> An internet connection is required the <strong>first time</strong> you open the app so your browser can cache a few small assets (like Google Fonts and a video conversion library). Once cached, the app will work completely offline (unless you clear your browser cache, in which case you'll need internet once to cache them again).</li>
 </ol>
 
 <h3> Option C — Local server </h3>
@@ -460,9 +465,9 @@ python -m http.server 3000
 <h3> Managing Files </h3>
 <p>Each file in your library has three action buttons:</p>
 <ol>
-<li><strong>⬇️ Download</strong>: Download the file directly to your device. The correct extension (e.g., <code>.wav</code>, <code>.mp3</code>, <code>.webm</code>) is automatically applied based on the file's exact MIME type.</li>
-<li><strong>▶️ Preview/Show</strong>: Play the audio/video or view the image directly in the library.</li>
-<li><strong>❌ Remove</strong>: Delete the file from the library to free up space.</li>
+<li><strong> Download</strong>: Download the file directly to your device. The correct extension (e.g., <code>.wav</code>, <code>.mp3</code>, <code>.webm</code>) is automatically applied based on the file's exact MIME type.</li>
+<li><strong> Preview/Show</strong>: Play the audio/video or view the image directly in the library.</li>
+<li><strong> Remove</strong>: Delete the file from the library to free up space.</li>
 </ol>
 
 <h3> Persistence </h3>
@@ -493,7 +498,15 @@ python -m http.server 3000
 
 <!-- Super Merger -->
 <section id="super-mode">
-<h2> Super Merger — Live Mixer </h2>
+<h2 id="tools"> Tools Guide </h2>
+
+<p> Use the <strong>tab bar</strong> to switch between tools. Press Left / Right Arrow Keys when the tab bar is focused to navigate between tabs.</p>
+
+<hr>
+
+<h3> Super Tools </h3>
+
+<h2 id="super-merger"> 1. Super Merger - Live Mixer </h2>
 <p>
  Super Merger lets you <strong> perform a live audio mix in real time </strong> using keyboard shortcuts,
  then <strong> automatically records and exports </strong> everything as a perfectly timed WAV — exactly
@@ -514,9 +527,18 @@ python -m http.server 3000
 <li> Select the <strong> Trigger Behavior </strong>(Overlap or Cutoff) for this sound (see below).</li>
 <li> Click <strong>"Add to Super Mix"</strong>.</li>
 </ul>
+<p style="margin-top: 8px; font-size: 0.9em; color: var(--text-sub);"><em>(Note: If you forget to select a file, forget to type a shortcut, or choose a shortcut that is already in use, the app will announce a warning and automatically return your focus to the correct field so you can fix it.)</em></p>
 </li>
 <li> Click <strong>"Go Now - Start Live Mixer"</strong>.</li>
 </ol>
+
+<h3 id="sm-managing-overlays"> Managing Overlays </h3>
+<p>If you made a mistake or want to change your assigned overlays, click <strong>"Manage Overlays"</strong> in the setup view. From there, you can:</p>
+<ul>
+<li><strong>Edit</strong>: Change the assigned file, shortcut key, volume, or behavior of any existing overlay.</li>
+<li><strong>Remove</strong>: Delete a specific overlay entirely.</li>
+<li><strong>Reset</strong>: Remove all overlays at once.</li>
+</ul>
 
 <h3 id="sm-keys"> Keyboard Shortcuts in Super Merger </h3>
 <div class="table-wrap">
@@ -532,6 +554,7 @@ python -m http.server 3000
 <tr><td><kbd> d </kbd>(your key)</td><td> Play overlay from beginning (restarts if already playing)</td></tr>
 <tr><td><kbd> Shift </kbd>+<kbd> d </kbd></td><td> Pause / Resume that overlay from current position in both listening and the final track </td></tr>
 <tr><td><kbd> Alt </kbd>+<kbd> Shift </kbd>+<kbd> d </kbd></td><td> Stop, delete, and erase the currently playing overlay clip from the log and timeline </td></tr>
+<tr><td><kbd> Escape </kbd></td><td> During Setup: Exits Super Merger. During Live Session: Returns to Setup view safely. </td></tr>
 </tbody>
 </table>
 </div>
@@ -543,7 +566,7 @@ python -m http.server 3000
 </div>
 </div>
 
-<h3 id="sm-advanced">⚙️ Advanced Settings </h3>
+<h3 id="sm-advanced"> Advanced Settings </h3>
 
 <h4 id="sm-settings"> Base Audio End Behavior </h4>
 <p> Under the Base Audio File selection, you can configure what happens when the base audio ends physically:</p>
@@ -573,6 +596,9 @@ python -m http.server 3000
 <li><strong> Cutoff:</strong> If you press the key multiple times, the currently playing instance of the sound will instantly stop, and a new one will begin. This acts as a "Choke Group"and is perfect for percussive hits, vocal chops, or melodic samples.<strong> Note:</strong> This choke behavior applies both during live recording and when playing back previously recorded overlays (overdubbing).</li>
 </ul>
 
+<h3 id="sm-resume"> Resuming Interrupted Sessions </h3>
+<p> If you accidentally press <kbd> Escape </kbd> or leave the Live Mixer while you have a session with recorded clips or an active timeline, your work is perfectly preserved. When you open the Super Merger again, a <strong> Continue Recording </strong> button will appear next to the "Go Now" button. Clicking it instantly restores your base track, timeline, and all overlays precisely where you left off, and seamlessly auto-resumes the playback and recording.</p>
+
 <h3 id="sm-export"> Live Session Actions </h3>
 <p> During the live performance, you can use the actions located in the <strong> Super Merger Header </strong>(right next to the Close button):</p>
 <ul>
@@ -583,7 +609,7 @@ python -m http.server 3000
 
 <!-- SUPER TRIM -->
 <section id="super-trim">
-<h2> Super Trim — Live Audio Cropper </h2>
+<h2 id="super-trim"> 2. Super Trim - Live Audio Cropper </h2>
 <p> Super Trim is the fastest, most precise way to crop audio files using only your keyboard. It was designed to solve the problem of visual timeline dependency in traditional editors.</p>
 
 <h3> How to use </h3>
@@ -619,7 +645,7 @@ python -m http.server 3000
 
 <!-- Super Cut -->
 <section id="super-cut">
-<h2> Super Cut — Live Audio Cleaner </h2>
+<h2 id="super-cut"> 3. Super Cut - Live Audio Cleaner </h2>
 <p> Super Cut allows you to listen to an audio file and seamlessly "cut out" multiple mistakes, long pauses, or unwanted sections in real time using simple keyboard shortcuts.</p>
 
 <h3> How to use </h3>
@@ -659,10 +685,12 @@ python -m http.server 3000
 
 <!-- TOOLS GUIDE -->
 <section id="tools">
-<h2> Tools Guide </h2>
-<p> Use the <strong> tab bar </strong> to switch between tools. Press <kbd>←</kbd><kbd>→</kbd> Arrow Keys when the tab bar is focused to navigate between tabs.</p>
 
-<h3 id="merge-audio">1. Merge Audio </h3>
+<hr>
+
+<h3> Standard Tools </h3>
+
+<h3 id="merge-audio"> 1. Merge Audio </h3>
 <p> Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.</p>
 <ol class="steps">
 <li> Select a file from the library dropdown.</li>
@@ -677,7 +705,7 @@ python -m http.server 3000
 <div class="callout-body"> You can add the same file multiple times with different start times to create loops or layered echoes.</div>
 </div>
 
-<h3 id="merge-video">2. Merge Video </h3>
+<h3 id="merge-video"> 2. Merge Video </h3>
 <p> Join multiple video clips one after another into a single WebM file.</p>
 <ol class="steps">
 <li> Select a video, optionally set crop range, click <strong>"Add to Queue"</strong>.</li>
@@ -724,6 +752,8 @@ python -m http.server 3000
 
 <!-- Super Merger -->
 <section id="accessibility">
+<hr>
+
 <h2> Accessibility </h2>
 <p> Accessibility is not a feature here — it's the foundation.</p>
 
@@ -815,7 +845,7 @@ python -m http.server 3000
 
 <!-- TECHNICAL -->
 <section id="technical">
-<h2>⚙️ Technical Notes </h2>
+<h2> Technical Notes </h2>
 
 <h3> Stack </h3>
 <ul>

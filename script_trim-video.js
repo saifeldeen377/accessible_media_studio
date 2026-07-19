@@ -14,6 +14,106 @@ function initTrimVideo() {
  }
  });
 
+  const btnPreview = document.getElementById('btn-tv-preview');
+  const btnReplay = document.getElementById('btn-tv-replay-preview');
+  const btnStop = document.getElementById('btn-tv-stop');
+  const container = document.getElementById('tv-preview-container');
+  const statusEl = document.getElementById('tv-status');
+
+  let tvIsPreviewing = false;
+  
+  function stopTvPreview() {
+    container.innerHTML = '';
+    container.hidden = true;
+    tvIsPreviewing = false;
+    btnPreview.textContent = 'Preview Trim';
+    btnPreview.setAttribute('aria-label', `Preview trim`);
+    if (btnReplay) {
+      if (document.activeElement === btnReplay) btnPreview.focus();
+      btnReplay.style.display = 'none';
+    }
+    btnStop.style.display = 'none';
+  }
+
+  btnPreview.addEventListener('click', () => {
+    const assetId = document.getElementById('tv-video-select').value;
+    if (!assetId) { alert('Please select a video file from the library.'); return; }
+    
+    if (tvIsPreviewing) {
+      const vid = container.querySelector('video');
+      if (vid) {
+        if (!vid.paused) {
+          vid.pause();
+          btnPreview.textContent = '▶️ Resume Trim';
+          btnPreview.setAttribute('aria-label', `Resume trim preview`);
+          statusEl.textContent = 'Preview paused.';
+          announce('Preview paused.');
+        } else {
+          vid.play();
+          btnPreview.textContent = '⏸️ Pause Trim';
+          btnPreview.setAttribute('aria-label', `Pause trim preview`);
+          statusEl.textContent = 'Preview resumed.';
+          announce('Preview resumed.');
+        }
+      }
+      return;
+    }
+
+    const asset = getAsset(assetId);
+    const start = parseFloat(tvStart.value) || 0;
+    const endRaw = tvEnd.value;
+    const end = endRaw ? parseFloat(endRaw) : Infinity;
+
+    if (start >= end) { alert('Trim End must be after Trim Start.'); return; }
+
+    container.hidden = false;
+    container.innerHTML = `<video id="vid-tv-preview" src="${asset.objectURL}" autoplay controls playsinline></video>`;
+    
+    const vid = document.getElementById('vid-tv-preview');
+    vid.currentTime = start;
+    vid.play().catch(e => console.error(e));
+
+    tvIsPreviewing = true;
+    btnPreview.textContent = '⏸️ Pause Trim';
+    btnPreview.setAttribute('aria-label', `Pause trim preview`);
+    btnReplay.style.display = 'inline-block';
+    btnStop.style.display = 'inline-block';
+    statusEl.textContent = 'Previewing...';
+
+    vid.ontimeupdate = () => {
+      if (vid.currentTime >= end) {
+        vid.pause();
+        stopTvPreview();
+        statusEl.textContent = 'Preview finished.';
+        announce('Preview finished.');
+      }
+    };
+
+    vid.onended = () => {
+      stopTvPreview();
+      statusEl.textContent = 'Preview finished.';
+      announce('Preview finished.');
+    };
+  });
+
+  btnReplay.addEventListener('click', () => {
+    const vid = document.getElementById('vid-tv-preview');
+    if (vid) {
+      const start = parseFloat(tvStart.value) || 0;
+      vid.currentTime = start;
+      vid.play();
+      btnPreview.textContent = '⏸️ Pause Trim';
+      btnPreview.setAttribute('aria-label', `Pause trim preview`);
+      announce('Preview replayed.');
+    }
+  });
+
+  btnStop.addEventListener('click', () => {
+    stopTvPreview();
+    statusEl.textContent = 'Stopped.';
+    announce('Preview stopped.');
+  });
+
   const performTrimVideoExport = async (isSaveToLib) =>{
  if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
  const assetId = document.getElementById('tv-video-select').value;
@@ -86,11 +186,11 @@ function initTrimVideo() {
  const pct = progress * 100;
  if (progressEl) progressEl.value = pct;
  
- const threshold = Math.floor(pct / 25) * 25;
- if (threshold >0 && threshold !== lastAnnouncedProgress && threshold % 25 === 0 && threshold<= 100) {
- statusEl.textContent = `Trimming video... ${threshold}%`;
- lastAnnouncedProgress = threshold;
- }
+  if (lastAnnouncedProgress === -1) lastAnnouncedProgress = 0;
+  if (pct >= lastAnnouncedProgress + 25 && lastAnnouncedProgress < 100) {
+    lastAnnouncedProgress += 25;
+    statusEl.textContent = `Trimming video... ${lastAnnouncedProgress}%`;
+  }
  });
  recorder.stop();
  } finally {

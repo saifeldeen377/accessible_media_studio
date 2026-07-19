@@ -50,6 +50,7 @@ window.addEventListener('beforeunload', (e) =>{
 let smBaseSegmentStartTimeline = 0;
 let smBaseSegmentStartSource = 0;
 let smTotalRecordedDuration = 0; // Captured when base ends or recording stops; defines the true end of the mix
+let smLastBaseTime = 0; // The time the base audio was at when the user pressed Escape
 const activeOverlayAudios = {}; // id ->{ sourceNode, gainNode, buffer, state, clipEntry, startTimeInBase, playStartTime, pausedAtOffset }
 let reviewOverlayPlaybacks = []; // Array of active review playback entries
 const decodedAudioBuffers = {};

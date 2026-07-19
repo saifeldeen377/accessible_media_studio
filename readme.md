@@ -6,9 +6,9 @@
 
 - **Fully local — No Server**
 - **NVDA / JAWS / VoiceOver**
-- 🎹 **Keyboard First**
+-  **Keyboard First**
 - **Persistent Library**
-- 🎚️ **Live Mixer (Super Merger)**
+-  **Live Mixer (Super Merger)**
 
 ---
 
@@ -20,25 +20,29 @@ This project was built to answer a simple question: _What if a media studio was 
 
 - **Accessibility First**: Every feature was designed to work fully via keyboard. No drag-and-drop. No visual-only controls. Every element has a label.
 - **Privacy by Default**: Your files never leave your device. No uploads, no accounts, no cloud. Everything is processed locally in your browser.
-- 🚫 **No Installation Required**: Open a single HTML file and it works. No Python, no Node.js, no app stores. Just your browser.
+-  **No Installation Required**: Open a single HTML file and it works. No Python, no Node.js, no app stores. Just your browser.
 - **Live Mixer for Everyone**: Super Merger lets you perform a live audio mix using only keyboard shortcuts — something no other accessible tool offers.
 
 > ** Note:** This project was built iteratively with real accessibility feedback in mind — every announcement, focus behavior, and keyboard shortcut was shaped by actual screen reader usage patterns.
 
 ---
 
-## ✨ Features at a Glance
+##  Features at a Glance
 
-- [**Super Merger**](#-super-merger---live-mixer): Live-mix audio with keyboard shortcuts. Auto-records and exports as perfectly synced WAV.
-- [**Super Trim**](#-super-trim---live-audio-cropper): Live-trim audio with keyboard shortcuts. Set start and end points instantly.
-- [**Super Cut**](#-super-cut---live-audio-cleaner): Remove multiple mistakes or unwanted sections seamlessly while listening.
-- [**Merge Audio**](#1-merge-audio): Mix unlimited tracks with custom timing, crop ranges, and volume.
-- [**Merge Video**](#2-merge-video): Concatenate video clips in sequence with optional crop ranges.
-- [**Audio → Video**](#3-audio--video-slideshow): Turn images + a music file into a timed slideshow video.
-- [**Video → Audio**](#4-video--audio-extract): Extract the audio track from any video as a clean WAV file.
-- [**Trim Audio**](#5-trim-audio): Crop audio to exact in/out points. Preview before you download.
-- [**Trim Video**](#6-trim-video): Crop video to exact timestamps and export as WebM.
-- [**Persistent Library**](#-the-media-library): Files saved locally in IndexedDB — survive page refresh.
+### Super Tools
+- **1. Super Merger**: Live-mix audio with keyboard shortcuts. Auto-records and exports as a perfectly synced WAV.
+- **2. Super Trim**: Live-trim audio with keyboard shortcuts. Set start and end points instantly.
+- **3. Super Cut**: Remove multiple mistakes or unwanted sections seamlessly while listening.
+
+### Standard Tools
+- **1. Merge Audio**: Mix unlimited tracks with custom timing, crop ranges, and volume.
+- **2. Merge Video**: Concatenate video clips in sequence with optional crop ranges.
+- **3. Audio → Video (Slideshow)**: Turn images + a music file into a timed slideshow video.
+- **4. Video → Audio (Extract)**: Extract the audio track from any video as a clean WAV file.
+- **5. Trim Audio**: Crop audio to exact in/out points. Preview before you download.
+- **6. Trim Video**: Crop video to exact timestamps and export as WebM.
+
+- **Persistent Library**: Files saved locally in IndexedDB — survive page refresh.
 
 ---
 
@@ -46,12 +50,13 @@ This project was built to answer a simple question: _What if a media studio was 
 
 ### Option A — Play Online (Easiest)
 You can use the studio directly in your browser without downloading anything:
-🔗 **[Accessible Media Studio - Live Version](https://saifeldeen377.github.io/accessible_media_studio/)**
+ **[Accessible Media Studio - Live Version](https://saifeldeen377.github.io/accessible_media_studio/)**
 
 ### Option B — Open locally
 1. Download or clone this project folder.
 2. Double-click `index.html` to open in Chrome, Edge, or Firefox.
-3. Done. No setup, no installation, no internet needed after first load.
+3. Done. No setup, no installation.
+   > **Note:** An internet connection is required the **first time** you open the app so your browser can cache a few small assets (like Google Fonts and a video conversion library). Once cached, the app will work completely offline (unless you clear your browser cache, in which case you'll need internet once to cache them again).
 
 ### Option C — Local server
 ```bash
@@ -84,9 +89,9 @@ The Media Library is the central hub. Upload once, and every tool can immediatel
 
 ### Managing Files
 Each file in your library has three action buttons:
-1. **⬇️ Download**: Download the file directly to your device. The correct extension (e.g., `.wav`, `.mp3`, `.webm`) is automatically applied based on the file's exact MIME type.
-2. **▶️ Preview/Show**: Play the audio/video or view the image directly in the library.
-3. **❌ Remove**: Delete the file from the library to free up space.
+1. ** Download**: Download the file directly to your device. The correct extension (e.g., `.wav`, `.mp3`, `.webm`) is automatically applied based on the file's exact MIME type.
+2. ** Preview/Show**: Play the audio/video or view the image directly in the library.
+3. ** Remove**: Delete the file from the library to free up space.
 
 ### Persistence
 Files are saved automatically to your browser's **IndexedDB**. Refresh the page and they're still there. The status badge below the library title always shows the current state:
@@ -106,12 +111,20 @@ Files are saved automatically to your browser's **IndexedDB**. Refresh the page 
 
 ---
 
-## Super Merger — Live Mixer
+## Tools Guide
+
+Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when the tab bar is focused to navigate between tabs.
+
+---
+
+### Super Tools
+
+## 1. Super Merger — Live Mixer
 
 Super Merger lets you **perform a live audio mix in real time** using keyboard shortcuts, then **automatically records and exports** everything as a perfectly timed WAV — exactly matching what you heard during your performance.
 
 ### Why Super Merger Exists
-Traditional editors require you to carefully place audio clips on a visual timeline using a mouse. If you can't see the screen, this is impossible. 
+Traditional editors require you to carefully place audio clips on a visual timeline using a mouse. If you can't see the screen, this is impossible.
 **Super Merger solves this by turning your keyboard into a live instrument.** You play a base track, and whenever you want an overlay sound to play, you just press its key. It captures your exact timing in real-time, builds a mix, and exports it as a perfectly synced WAV file.
 
 ### Quick Start
@@ -123,7 +136,14 @@ Traditional editors require you to carefully place audio clips on a visual timel
  - Adjust the **Overlay Volume** (0-100%) for this specific sound.
  - Select the **Trigger Behavior** (Overlap or Cutoff) for this sound (see below).
  - Click **" Add to Super Mix"**.
+ *(Note: If you forget to select a file, forget to type a shortcut, or choose a shortcut that is already in use, the app will announce a warning and automatically return your focus to the correct field so you can fix it.)*
 4. Click **" Go Now - Start Live Mixer"**.
+
+### Managing Overlays
+If you made a mistake or want to change your assigned overlays, click **"Manage Overlays"** in the setup view. From there, you can:
+- **Edit**: Change the assigned file, shortcut key, volume, or behavior of any existing overlay.
+- **Remove**: Delete a specific overlay entirely.
+- **Reset**: Remove all overlays at once.
 
 ### Keyboard Shortcuts in Super Merger
 | Key | Action |
@@ -137,10 +157,11 @@ Traditional editors require you to carefully place audio clips on a visual timel
 | `[Your Key]` | Play overlay from beginning (restarts if already playing) |
 | `Shift` + `[Your Key]` | Pause / Resume that overlay from current position in both listening and the final track |
 | `Alt` + `Shift` + `[Your Key]` | Stop, delete, and erase the currently playing overlay clip from the log and timeline |
+| `Escape` | During Setup: Exits Super Merger. During Live Session: Returns to Setup view safely. |
 
 > ** Note:** Overlays are only **recorded** when the timeline is actively running. This includes when the base audio is playing naturally, when overdubbing during a replay, and during a **Soft-Pause** gap. Triggering an overlay while the timeline is fully paused lets you audition the sound without it appearing in the final mix.
 
-### ⚙️ Advanced Settings
+###  Advanced Settings
 
 #### Base Audio End Behavior
 Under the Base Audio File selection, you can configure what happens when the base audio ends physically:
@@ -162,6 +183,9 @@ When assigning a shortcut key to an overlay, you can configure how it behaves wh
 - **Overlap (Default):** If you press the key multiple times, the sound will play on top of itself. This is ideal for sounds with long tails (like crash cymbals or pads) where you want the sound to ring out naturally without being cut short.
 - **Cutoff:** If you press the key multiple times, the currently playing instance of the sound will instantly stop, and a new one will begin. This acts as a " Choke Group" and is perfect for percussive hits, vocal chops, or melodic samples. **Note:** This choke behavior applies both during live recording and when playing back previously recorded overlays (overdubbing).
 
+### Resuming Interrupted Sessions
+If you accidentally press `Escape` or leave the Live Mixer while you have a session with recorded clips or an active timeline, your work is perfectly preserved. When you open the Super Merger again, a **Continue Recording** button will appear next to the "Go Now" button. Clicking it instantly restores your base track, timeline, and all overlays precisely where you left off, and seamlessly auto-resumes the playback and recording.
+
 ### Live Session Actions
 During the live performance, you can use the actions located in the **Super Merger Header** (right next to the Close button):
  - ** Download WAV:** Click this button to render and download your current live mix. The app processes the base audio and overlays via `OfflineAudioContext` (much faster than real-time) and downloads a WAV file with exact timing. You can also use **Save to Library** to keep the result in the studio without downloading.
@@ -169,7 +193,7 @@ During the live performance, you can use the actions located in the **Super Merg
 
 ---
 
-## Super Trim — Live Audio Cropper
+## 2. Super Trim — Live Audio Cropper
 
 Super Trim is the fastest, most precise way to crop audio files using only your keyboard. It was designed to solve the problem of visual timeline dependency in traditional editors.
 
@@ -196,7 +220,7 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 
 ---
 
-## Super Cut — Live Audio Cleaner
+## 3. Super Cut — Live Audio Cleaner
 
 Super Cut allows you to listen to an audio file and seamlessly "cut out" multiple mistakes, long pauses, or unwanted sections in real time using simple keyboard shortcuts.
 
@@ -227,9 +251,7 @@ Super Cut's state machine is designed to be forgiving:
 
 ---
 
-## Tools Guide
-
-Use the **tab bar** to switch between tools. Press `←` `→` Arrow Keys when the tab bar is focused to navigate between tabs.
+### Standard Tools
 
 ### 1. Merge Audio
 Mix multiple audio tracks into one WAV file. All tracks play simultaneously, positioned by time.
@@ -253,7 +275,7 @@ Join multiple video clips one after another into a single WebM file.
 ### 3. Audio → Video (Slideshow)
 Combine a music track with images to create a timed slideshow video.
 1. Select your audio/music file in Step 1.
-2. For each slide: select an image, set " Show from" and " Show until"(seconds), click **" Add Image Slide"**.
+2. For each slide: select an image, set " Show from" and " Show until" (seconds), click **" Add Image Slide"**.
  3. Click **" Generate Slideshow Video"** or **" Save to Library"**.
 
 ### 4. Video → Audio (Extract)
@@ -325,7 +347,7 @@ Accessibility is not a feature here — it's the foundation.
 
 ---
 
-## ⚙️ Technical Notes
+##  Technical Notes
 
 ### Stack
 - **Pure HTML, CSS, JavaScript** — zero frameworks, zero build tools, zero dependencies.

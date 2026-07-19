@@ -26,8 +26,123 @@ function initMergeVideo() {
  announce(`"${asset.name}"added to the video merge queue.`);
  });
 
- document.getElementById('btn-mv-export').addEventListener('click', () => exportMergeVideo(false));
- document.getElementById('btn-mv-save').addEventListener('click', () => exportMergeVideo(true));
+  document.getElementById('btn-mv-export').addEventListener('click', () => exportMergeVideo(false));
+  document.getElementById('btn-mv-save').addEventListener('click', () => exportMergeVideo(true));
+
+  const btnPreview = document.getElementById('btn-mv-preview');
+  const btnReplay = document.getElementById('btn-mv-replay-preview');
+  const btnStop = document.getElementById('btn-mv-stop');
+  const container = document.getElementById('mv-preview-container');
+  const statusEl = document.getElementById('mv-status');
+
+  let mvIsPreviewing = false;
+  let mvPreviewClipIndex = 0;
+  let mvActiveVideoElement = null;
+
+  function stopMvPreview() {
+    container.innerHTML = '';
+    container.hidden = true;
+    mvIsPreviewing = false;
+    mvPreviewClipIndex = 0;
+    mvActiveVideoElement = null;
+    btnPreview.textContent = 'Preview Video Mix';
+    btnPreview.setAttribute('aria-label', `Preview video mix`);
+    if (btnReplay) {
+      if (document.activeElement === btnReplay) btnPreview.focus();
+      btnReplay.style.display = 'none';
+    }
+    btnStop.style.display = 'none';
+  }
+
+  function playNextMvClip() {
+    if (mvPreviewClipIndex >= mvClips.length) {
+      stopMvPreview();
+      statusEl.textContent = 'Preview finished.';
+      announce('Preview finished.');
+      return;
+    }
+
+    const clip = mvClips[mvPreviewClipIndex];
+    const asset = getAsset(clip.assetId);
+    if (!asset) {
+      mvPreviewClipIndex++;
+      playNextMvClip();
+      return;
+    }
+
+    container.hidden = false;
+    container.innerHTML = `<video id="vid-mv-preview" src="${asset.objectURL}" autoplay playsinline></video>`;
+    mvActiveVideoElement = document.getElementById('vid-mv-preview');
+    
+    // We intentionally do NOT use controls so the user uses the main Play/Pause button
+    
+    const cropStart = clip.cropStart || 0;
+    const cropEnd = clip.cropEnd || Infinity;
+
+    mvActiveVideoElement.currentTime = cropStart;
+    mvActiveVideoElement.play().catch(e => console.error(e));
+    
+    statusEl.textContent = `Previewing clip ${mvPreviewClipIndex + 1} of ${mvClips.length}...`;
+
+    mvActiveVideoElement.ontimeupdate = () => {
+      if (mvActiveVideoElement.currentTime >= cropEnd) {
+        mvActiveVideoElement.pause();
+        mvPreviewClipIndex++;
+        playNextMvClip();
+      }
+    };
+
+    mvActiveVideoElement.onended = () => {
+      mvPreviewClipIndex++;
+      playNextMvClip();
+    };
+  }
+
+  btnPreview.addEventListener('click', () => {
+    if (mvClips.length === 0) { alert('Add at least one video clip first.'); return; }
+
+    if (mvIsPreviewing) {
+      if (mvActiveVideoElement) {
+        if (!mvActiveVideoElement.paused) {
+          mvActiveVideoElement.pause();
+          btnPreview.textContent = '▶️ Resume Mix';
+          btnPreview.setAttribute('aria-label', `Resume video mix preview`);
+          statusEl.textContent = 'Preview paused.';
+          announce('Preview paused.');
+        } else {
+          mvActiveVideoElement.play();
+          btnPreview.textContent = '⏸️ Pause Mix';
+          btnPreview.setAttribute('aria-label', `Pause video mix preview`);
+          statusEl.textContent = `Previewing clip ${mvPreviewClipIndex + 1} of ${mvClips.length}...`;
+          announce('Preview resumed.');
+        }
+      }
+      return;
+    }
+
+    mvIsPreviewing = true;
+    btnPreview.textContent = '⏸️ Pause Mix';
+    btnPreview.setAttribute('aria-label', `Pause video mix preview`);
+    btnReplay.style.display = 'inline-block';
+    btnStop.style.display = 'inline-block';
+    playNextMvClip();
+  });
+
+  btnReplay.addEventListener('click', () => {
+    mvPreviewClipIndex = 0;
+    if (mvActiveVideoElement) {
+      mvActiveVideoElement.pause();
+    }
+    btnPreview.textContent = '⏸️ Pause Mix';
+    playNextMvClip();
+    announce('Preview replayed.');
+  });
+
+  btnStop.addEventListener('click', () => {
+    stopMvPreview();
+    statusEl.textContent = 'Stopped.';
+    announce('Preview stopped.');
+  });
 }
 
 function renderMvTable() {
@@ -150,11 +265,11 @@ function playVideoClipToCanvas(url, cropStart, cropEnd, canvas, ctx2d, actx, aud
  video.preload = 'auto';
 
  let audioSource = null;
- let animFrameId = null;
+ let intervalId = null;
  let resolved = false;
 
  const cleanup = () =>{
- if (animFrameId) cancelAnimationFrame(animFrameId);
+ if (intervalId) clearInterval(intervalId);
  if (audioSource) {
  try { audioSource.disconnect(); } catch (_) {}
  audioSource = null;
@@ -201,10 +316,9 @@ function playVideoClipToCanvas(url, cropStart, cropEnd, canvas, ctx2d, actx, aud
  const curr = video.currentTime - cropStart;
  onProgress(dur >0 ? Math.max(0, Math.min(1, curr / dur)) : 0);
  }
- animFrameId = requestAnimationFrame(draw);
  };
 
- video.play().then(() =>{ animFrameId = requestAnimationFrame(draw); });
+ video.play().then(() =>{ intervalId = setInterval(draw, 33); });
 
  video.addEventListener('timeupdate', () =>{
  if (video.currentTime >= endTime) {

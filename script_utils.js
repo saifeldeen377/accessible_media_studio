@@ -22,9 +22,35 @@ function getAudioCtx() {
 }
 
 function announce(msg, assertive = false) {
- const el = document.getElementById(assertive ? 'assertive-announcement' : 'announcement');
- el.textContent = '';
- setTimeout(() =>{ el.textContent = msg; }, 50);
+    const dialogs = document.querySelectorAll('dialog[open]');
+    let targetEl;
+    
+    if (dialogs.length > 0) {
+        const topDialog = dialogs[dialogs.length - 1];
+        targetEl = topDialog.querySelector('#local-announcer');
+        if (!targetEl) {
+            targetEl = document.createElement('div');
+            targetEl.id = 'local-announcer';
+            targetEl.className = 'sr-only';
+            topDialog.appendChild(targetEl);
+        }
+    } else {
+        targetEl = document.getElementById(assertive ? 'assertive-announcement' : 'announcement');
+    }
+
+    if (targetEl) {
+        targetEl.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+        targetEl.setAttribute('aria-atomic', 'true');
+        targetEl.textContent = '';
+        setTimeout(() => { 
+            targetEl.textContent = msg; 
+            setTimeout(() => {
+                if (targetEl.textContent === msg) {
+                    targetEl.textContent = '';
+                }
+            }, 8000);
+        }, 50);
+    }
 }
 
 function setAppBackgroundInert(isInert) {
@@ -48,7 +74,7 @@ function setupFocusTrap(container) {
     if (e.key === 'Tab') {
       const focusableElements = Array.from(container.querySelectorAll(
         'button:not([disabled]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ));
+      )).filter(el => el.offsetParent !== null);
       
       if (focusableElements.length === 0) return;
       
@@ -171,7 +197,9 @@ function audioBufferToWav(buffer) {
  };
  `;
  const blob = new Blob([workerCode], { type: 'application/javascript' });
- const worker = new Worker(URL.createObjectURL(blob));
+ const workerUrl = URL.createObjectURL(blob);
+ const worker = new Worker(workerUrl);
+ URL.revokeObjectURL(workerUrl); // Free memory immediately
 
  worker.onmessage = (e) =>{
  if (e.data && e.data.error) {

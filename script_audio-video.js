@@ -25,8 +25,180 @@ function initAudioToVideo() {
  announce(`"${asset.name}"added: shown from ${start}s to ${end}s.`);
  });
 
- document.getElementById('btn-av-export').addEventListener('click', () => exportAudioToVideo(false));
- document.getElementById('btn-av-save').addEventListener('click', () => exportAudioToVideo(true));
+  document.getElementById('btn-av-export').addEventListener('click', () => exportAudioToVideo(false));
+  document.getElementById('btn-av-save').addEventListener('click', () => exportAudioToVideo(true));
+
+  const btnPreview = document.getElementById('btn-av-preview');
+  const btnReplay = document.getElementById('btn-av-replay-preview');
+  const btnStop = document.getElementById('btn-av-stop');
+  const container = document.getElementById('av-preview-container');
+  const statusEl = document.getElementById('av-status');
+
+  let avIsPreviewing = false;
+  let avPreviewTimer = null;
+  let avPreviewAudioSrc = null;
+  let avPreviewStartTime = 0;
+  let avPreviewOffset = 0;
+
+  function stopAvPreview() {
+    if (!avIsPreviewing && !avPreviewAudioSrc) return;
+    if (avPreviewTimer) clearInterval(avPreviewTimer);
+    if (avPreviewAudioSrc) {
+      avPreviewAudioSrc.onended = null;
+      try { avPreviewAudioSrc.stop(); } catch (e) {}
+    }
+    avIsPreviewing = false;
+    avPreviewAudioSrc = null;
+    avPreviewOffset = 0;
+    container.innerHTML = '';
+    container.hidden = true;
+    
+    if (btnPreview) {
+      btnPreview.textContent = 'Preview Video';
+      btnPreview.setAttribute('aria-label', `Preview video`);
+    }
+    if (btnReplay) {
+      if (document.activeElement === btnReplay) btnPreview.focus();
+      btnReplay.style.display = 'none';
+    }
+    if (btnStop) btnStop.style.display = 'none';
+  }
+
+  if (btnPreview) {
+    btnPreview.addEventListener('click', async () => {
+      const audioAssetId = document.getElementById('av-audio-select').value;
+      if (!audioAssetId) { alert('Please select an audio file in Step 1.'); return; }
+      if (avSlides.length === 0) { alert('Please add at least one image slide in Step 2.'); return; }
+
+      if (avIsPreviewing) {
+        if (avPreviewAudioSrc) {
+          try { avPreviewAudioSrc.stop(); } catch (e) {}
+          avPreviewOffset += (getAudioCtx().currentTime - avPreviewStartTime);
+          avPreviewAudioSrc = null;
+        }
+        if (avPreviewTimer) clearInterval(avPreviewTimer);
+        avIsPreviewing = false;
+        btnPreview.textContent = '▶️ Resume Preview';
+        btnPreview.setAttribute('aria-label', `Resume preview`);
+        statusEl.textContent = 'Preview paused.';
+        announce('Preview paused.');
+        return;
+      }
+
+      const totalDur = Math.max(...avSlides.map(s => s.end));
+      if (avPreviewOffset >= totalDur) avPreviewOffset = 0;
+
+      const actx = getAudioCtx();
+      if (actx.state === 'suspended') { await actx.resume(); }
+
+      let audioBuffer;
+      btnPreview.textContent = 'Loading...';
+      try {
+        audioBuffer = await decodeAudio(getAsset(audioAssetId).objectURL);
+      } catch (err) {
+        statusEl.textContent = "Error decoding audio file.";
+        btnPreview.textContent = 'Preview Video';
+        return;
+      }
+
+      // Pre-load all images
+      const imgCache = {};
+      await Promise.all(avSlides.map(slide => new Promise(res => {
+        const asset = getAsset(slide.assetId);
+        const img = new Image();
+        img.onload = () => { imgCache[slide.id] = img; res(); };
+        img.onerror = () => { console.warn('Failed to load image', slide.id); res(); };
+        img.src = asset.objectURL;
+      })));
+
+      container.hidden = false;
+      container.innerHTML = '<canvas width="1280" height="720" style="max-width:100%; max-height:400px; background:#000;"></canvas>';
+      const canvas = container.querySelector('canvas');
+      
+      if (avSlides.length > 0 && imgCache[avSlides[0].id]) {
+        const firstImg = imgCache[avSlides[0].id];
+        let w = firstImg.width;
+        let h = firstImg.height;
+        if (w > 1920 || h > 1080) {
+          const scale = Math.min(1920 / w, 1080 / h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        canvas.width = w - (w % 2);
+        canvas.height = h - (h % 2);
+      }
+      const ctx2d = canvas.getContext('2d');
+
+      avPreviewAudioSrc = actx.createBufferSource();
+      avPreviewAudioSrc.buffer = audioBuffer;
+      avPreviewAudioSrc.connect(actx.destination);
+      
+      avPreviewAudioSrc.start(0, avPreviewOffset);
+      avPreviewStartTime = actx.currentTime;
+      avIsPreviewing = true;
+      
+      btnPreview.textContent = '⏸️ Pause Preview';
+      btnPreview.setAttribute('aria-label', `Pause preview`);
+      if (btnReplay) btnReplay.style.display = 'inline-block';
+      if (btnStop) btnStop.style.display = 'inline-block';
+
+      statusEl.textContent = 'Previewing...';
+
+      avPreviewAudioSrc.onended = () => {
+        if (!avIsPreviewing) return; // paused
+        stopAvPreview();
+        statusEl.textContent = 'Preview finished.';
+        announce('Preview finished.');
+      };
+
+      avPreviewTimer = setInterval(() => {
+        const elapsed = avPreviewOffset + (actx.currentTime - avPreviewStartTime);
+        if (elapsed >= totalDur) {
+          stopAvPreview();
+          statusEl.textContent = 'Preview finished.';
+          announce('Preview finished.');
+          return;
+        }
+
+        const slide = avSlides.find(s => elapsed >= s.start && elapsed < s.end);
+        ctx2d.fillStyle = 'black';
+        ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (slide && imgCache[slide.id]) {
+          const img = imgCache[slide.id];
+          const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+          const dx = (canvas.width - dw) / 2;
+          const dy = (canvas.height - dh) / 2;
+          ctx2d.drawImage(img, dx, dy, dw, dh);
+        }
+      }, 33);
+    });
+  }
+
+  if (btnReplay) {
+    btnReplay.addEventListener('click', () => {
+      avPreviewOffset = 0;
+      if (avIsPreviewing) {
+        if (avPreviewTimer) clearInterval(avPreviewTimer);
+        if (avPreviewAudioSrc) {
+          try { avPreviewAudioSrc.stop(); } catch (e) {}
+        }
+        avIsPreviewing = false;
+      }
+      if (btnPreview) btnPreview.click();
+      announce('Preview replayed.');
+    });
+  }
+
+  if (btnStop) {
+    btnStop.addEventListener('click', () => {
+      stopAvPreview();
+      statusEl.textContent = 'Stopped.';
+      announce('Preview stopped.');
+    });
+  }
 }
 
 function renderAvTable() {
@@ -102,12 +274,21 @@ async function exportAudioToVideo(isSaveToLib = false) {
  }
  const ctx2d = canvas.getContext('2d');
 
- const actx = getAudioCtx();
- const audioBuffer = await decodeAudio(audioAsset.file);
- const audioSrc = actx.createBufferSource();
- audioSrc.buffer = audioBuffer;
- const audioDest = actx.createMediaStreamDestination();
- audioSrc.connect(audioDest);
+  const actx = getAudioCtx();
+  let audioBuffer;
+  try {
+    audioBuffer = await decodeAudio(audioAsset.file);
+  } catch (err) {
+    statusEl.textContent = "Error decoding audio file. It may be corrupted or unsupported.";
+    announce("Error decoding audio file. It may be corrupted or unsupported.");
+    btnGenerate.disabled = false;
+    btnGenerate.textContent = "Generate Video";
+    return;
+  }
+  const audioSrc = actx.createBufferSource();
+  audioSrc.buffer = audioBuffer;
+  const audioDest = actx.createMediaStreamDestination();
+  audioSrc.connect(audioDest);
 
  const canvasStream = canvas.captureStream(30);
  const combinedStream = new MediaStream([
@@ -157,46 +338,47 @@ async function exportAudioToVideo(isSaveToLib = false) {
  if (progressEl) { progressEl.style.display = 'block'; progressEl.value = 0; }
  let lastAnnouncedProgress = -1;
  try {
- await new Promise(resolve =>{
- const draw = () =>{
- const elapsed = actx.currentTime - startWall;
- const pct = (elapsed / totalDur) * 100;
- if (progressEl) progressEl.value = pct;
+  await new Promise(resolve =>{
+  let timerId;
+  const draw = () =>{
+  const elapsed = actx.currentTime - startWall;
+  const pct = (elapsed / totalDur) * 100;
+  if (progressEl) progressEl.value = pct;
 
- const threshold = Math.floor(pct / 25) * 25;
- if (threshold >0 && threshold !== lastAnnouncedProgress && threshold % 25 === 0 && threshold<= 100) {
- statusEl.textContent = `Generating slideshow video... ${threshold}%`;
- lastAnnouncedProgress = threshold;
- }
+   if (lastAnnouncedProgress === -1) lastAnnouncedProgress = 0;
+   if (pct >= lastAnnouncedProgress + 25 && lastAnnouncedProgress < 100) {
+     lastAnnouncedProgress += 25;
+     statusEl.textContent = `Generating slideshow video... ${lastAnnouncedProgress}%`;
+   }
 
- if (elapsed >= totalDur) {
- try { audioSrc.stop(); } catch (_) {}
- recorder.stop();
- resolve();
- return;
- }
+  if (elapsed >= totalDur) {
+  try { audioSrc.stop(); } catch (_) {}
+  recorder.stop();
+  clearInterval(timerId);
+  resolve();
+  return;
+  }
 
- // Black background
- ctx2d.fillStyle = '#000';
- ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+  const slide = avSlides.find(s =>elapsed >= s.start && elapsed < s.end);
+  ctx2d.fillStyle = 'black';
+  ctx2d.fillRect(0, 0, canvas.width, canvas.height);
 
- // Find the slide that should be visible now
- const current = avSlides.find(s =>elapsed >= s.start && elapsed< s.end);
- if (current && imgCache[current.id]) {
- const img = imgCache[current.id];
- const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
- const x = (canvas.width - img.width * scale) / 2;
- const y = (canvas.height - img.height * scale) / 2;
- ctx2d.drawImage(img, x, y, img.width * scale, img.height * scale);
- }
-
- requestAnimationFrame(draw);
- };
- requestAnimationFrame(draw);
- });
+  if (slide && imgCache[slide.id]) {
+  const img = imgCache[slide.id];
+  const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  const dx = (canvas.width - dw) / 2;
+  const dy = (canvas.height - dh) / 2;
+  ctx2d.drawImage(img, dx, dy, dw, dh);
+  }
+  };
+  timerId = setInterval(draw, 33);
+  draw();
+  });
  } finally {
  isExportingMedia = false;
  if (progressEl) progressEl.style.display = 'none';
  }
-}
 
+}

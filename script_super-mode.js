@@ -15,6 +15,12 @@ function initSuperMode() {
  const resetMixBtn = document.getElementById('btn-sm-reset-mix');
  const exitToSetupBtn = document.getElementById('btn-sm-exit-to-setup');
 
+ const btnManageOverlays = document.getElementById('btn-sm-manage-overlays');
+ const btnManageClose = document.getElementById('btn-sm-manage-overlays-close');
+ const btnManageReset = document.getElementById('btn-sm-manage-overlays-reset');
+ const manageDialog = document.getElementById('sm-manage-overlays-dialog');
+ setupFocusTrap(manageDialog);
+
  const baseVolInput = document.getElementById('sm-base-volume');
  const baseVolVal = document.getElementById('sm-base-vol-val');
  baseVolInput.addEventListener('input', () =>{
@@ -45,18 +51,24 @@ function initSuperMode() {
  updateSmGoButton();
  });
 
+ document.getElementById('sm-overlay-key').addEventListener('input', (e) => {
+     e.target.setCustomValidity('');
+ });
+
  overlayForm.addEventListener('submit', e =>{
  e.preventDefault();
  const assetId = document.getElementById('sm-overlay-select').value;
  const rawKey = document.getElementById('sm-overlay-key').value.trim().toLowerCase();
 
- if (!assetId) { alert('Please select an audio file.'); return; }
- if (!rawKey) { alert('Please type a shortcut key.'); return; }
+ if (!assetId) { announce('Please select an audio file.', true); return; }
+ if (!rawKey) { announce('Please type a shortcut key.', true); return; }
 
- const exists = smOverlays.find(o =>o.key.toLowerCase() === rawKey);
+ const exists = smOverlays.find(o => o.key.toLowerCase() === rawKey);
  if (exists) {
- alert(`The key "${rawKey.toUpperCase()}"is already assigned to "${exists.name}". Choose a different key.`);
- return;
+     const keyInput = document.getElementById('sm-overlay-key');
+     keyInput.setCustomValidity(`The key "${rawKey.toUpperCase()}" is already assigned to "${exists.name}". Choose a different key.`);
+     keyInput.reportValidity();
+     return;
  }
 
  const asset = getAsset(assetId);
@@ -71,27 +83,84 @@ function initSuperMode() {
  behavior: behaviorVal
  });
 
- renderSmShortcutsTable();
- document.getElementById('sm-overlay-select').value = '';
- document.getElementById('sm-overlay-key').value = '';
- overlayVolInput.value = 100;
- overlayVolVal.textContent = '100';
- const behaviorText = behaviorVal === 'overlap' ? 'with overlap behavior' : 'with cutoff behavior';
- announce(`Assigned key "${rawKey.toUpperCase()}"to "${asset.name}"at ${volVal}% volume, ${behaviorText}.`);
+    const behaviorText = behaviorVal === 'overlap' ? 'with overlap behavior' : 'with cutoff behavior';
+    announce(`Assigned key "${rawKey.toUpperCase()}" to "${asset.name}" at ${Math.round(volVal)}% volume, ${behaviorText}.`, true);
+    
+    renderSmShortcutsTable();
+    document.getElementById('sm-overlay-select').value = '';
+    document.getElementById('sm-overlay-key').value = '';
+    overlayVolInput.value = 100;
+    overlayVolVal.textContent = '100';
  });
 
  goBtn.addEventListener('click', startSuperModeLive);
+ 
+ const continueBtn = document.getElementById('btn-sm-continue');
+ if (continueBtn) {
+     continueBtn.addEventListener('click', continueSuperModeLive);
+ }
  exportBtn.addEventListener('click', () => exportSuperModeWav(false));
  document.getElementById('btn-sm-save').addEventListener('click', () => exportSuperModeWav(true));
  resetMixBtn.addEventListener('click', resetAndRecordFromScratch);
  exitToSetupBtn.addEventListener('click', exitToSetupView);
 
+ btnManageOverlays.addEventListener('click', () => {
+    smManageEditId = null;
+    renderManageOverlaysList();
+    manageDialog.showModal();
+    if (smOverlays.length === 0) {
+        announce('There are no overlays added yet.', true);
+    }
+ });
+
+ btnManageClose.addEventListener('click', () => {
+    smManageEditId = null;
+    manageDialog.close();
+    btnManageOverlays.focus();
+ });
+
+ btnManageReset.addEventListener('click', () => {
+    smOverlays.length = 0;
+    renderManageOverlaysList();
+    renderSmShortcutsTable();
+    btnManageClose.focus();
+    announce('All overlays reset.');
+ });
+
  // Global key listener
  window.addEventListener('keydown', e =>{
  if (e.key === 'Escape' && smActive) {
- e.preventDefault();
- exitSuperMode();
- return;
+    if (manageDialog.open) {
+        e.preventDefault();
+        if (smManageEditId !== null) {
+            announce("Edit cancelled.", true);
+            const oldId = smManageEditId;
+            smManageEditId = null;
+            const card = document.querySelector(`.sm-card[data-id="${oldId}"]`);
+            if (card) {
+                card.querySelector('.sm-summary-view').hidden = false;
+                card.querySelector('.sm-edit-view').hidden = true;
+                const btn = card.querySelector('.btn-manage-edit');
+                if (btn) btn.focus();
+            }
+        } else {
+            manageDialog.close();
+            btnManageOverlays.focus();
+        }
+        return;
+    }
+    const liveView = document.getElementById('sm-live-view');
+    if (liveView && !liveView.hidden) {
+        e.preventDefault();
+        if (typeof exitToSetupView === 'function') {
+            exitToSetupView();
+        }
+        return;
+    }
+
+    e.preventDefault();
+    exitSuperMode();
+    return;
  }
 
  const tag = e.target.tagName.toLowerCase();
@@ -215,20 +284,35 @@ function enterSuperMode() {
  document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
 
- // Reset setup state
- document.getElementById('sm-base-select').value = '';
+ // Restore setup state if exists, otherwise reset
+ if (smBaseAsset) {
+     const baseSelect = document.getElementById('sm-base-select');
+     let exists = false;
+     for (let i = 0; i < baseSelect.options.length; i++) {
+         if (baseSelect.options[i].value === smBaseAsset.id) { exists = true; break; }
+     }
+     if (exists) {
+         baseSelect.value = smBaseAsset.id;
+         if (smBaseAsset.volume !== undefined) {
+             document.getElementById('sm-base-volume').value = Math.round(smBaseAsset.volume * 100);
+             document.getElementById('sm-base-vol-val').textContent = Math.round(smBaseAsset.volume * 100);
+         }
+     } else {
+         smBaseAsset = null;
+         smOverlays.length = 0;
+         smRecordedClips.length = 0;
+         baseSelect.value = '';
+     }
+ } else {
+     document.getElementById('sm-base-select').value = '';
+     document.getElementById('sm-base-volume').value = 100;
+     document.getElementById('sm-base-vol-val').textContent = '100';
+ }
+ 
  document.getElementById('sm-overlay-select').value = '';
  document.getElementById('sm-overlay-key').value = '';
- 
- // Reset volume fields
- document.getElementById('sm-base-volume').value = 100;
- document.getElementById('sm-base-vol-val').textContent = '100';
  document.getElementById('sm-overlay-volume').value = 100;
  document.getElementById('sm-overlay-vol-val').textContent = '100';
-
- smBaseAsset = null;
- smOverlays.length = 0;
- smRecordedClips.length = 0;
 
  renderSmShortcutsTable();
  updateSmGoButton();
@@ -247,44 +331,230 @@ function exitSuperMode() {
  document.getElementById('btn-sm-export').style.display = 'none';
  document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
- setAppBackgroundInert(false);
- stopSmAudio();
+  // Preserve the exact exit point so they can "Continue" later
+  if (smBaseAudio) {
+      smLastBaseTime = smBaseAudio.currentTime;
+  }
+  
+  // Close any active base segments safely
+  if (smBaseSegmentStartSource !== null && smBaseAudio) {
+      const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
+      if (duration > 0) {
+          smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
+      }
+      smBaseSegmentStartTimeline = null;
+      smBaseSegmentStartSource = null;
+  }
+
+  // Cap active overlays but PRESERVE tails so we don't chop them off harshly
+  if (typeof capActiveOverlayRecordings === 'function') {
+      capActiveOverlayRecordings(true);
+  }
+
+  setAppBackgroundInert(false);
+  stopSmAudio();
  const trigger = document.getElementById('btn-enter-super-mode');
  if (trigger) trigger.focus();
- // announce("Super Merger Closed.");
 }
 
 function updateSmGoButton() {
- const goBtn = document.getElementById('btn-sm-go');
- goBtn.disabled = !smBaseAsset;
+  const goBtn = document.getElementById('btn-sm-go');
+  const continueBtn = document.getElementById('btn-sm-continue');
+  goBtn.disabled = !smBaseAsset;
+  
+  if (continueBtn) {
+      if (smBaseAsset && (smRecordedClips.length > 0 || smVirtualTime > 0)) {
+          continueBtn.style.display = 'inline-block';
+      } else {
+          continueBtn.style.display = 'none';
+      }
+  }
 }
 
 function renderSmShortcutsTable() {
- const tbody = document.getElementById('sm-shortcuts-tbody');
- tbody.querySelectorAll('tr.data-row').forEach(r =>r.remove());
- document.getElementById('sm-shortcuts-empty').style.display = smOverlays.length ? 'none' : '';
-
- smOverlays.forEach(item =>{
- const tr = document.createElement('tr');
- tr.className = 'data-row';
- const volPct = Math.round((item.volume !== undefined ? item.volume : 1.0) * 100);
- const behaviorText = (item.behavior === 'cutoff') ? 'Cutoff' : 'Overlap';
- tr.innerHTML = `
-<td>${escapeHTML(item.name)}</td>
-<td><span class="kbd-badge">${item.key.toUpperCase()}</span></td>
-<td>${volPct}%</td>
-<td>${behaviorText}</td>
-<td><button class="btn btn-sm btn-danger"onclick="removeSmOverlay('${item.id}')"aria-label="Remove ${escapeHTML(item.name)}">✕</button></td>
- `;
- tbody.appendChild(tr);
- });
+    const summary = document.getElementById('sm-shortcuts-summary');
+    if (summary) {
+        const count = smOverlays.length;
+        summary.textContent = `${count} overlay${count === 1 ? '' : 's'} configured.`;
+    }
 }
 
-window.removeSmOverlay = function(id) {
- const idx = smOverlays.findIndex(o =>o.id === id);
- if (idx !== -1) smOverlays.splice(idx, 1);
- renderSmShortcutsTable();
-};
+let smManageEditId = null;
+
+function renderManageOverlaysList() {
+    const listContainer = document.getElementById('sm-manage-overlays-list');
+    const resetBtn = document.getElementById('btn-sm-manage-overlays-reset');
+    
+    Array.from(listContainer.children).forEach(child => {
+        if (child.id !== 'sm-manage-overlays-empty') {
+            child.remove();
+        }
+    });
+    
+    if (smOverlays.length === 0) {
+        document.getElementById('sm-manage-overlays-empty').style.display = '';
+        resetBtn.style.display = 'none';
+        smManageEditId = null;
+        return;
+    }
+    
+    document.getElementById('sm-manage-overlays-empty').style.display = 'none';
+    resetBtn.style.display = 'inline-block';
+    
+    smOverlays.forEach((item, idx) => {
+        const card = document.createElement('fieldset');
+        card.className = 'sm-card data-row';
+        card.setAttribute('data-id', item.id);
+        card.style.border = '1px solid var(--border)';
+        card.style.padding = '10px 15px';
+        card.style.position = 'relative';
+        card.style.marginBottom = '10px';
+        
+        const volPct = Math.round((item.volume !== undefined ? item.volume : 1.0) * 100);
+        const isCutoff = item.behavior === 'cutoff';
+        const detailsText = `${escapeHTML(item.name)}, ${item.key.toUpperCase()}, ${volPct}%, ${item.behavior}`;
+        
+        let optionsHtml = '<option value="" disabled>Select from library...</option>';
+        if (typeof assetLibrary !== 'undefined') {
+            assetLibrary.forEach(asset => {
+                const selected = asset.id === item.assetId ? 'selected' : '';
+                optionsHtml += `<option value="${asset.id}" ${selected}>${escapeHTML(asset.name)}</option>`;
+            });
+        }
+        
+        const isEditing = smManageEditId === item.id;
+        
+        card.innerHTML = `
+            <div class="sm-summary-view" style="display: flex; gap: 10px; align-items: center;" ${isEditing ? 'hidden' : ''}>
+                <button class="btn btn-secondary btn-manage-edit" style="flex: 1; text-align: left;">Edit ${detailsText}</button>
+                <button class="btn btn-danger btn-manage-delete" style="flex: 1; text-align: left;">Remove ${detailsText}</button>
+            </div>
+            
+            <div class="sm-edit-view" ${!isEditing ? 'hidden' : ''}>
+                <legend style="font-weight: bold; padding: 0 5px;">Editing Overlay ${idx + 1}</legend>
+                <div class="form-grid" style="grid-template-columns: 1fr; gap: 10px;">
+                    <div class="control-group">
+                        <label>Select Audio File:</label>
+                        <select class="sm-edit-file" aria-label="Audio file">${optionsHtml}</select>
+                    </div>
+                    <div class="control-group">
+                        <label>Shortcut Key (single letter/number):</label>
+                        <input type="text" class="sm-edit-key" maxlength="1" value="${item.key.toUpperCase()}" aria-label="Shortcut" style="width: 100%;">
+                    </div>
+                    <div class="control-group">
+                        <label>Overlay Volume: <span class="sm-edit-vol-val">${volPct}</span>%</label>
+                        <input type="range" class="sm-edit-vol" min="0" max="100" step="5" value="${volPct}" aria-label="Volume">
+                    </div>
+                    <div class="control-group">
+                        <label>Trigger Behavior:</label>
+                        <select class="sm-edit-behavior" aria-label="Behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+                            <option value="overlap" ${!isCutoff ? 'selected' : ''}>Overlap (Play on top)</option>
+                            <option value="cutoff" ${isCutoff ? 'selected' : ''}>Cutoff (Restart sound)</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right; margin-top: 10px;">
+                        <button class="btn btn-sm btn-success btn-manage-save">Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // --- Edit View Events ---
+        const fileSelect = card.querySelector('.sm-edit-file');
+        fileSelect.addEventListener('change', (e) => {
+            const newAssetId = e.target.value;
+            const newAsset = typeof getAsset === 'function' ? getAsset(newAssetId) : null;
+            if (newAsset) {
+                item.assetId = newAssetId;
+                item.name = newAsset.name;
+                renderSmShortcutsTable();
+                updateCardSummaryText();
+                // announce("Audio file updated to " + newAsset.name);
+            }
+        });
+        
+        card.querySelector('.sm-edit-key').addEventListener('change', (e) => {
+            const val = e.target.value.toLowerCase();
+            if (val && !smOverlays.find((o, i) => i !== idx && o.key.toLowerCase() === val)) {
+                item.key = val;
+                renderSmShortcutsTable();
+                updateCardSummaryText();
+            } else {
+                e.target.value = item.key.toUpperCase();
+                announce("Invalid or duplicate shortcut key.", true);
+            }
+        });
+        
+        const volInput = card.querySelector('.sm-edit-vol');
+        const volVal = card.querySelector('.sm-edit-vol-val');
+        volInput.addEventListener('input', (e) => {
+            volVal.textContent = e.target.value;
+        });
+        volInput.addEventListener('change', (e) => {
+            item.volume = parseFloat(e.target.value) / 100;
+            renderSmShortcutsTable();
+            updateCardSummaryText();
+        });
+        
+        card.querySelector('.sm-edit-behavior').addEventListener('change', (e) => {
+            item.behavior = e.target.value;
+            renderSmShortcutsTable();
+            updateCardSummaryText();
+        });
+        
+        function updateCardSummaryText() {
+            const vPct = Math.round((item.volume !== undefined ? item.volume : 1.0) * 100);
+            const newText = `${escapeHTML(item.name)}, ${item.key.toUpperCase()}, ${vPct}%, ${item.behavior}`;
+            card.querySelector('.btn-manage-edit').textContent = `Edit ${newText}`;
+            card.querySelector('.btn-manage-delete').textContent = `Remove ${newText}`;
+        }
+        
+        card.querySelector('.btn-manage-save').addEventListener('click', () => {
+            announce("Changes saved.", true);
+            smManageEditId = null;
+            card.querySelector('.sm-edit-view').hidden = true;
+            card.querySelector('.sm-summary-view').hidden = false;
+            card.querySelector('.btn-manage-edit').focus();
+        });
+        
+        // --- Summary View Events ---
+        card.querySelector('.btn-manage-edit').addEventListener('click', () => {
+            // Close any currently open edits
+            document.querySelectorAll('#sm-manage-overlays-list .sm-card').forEach(c => {
+                c.querySelector('.sm-edit-view').hidden = true;
+                c.querySelector('.sm-summary-view').hidden = false;
+            });
+            smManageEditId = item.id;
+            card.querySelector('.sm-summary-view').hidden = true;
+            card.querySelector('.sm-edit-view').hidden = false;
+            card.querySelector('.sm-edit-file').focus();
+        });
+        
+        card.querySelector('.btn-manage-delete').addEventListener('click', () => {
+            smOverlays.splice(idx, 1);
+            
+            renderManageOverlaysList();
+            renderSmShortcutsTable();
+            updateSmGoButton();
+            
+            // After render, get all delete buttons currently in the DOM
+            const newDeleteBtns = document.querySelectorAll('#sm-manage-overlays-list .btn-manage-delete');
+            if (newDeleteBtns.length > 0) {
+                // Focus the item that slid into the current index, or the last item
+                const targetIdx = Math.min(idx, newDeleteBtns.length - 1);
+                newDeleteBtns[targetIdx].focus();
+            } else {
+                document.getElementById('btn-sm-manage-overlays-close').focus();
+            }
+            announce("Deleted overlay.", true);
+        });
+        
+        listContainer.appendChild(card);
+    });
+}
+
+
+
 
 class WebAudioPlayer {
  constructor(buffer) {
@@ -408,19 +678,22 @@ async function startSuperModeLive() {
  if (!smBaseAsset) return;
 
  if (smRecordedClips.length >0) {
- const proceed = confirm("Starting a new mixer session will clear all your currently recorded clips. Do you want to proceed?");
- if (!proceed) return;
+ const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording' button.\n\nPress OK to delete old work and start fresh.");
+ if (!proceed) {
+     const goBtn = document.getElementById('btn-sm-go');
+     if (goBtn) goBtn.focus();
+     return;
+ }
  }
 
  // Pre-decode base and overlays
- // announce("Pre-decoding assets for zero-latency mixing... Please wait.", true);
  try {
- await getDecodedBuffer(smBaseAsset.id);
- await Promise.all(smOverlays.map(o =>getDecodedBuffer(o.assetId)));
+   await getDecodedBuffer(smBaseAsset.id);
+   await Promise.all(smOverlays.map(o =>getDecodedBuffer(o.assetId)));
  } catch (err) {
- console.error(err);
- alert("Error pre-decoding audio files: "+ err.message);
- return;
+   console.error(err);
+   alert("Error pre-decoding audio files: "+ err.message);
+   return;
  }
 
  document.getElementById('sm-setup-view').hidden = true;
@@ -488,6 +761,66 @@ async function startSuperModeLive() {
  }, 100);
 
  // announce("Live Mixer Active.");
+}
+
+async function continueSuperModeLive() {
+  if (!smBaseAsset) return;
+
+  try {
+    await getDecodedBuffer(smBaseAsset.id);
+    await Promise.all(smOverlays.map(o => getDecodedBuffer(o.assetId)));
+  } catch (err) {
+    console.error(err);
+    alert("Error pre-decoding audio files: " + err.message);
+    return;
+  }
+
+  document.getElementById('sm-setup-view').hidden = true;
+  document.getElementById('sm-live-view').hidden = false;
+
+  document.getElementById('btn-sm-export').style.display = 'inline-block';
+  document.getElementById('btn-sm-save').style.display = 'inline-block';
+  document.getElementById('btn-sm-reset-mix').style.display = 'inline-block';
+
+  renderSmActiveKeysList();
+  renderSmMixLog();
+
+  // Clear active overlays and review playback state
+  Object.keys(activeOverlayAudios).forEach(k => delete activeOverlayAudios[k]);
+  reviewOverlayPlaybacks = [];
+
+  // DO NOT reset timeline state! Keep smVirtualTime, smRecordedClips, smBaseSegments intact.
+  smSoftPaused = false;
+  smWasSoftPaused = false;
+  smLastUpdateTime = getAudioCtx().currentTime;
+  
+  // Re-create base audio player
+  const baseBuf = decodedAudioBuffers[smBaseAsset.id];
+  smBaseAudio = new WebAudioPlayer(baseBuf);
+  smBaseAudio.endedTriggered = false;
+  smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
+  
+  smBaseAudio.currentTime = smLastBaseTime; // Resume from where we left off!
+
+  document.getElementById('sm-total-duration').textContent = smBaseAudio.duration.toFixed(3);
+  
+  updatePlaybackStateUI('paused');
+  
+  if (!smTimelineTimer) {
+     smTimelineTimer = setInterval(updateSmTimeline, 100);
+  }
+
+  setTimeout(() => {
+    const container = document.querySelector('.sm-container');
+    if (container) {
+      container.setAttribute('tabindex', '-1');
+      container.focus();
+    }
+    announce("Session resumed.");
+    
+    // Auto-resume playback correctly using standard logic
+    smResumeBase(false);
+  }, 100);
 }
 
 function updateSmTimeline() {
@@ -1231,7 +1564,7 @@ function toggleOverlayPauseResume(overlay) {
  entry.clip.cropEnd = (entry.clip.cropStart || 0) + played;
  }
  });
- announce(`Paused timeline playback for ${overlay.name}.`, true);
+ // announce(`Paused timeline playback for ${overlay.name}.`, true);
  renderSmMixLog();
  }
 
@@ -1592,7 +1925,27 @@ function stopSmAudio() {
 }
 
 function exitToSetupView() {
- stopSmAudio();
+  // Preserve the exact exit point so they can "Continue" later
+  if (smBaseAudio) {
+      smLastBaseTime = smBaseAudio.currentTime;
+  }
+
+  // Close any active base segments safely
+  if (smBaseSegmentStartSource !== null && smBaseAudio) {
+      const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
+      if (duration > 0) {
+          smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
+      }
+      smBaseSegmentStartTimeline = null;
+      smBaseSegmentStartSource = null;
+  }
+
+  // Cap active overlays but PRESERVE tails so we don't chop them off harshly
+  if (typeof capActiveOverlayRecordings === 'function') {
+      capActiveOverlayRecordings(true);
+  }
+
+  stopSmAudio();
  document.getElementById('sm-setup-view').hidden = false;
  document.getElementById('sm-live-view').hidden = true;
 
@@ -1601,11 +1954,13 @@ function exitToSetupView() {
  document.getElementById('btn-sm-save').style.display = 'none';
  document.getElementById('btn-sm-reset-mix').style.display = 'none';
 
- // Focus setup view to enable smooth NVDA transition
- const setupView = document.getElementById('sm-setup-view');
- if (setupView) {
- setupView.focus();
- }
+  // Focus setup view to enable smooth NVDA transition
+  const setupView = document.getElementById('sm-setup-view');
+  if (setupView) {
+  setupView.focus();
+  }
+  
+  updateSmGoButton();
 }
 
 function resetAndRecordFromScratch() {
@@ -1696,7 +2051,7 @@ async function exportSuperModeWav(isSaveToLib = false) {
   }
   }
 
-  let totalDuration = Math.max(baseBuffer.duration, smTotalRecordedDuration || 0);
+  let totalDuration = baseBuffer.duration || 0;
   exportSegments.forEach(seg =>{
   totalDuration = Math.max(totalDuration, seg.timelineStart + seg.duration);
   });
@@ -1710,8 +2065,6 @@ async function exportSuperModeWav(isSaveToLib = false) {
   totalDuration = Math.max(totalDuration, c.timelineStart + dur);
   }
   });
-
-  totalDuration = Math.max(totalDuration, smVirtualTime, smTotalRecordedDuration || 0);
 
   const sr = getAudioCtx().sampleRate;
   const offline = new OfflineAudioContext(2, Math.ceil(totalDuration * sr), sr);

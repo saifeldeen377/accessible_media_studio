@@ -36,6 +36,7 @@ function initSuperCut() {
   const btnManageClose = document.getElementById('btn-sct-manage-close');
   const btnManageDeleteAll = document.getElementById('btn-sct-delete-all');
   const manageDialog = document.getElementById('sct-manage-dialog');
+  setupFocusTrap(manageDialog);
   
   const btnPreview = document.getElementById('btn-sct-preview');
   const btnExport = document.getElementById('btn-sct-export');
@@ -64,7 +65,14 @@ function initSuperCut() {
     if (sctCutRegions.length === 0 && (sctActiveCut.start === null || sctActiveCut.end === null)) {
       announce('There are no cuts registered to manage or delete.', true);
     }
-    btnManageClose.focus();
+    
+    // Focus the first remove button, or fallback to close button
+    const firstRemoveBtn = document.querySelector('#sct-cuts-tbody button.btn-danger');
+    if (firstRemoveBtn) {
+      firstRemoveBtn.focus();
+    } else {
+      btnManageClose.focus();
+    }
   });
 
   btnManageClose.addEventListener('click', () => {
@@ -110,6 +118,7 @@ function initSuperCut() {
   select.addEventListener('change', () => {
     stopAudio();
     stopPreview();
+    sctBuffer = null;
     sctCutRegions = [];
     sctActiveCut = { start: null, end: null, id: null };
     sctLastAction = null;
@@ -117,6 +126,7 @@ function initSuperCut() {
     displayEnd.textContent = 'Not set';
     renderCutsTable();
   });
+
 
   function formatTime(secs) {
     return Number(secs).toFixed(3) + "s";
@@ -220,6 +230,7 @@ function initSuperCut() {
     }
     if (issctPreviewing) {
       stopPreview();
+      return;
     }
     
     if (sctIsPlaying) {
@@ -252,6 +263,7 @@ function initSuperCut() {
       if (sctPlayOffset >= sctBuffer.duration) sctPlayOffset = 0;
 
       const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') { await ctx.resume(); }
       sctPlaySource = ctx.createBufferSource();
       sctPlaySource.buffer = sctBuffer;
       sctPlaySource.connect(masterCompressor); 
@@ -309,13 +321,6 @@ function initSuperCut() {
     if (sctActiveCut.end === null) sctActiveCut.end = sctBuffer.duration;
 
     if (!sctActiveCut.id) sctActiveCut.id = 'cut-' + (++sctCutCounter);
-
-    const idx = sctCutRegions.findIndex(c => c.id === sctActiveCut.id);
-    if (idx === -1) {
-      sctCutRegions.push({ ...sctActiveCut });
-    } else {
-      sctCutRegions[idx] = { ...sctActiveCut };
-    }
 
     displayStart.textContent = sctActiveCut.start.toFixed(2) + "s";
     displayEnd.textContent = sctActiveCut.end.toFixed(2) + "s";
@@ -526,6 +531,8 @@ function initSuperCut() {
     return keepRegions;
   }
 
+  const btnReplayPreview = document.getElementById('btn-sct-replay-preview');
+
   function stopPreview() {
     if (!issctPreviewing) return;
     sctPreviewNodes.forEach(node => {
@@ -535,6 +542,11 @@ function initSuperCut() {
     sctPreviewNodes = [];
     issctPreviewing = false;
     btnPreview.textContent = "Preview Remaining Audio";
+    btnPreview.setAttribute('aria-label', `Preview remaining audio`);
+    if (btnReplayPreview) {
+      if (document.activeElement === btnReplayPreview) btnPreview.focus();
+      btnReplayPreview.style.display = 'none';
+    }
     statusEl.textContent = "Preview stopped.";
   }
 
@@ -545,15 +557,24 @@ function initSuperCut() {
       return;
     }
     
+    if (sctIsPlaying) stopAudio();
+
     if (issctPreviewing) {
-      stopPreview();
+      sctPreviewNodes.forEach(node => {
+        node.onended = null;
+        try { node.stop(); } catch(e) {}
+      });
+      sctPreviewNodes = [];
+      sctPreviewPlayOffset += (getAudioCtx().currentTime - sctPreviewStartTime);
+      issctPreviewing = false;
+      btnPreview.textContent = '▶️ Resume Preview';
+      btnPreview.setAttribute('aria-label', `Resume preview`);
+      statusEl.textContent = "Preview paused.";
+      announce('Preview paused.');
       return;
     }
 
-    if (sctIsPlaying) stopAudio();
-
     if (!sctBuffer) {
-
       sctIsLoading = true;
       try {
         sctBuffer = await decodeAudio(getAsset(select.value).objectURL);
@@ -573,25 +594,51 @@ function initSuperCut() {
       return;
     }
 
+    const totalDur = keepRegions.reduce((sum, r) => sum + (r.end - r.start), 0);
+    if (sctPreviewPlayOffset >= totalDur) sctPreviewPlayOffset = 0;
+
     const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') { await ctx.resume(); }
     
     issctPreviewing = true;
     sctPreviewNodes = [];
     sctPreviewStartTime = ctx.currentTime;
-    sctPreviewPlayOffset = 0;
     
     let scheduleTime = ctx.currentTime;
+    let accumulated = 0;
+    
     for (let region of keepRegions) {
-      const dur = region.end - region.start;
+      let dur = region.end - region.start;
       if (dur <= 0) continue;
       
+      let regionStart = accumulated;
+      let regionEnd = accumulated + dur;
+
+      if (sctPreviewPlayOffset >= regionEnd) {
+        accumulated += dur;
+        continue;
+      }
+
+      let playStartOffset = region.start;
+      let playDuration = dur;
+
+      if (sctPreviewPlayOffset > regionStart) {
+        let skipInsideRegion = sctPreviewPlayOffset - regionStart;
+        playStartOffset = region.start + skipInsideRegion;
+        playDuration = dur - skipInsideRegion;
+      }
+
       const source = ctx.createBufferSource();
       source.buffer = sctBuffer;
       source.connect(masterCompressor);
-      source.start(scheduleTime, region.start, dur);
-      
+      source.start(scheduleTime, playStartOffset, playDuration);
+      source.addEventListener('ended', function() {
+        sctPreviewNodes = sctPreviewNodes.filter(n => n !== this);
+      });
       sctPreviewNodes.push(source);
-      scheduleTime += dur;
+      
+      scheduleTime += playDuration;
+      accumulated += dur;
     }
 
     if (sctPreviewNodes.length > 0) {
@@ -599,21 +646,46 @@ function initSuperCut() {
       lastNode.onended = () => {
         if (!issctPreviewing) return;
         issctPreviewing = false;
+        sctPreviewPlayOffset = 0;
         btnPreview.textContent = "Preview Remaining Audio";
+        btnPreview.setAttribute('aria-label', `Preview remaining audio`);
+        if (btnReplayPreview) {
+          if (document.activeElement === btnReplayPreview) btnPreview.focus();
+          btnReplayPreview.style.display = 'none';
+        }
         statusEl.textContent = "Preview finished.";
+        announce("Preview finished.");
       };
     }
 
     sctLastPlayedWasPreview = true;
-    btnPreview.textContent = "Stop Preview";
+    btnPreview.textContent = "⏸️ Pause Preview";
+    btnPreview.setAttribute('aria-label', `Pause preview`);
+    if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
     statusEl.textContent = "Previewing remaining audio...";
-    announce("Previewing remaining audio.");
   });
 
-  function seekPreview(seconds) {
+  if (btnReplayPreview) {
+    btnReplayPreview.addEventListener('click', () => {
+      sctPreviewPlayOffset = 0;
+      if (issctPreviewing) {
+        sctPreviewNodes.forEach(node => {
+          node.onended = null;
+          try { node.stop(); } catch(e) {}
+        });
+        sctPreviewNodes = [];
+        issctPreviewing = false;
+      }
+      btnPreview.click();
+      announce('Preview replayed.');
+    });
+  }
+
+  async function seekPreview(seconds) {
     if (!issctPreviewing && sctPreviewStartTime === 0) return;
     
     const actx = getAudioCtx();
+    if (actx.state === 'suspended') { await actx.resume(); }
     let currentRelativeTime = sctPreviewPlayOffset;
     if (issctPreviewing) {
       currentRelativeTime += (actx.currentTime - sctPreviewStartTime);
@@ -661,6 +733,9 @@ function initSuperCut() {
       source.buffer = sctBuffer;
       source.connect(masterCompressor);
       source.start(scheduleTime, playStartOffset, playDuration);
+      source.addEventListener('ended', function() {
+        sctPreviewNodes = sctPreviewNodes.filter(n => n !== this);
+      });
       sctPreviewNodes.push(source);
       
       scheduleTime += playDuration;
@@ -673,12 +748,14 @@ function initSuperCut() {
         if (!issctPreviewing) return;
         issctPreviewing = false;
         btnPreview.textContent = "Preview Remaining Audio";
+        btnPreview.setAttribute('aria-label', `Preview remaining audio`);
         statusEl.textContent = "Preview finished.";
       };
     }
     
     sctLastPlayedWasPreview = true;
-    btnPreview.textContent = "Stop Preview";
+    btnPreview.textContent = "⏸️ Pause Preview";
+    btnPreview.setAttribute('aria-label', `Pause preview`);
     statusEl.textContent = "Previewing remaining audio...";
   }
 

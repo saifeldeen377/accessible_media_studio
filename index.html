@@ -145,6 +145,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="panel-actions">
 <button id="btn-ma-play" class="btn btn-success"> Preview Mix </button>
+<button id="btn-ma-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
 <button id="btn-ma-stop" class="btn btn-danger"> Stop </button>
 <button id="btn-ma-export" class="btn btn-primary"> Download Merged WAV </button>
 <button id="btn-ma-save" class="btn btn-secondary"> Save to Library </button>
@@ -198,9 +199,14 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 
 <div class="panel-actions">
+<button id="btn-mv-preview" class="btn btn-success"> Preview Video Mix </button>
+<button id="btn-mv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
+<button id="btn-mv-stop" class="btn btn-danger" style="display: none;"> Stop </button>
 <button id="btn-mv-export" class="btn btn-primary"> Download Merged Video (WebM)</button>
 <button id="btn-mv-save" class="btn btn-secondary"> Save to Library </button>
 </div>
+<p id="mv-status" class="status-text" aria-live="polite"></p>
+<div id="mv-preview-container" hidden></div>
 <p id="mv-status" class="status-text" aria-live="polite"></p>
 <progress id="mv-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
 </section>
@@ -269,9 +275,13 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 
 <div class="panel-actions">
+<button id="btn-av-preview" class="btn btn-success"> Preview Slideshow </button>
+<button id="btn-av-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
+<button id="btn-av-stop" class="btn btn-danger" style="display: none;"> Stop </button>
 <button id="btn-av-export" class="btn btn-primary"> Download Slideshow Video (WebM)</button>
 <button id="btn-av-save" class="btn btn-secondary"> Save to Library </button>
 </div>
+<div id="av-preview-container" hidden></div>
 <p id="av-status" class="status-text" aria-live="polite"></p>
 <progress id="av-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
 </section>
@@ -291,6 +301,9 @@ window.onerror = function(msg, url, line, col, error) {
 </select>
 </div>
 <div class="panel-actions">
+<button id="btn-va-preview" class="btn btn-success"> Preview Extracted Audio </button>
+<button id="btn-va-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
+<button id="btn-va-stop" class="btn btn-danger" style="display: none;"> Stop </button>
 <button id="btn-va-export" class="btn btn-primary"> Extract &amp; Download Audio (WAV)</button>
 <button id="btn-va-save" class="btn btn-secondary"> Save to Library </button>
 </div>
@@ -324,6 +337,7 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 <div class="panel-actions">
 <button id="btn-ta-preview" class="btn btn-success"> Preview Trim </button>
+<button id="btn-ta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
 <button id="btn-ta-stop" class="btn btn-danger"> Stop </button>
 <button id="btn-ta-export" class="btn btn-primary"> Download Trimmed WAV </button>
 <button id="btn-ta-save" class="btn btn-secondary"> Save to Library </button>
@@ -357,9 +371,13 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 </div>
 <div class="panel-actions">
+<button id="btn-tv-preview" class="btn btn-success"> Preview Trim </button>
+<button id="btn-tv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
+<button id="btn-tv-stop" class="btn btn-danger" style="display: none;"> Stop </button>
 <button id="btn-tv-export" class="btn btn-primary"> Download Trimmed Video (WebM)</button>
 <button id="btn-tv-save" class="btn btn-secondary"> Save to Library </button>
 </div>
+<div id="tv-preview-container" hidden></div>
 <p id="tv-status" class="status-text" aria-live="polite"></p>
 <progress id="tv-progress" value="0" max="100" style="width: 100%; display: none; margin-top: 10px; height: 15px; border-radius: 5px;" aria-hidden="true"></progress>
 </div>
@@ -468,26 +486,15 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="sm-card sm-list-card">
 <h3> Configured Shortcuts:</h3>
-<div class="table-scroll">
-<table id="sm-shortcuts-table" aria-label="Keyboard shortcuts configured for mixing">
-<thead>
-<tr>
-<th scope="col"> File Name </th>
-<th scope="col"> Key </th>
-<th scope="col"> Vol </th>
-<th scope="col"> Behavior </th>
-<th scope="col"> Actions </th>
-</tr>
-</thead>
-<tbody id="sm-shortcuts-tbody">
-<tr id="sm-shortcuts-empty"><td colspan="5" class="empty-cell"> No shortcuts configured yet.</td></tr>
-</tbody>
-</table>
+<p id="sm-shortcuts-summary" style="margin-bottom: 15px; color: var(--text-muted);">0 overlays configured.</p>
+<div style="display: flex; gap: 10px;">
+<button id="btn-sm-manage-overlays" class="btn btn-secondary btn-sm">Manage Overlays</button>
 </div>
 </div>
 
-<div class="sm-setup-actions">
+<div class="sm-setup-actions" style="display: flex; gap: 10px;">
 <button id="btn-sm-go" class="btn btn-success btn-lg"disabled> Go Now — Start Live Mixer </button>
+<button id="btn-sm-continue" class="btn btn-warning btn-lg" style="display: none;"> Continue Recording </button>
 </div>
 </div>
 
@@ -542,6 +549,20 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 </div>
 
+<!-- Manage Overlays Dialog -->
+<dialog id="sm-manage-overlays-dialog" role="application" aria-label="Manage Overlays" style="padding: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text); max-width: 800px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <div class="dialog-content">
+    <h3 id="sm-manage-overlays-title" style="margin-top: 0;">Manage Overlays</h3>
+    <div id="sm-manage-overlays-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+      <p id="sm-manage-overlays-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No overlays configured yet.</p>
+    </div>
+    <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+      <button id="btn-sm-manage-overlays-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>
+      <button id="btn-sm-manage-overlays-reset" class="btn btn-danger btn-sm">Reset All</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- ══════════════════════════════════════════ -->
 <!-- SUPER TRIM OVERLAY -->
 <!-- ══════════════════════════════════════════ -->
@@ -595,6 +616,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="panel-actions">
 <button id="btn-sta-preview" class="btn btn-secondary"> Preview Trimmed Range </button>
+<button id="btn-sta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
 <button id="btn-sta-export" class="btn btn-primary"> Download Trimmed WAV </button>
 <button id="btn-sta-save" class="btn btn-secondary"> Save to Library </button>
 </div>
@@ -662,6 +684,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <div class="panel-actions" style="margin-top: 20px;">
 <button id="btn-sct-preview" class="btn btn-secondary"> Preview Remaining Audio </button>
+<button id="btn-sct-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
 <button id="btn-sct-export" class="btn btn-primary"> Download Remaining WAV </button>
 <button id="btn-sct-save" class="btn btn-secondary"> Save to Library </button>
 </div>
@@ -696,7 +719,7 @@ window.onerror = function(msg, url, line, col, error) {
 </dialog>
 </div>
 
-<script src="https://unpkg.com/fix-webm-duration"></script>
+<script src="https://unpkg.com/fix-webm-duration" crossorigin="anonymous"></script>
 <!-- Core -->
 <script src="script_globals.js"></script>
 <script src="script_utils.js"></script>
@@ -711,9 +734,9 @@ window.onerror = function(msg, url, line, col, error) {
 <script src="script_video-audio.js"></script>
 <script src="script_trim-audio.js"></script>
 <script src="script_trim-video.js"></script>
-<script src="script_super-mode.js?v=1.1"></script>
-<script src="script_super-trim.js?v=1.1"></script>
-<script src="script_super-cut.js?v=1.0"></script>
+<script src="script_super-mode.js"></script>
+<script src="script_super-trim.js"></script>
+<script src="script_super-cut.js"></script>
 <!-- Main Boot -->
 <script src="script_main.js"></script>
 
