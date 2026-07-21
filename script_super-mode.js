@@ -199,22 +199,23 @@ function initSuperMode() {
     // â”€â”€ Ctrl+Shift+Space: Cancel Silent Gap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     handleCancelGap();
   } else if (isCtrl) {
-  // â”€â”€ Ctrl+Space: Soft Pause / Punch-In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- if (smSoftPaused) {
- const isActuallyEnded = smBaseAudio.ended || smBaseAudio.endedTriggered || (smBaseAudio.currentTime >= smBaseAudio.duration - 0.05);
- if (isActuallyEnded) {
- // We are soft-paused after the base audio ended ->Ctrl+Space should STOP the timeline.
- smRegularPauseBase();
+  // ── Ctrl+Space: Soft Pause / Punch-In ──────────────────────────────
+ const isAtEnd = smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05;
+ 
+ if (isAtEnd) {
+     if (smIsActive()) {
+         smRegularPauseBase(); // Timeline playing -> stop
+     } else {
+         smResumeBase(true);   // Timeline paused -> resume and punch-in
+     }
  } else {
- // We are soft paused mid-track ->Punch In to resume base audio
- smResumeBase(true);
- }
- } else if (!smBaseAudio.paused) {
- // Base is playing ->Soft Pause it
- smSoftPauseBase();
- } else {
- // Base is paused (gap playback or ended) ->Punch In (will trigger soft-pause if ended)
- smResumeBase(true);
+     if (smSoftPaused) {
+         smResumeBase(true); // Punch in
+     } else if (!smBaseAudio.paused) {
+         smSoftPauseBase();  // Soft Pause
+     } else {
+         smResumeBase(true); // Punch in from replay gap
+     }
  }
 
  } else if (isShift) {
@@ -687,6 +688,15 @@ async function startSuperModeLive() {
  }
 
  // Pre-decode base and overlays
+ let totalSize = 0;
+ if (smBaseAsset && smBaseAsset.file) totalSize += smBaseAsset.file.size;
+ smOverlays.forEach(o => {
+     const asset = getAsset(o.assetId);
+     if (asset && asset.file) totalSize += asset.file.size;
+ });
+ if (totalSize > 50 * 1024 * 1024) {
+     announce('Loading audio files for the session, please wait...');
+ }
  try {
    await getDecodedBuffer(smBaseAsset.id);
    await Promise.all(smOverlays.map(o =>getDecodedBuffer(o.assetId)));
@@ -732,7 +742,7 @@ async function startSuperModeLive() {
  // Create base audio player using Web Audio API
  const baseBuf = decodedAudioBuffers[smBaseAsset.id];
  smBaseAudio = new WebAudioPlayer(baseBuf);
- smBaseAudio.endedTriggered = false;
+  smBaseAudio.endedTriggered = false;
  smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
  
  document.getElementById('sm-total-duration').textContent = smBaseAudio.duration.toFixed(3);
@@ -835,9 +845,8 @@ function updateSmTimeline() {
  // We are replaying if we are within the boundaries of recorded history,
  // NOT actively soft-paused overriding it,
  // and NOT actively recording a new segment overriding it.
- const isReplaying = smVirtualTime< smTotalRecordedDuration && !smSoftPaused && smBaseSegmentStartSource === null;
-
- if (isReplaying) {
+ const isReplaying = smVirtualTime < smTotalRecordedDuration && !smSoftPaused && smBaseSegmentStartSource === null;
+  if (isReplaying) {
  // â”€â”€ REPLAY MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
  
@@ -884,15 +893,20 @@ function updateSmTimeline() {
  } else {
  // Base is ended. Check behavior
  const endBehavior = document.getElementById('sm-base-end-behavior').value;
- if (endBehavior === 'continue') {
- smSoftPaused = true;
- smSoftPauseStartVirtual = smVirtualTime;
- smSoftPauseStartWall = now;
- updatePlaybackStateUI('soft-paused');
- } else {
- smRegularPauseBase();
- return;
- }
+ const baseDur = smBaseAudio.duration || 0;
+ const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => {
+     const a = activeOverlayAudios[id];
+     return a.state === 'playing' && a.startTimeInBase !== null;
+ });
+          if (endBehavior === 'continue' || smTotalRecordedDuration > baseDur + 0.05 || hasActiveRecording) {
+              smSoftPaused = true;
+              smSoftPauseStartVirtual = smVirtualTime;
+              smSoftPauseStartWall = now;
+              // updatePlaybackStateUI('soft-paused');
+          } else {
+              smRegularPauseBase();
+              return;
+          }
  }
  }
 
@@ -931,15 +945,19 @@ function updateSmTimeline() {
  }
 
  const endBehavior = document.getElementById('sm-base-end-behavior').value;
- if (endBehavior === 'continue') {
- smSoftPaused = true;
- smSoftPauseStartVirtual = smVirtualTime;
- smSoftPauseStartWall = now;
- updatePlaybackStateUI('soft-paused');
- } else {
- // STOP
- smRegularPauseBase();
- }
+ const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => {
+     const a = activeOverlayAudios[id];
+     return a.state === 'playing' && a.startTimeInBase !== null;
+ });
+          if (endBehavior === 'continue' || hasActiveRecording) {
+              smSoftPaused = true;
+              smSoftPauseStartVirtual = smVirtualTime;
+              smSoftPauseStartWall = now;
+              // updatePlaybackStateUI('soft-paused');
+          } else {
+              // STOP
+              smRegularPauseBase();
+          }
  }
  }
 
@@ -990,11 +1008,16 @@ function smResumeBase(isPunchIn = false) {
  punchInTimeline();
  smSoftPaused = false;
  
- if (smBaseAudio.ended || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05) {
- smSoftPaused = true;
- smSoftPauseStartVirtual = smVirtualTime;
- smSoftPauseStartWall = getAudioCtx().currentTime;
- updatePlaybackStateUI('soft-paused');
+  if (smBaseAudio.ended || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05) {
+  smBaseAudio.endedTriggered = true;
+  smSoftPaused = true;
+  smSoftPauseStartVirtual = smVirtualTime;
+  smSoftPauseStartWall = getAudioCtx().currentTime;
+  updatePlaybackStateUI('soft-paused');
+ if (!smTimelineTimer) {
+     smLastUpdateTime = getAudioCtx().currentTime;
+     smTimelineTimer = setInterval(updateSmTimeline, 100);
+ }
   } else {
     smBaseSegmentStartTimeline = smVirtualTime;
     smBaseSegmentStartSource   = smBaseAudio.currentTime;
@@ -1260,6 +1283,8 @@ function restartSmPlayback() {
   smBaseAudio.endedTriggered = false;
 
   // Normal replay from 0.0s (do NOT punch in, so we preserve the timeline)
+  smSoftPaused = false;
+  smWasSoftPaused = false;
   smResumeBase(false);
 }
 
@@ -1289,9 +1314,7 @@ function getSmTotalVirtualDuration() {
 
 function seekSmTimeline(seconds) {
   if (!smBaseAudio) return;
-
   smBaseAudio.endedTriggered = false;
-  
   const oldVirtualTime = smVirtualTime;
   const maxDur = getSmTotalVirtualDuration();
   
@@ -1334,9 +1357,18 @@ function seekSmTimeline(seconds) {
   reviewOverlayPlaybacks = [];
   playedClipIds.clear();
 
+  const wasEnded = smBaseAudio.ended || smBaseAudio.endedTriggered || smSoftPaused;
+
   // 4. Update the actual playhead time
   smVirtualTime = newVirtualTime;
   smBaseAudio.currentTime = newVirtualTime;
+
+  // 5. If we seeked backward from an ended/paused state, auto-resume playback
+  if (wasEnded && smVirtualTime < getSmTotalVirtualDuration() && !smBaseAudio.isPlaying) {
+      smSoftPaused = false;
+      smWasSoftPaused = false;
+      smResumeBase(false);
+  }
 
   // 5. Cancel soft-pause only if we rewound BACK into the base audio
   const baseDur = smBaseAudio.duration || 0;
@@ -1452,8 +1484,9 @@ function triggerOverlayStart(overlay) {
  if (curr && curr.sourceNode === src) {
  if (curr.state === 'playing') {
  if (curr.startTimeInBase !== null && smIsActive()) {
- const played = smVirtualTime - curr.startTimeInBase;
- curr.clipEntry.cropEnd = curr.clipEntry.cropStart + played;
+ const exactVirtualTime = smVirtualTime + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
+ const played = exactVirtualTime - curr.startTimeInBase;
+ curr.clipEntry.cropEnd = curr.buffer ? curr.buffer.duration : buffer.duration;
  }
  delete activeOverlayAudios[clip.id];
  renderSmActiveKeysList();
@@ -1480,14 +1513,14 @@ function toggleOverlayPauseResume(overlay) {
  try { active.sourceNode.stop(); } catch(_) {}
  active.state = 'paused';
  
- const elapsed = getAudioCtx().currentTime - active.playStartTime;
- active.pausedAtOffset += elapsed;
+ const elapsedWall = getAudioCtx().currentTime - active.playStartTime;
+ active.pausedAtOffset += elapsedWall;
 
- if (active.startTimeInBase !== null && (isPlayingBase || smSoftPaused)) {
- const played = smVirtualTime - active.startTimeInBase;
- active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
- active.startTimeInBase = null;
- }
+  if (active.startTimeInBase !== null && (isPlayingBase || smSoftPaused)) {
+      const played = elapsedWall;
+      active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
+      active.startTimeInBase = null;
+  }
  } else if (active.state === 'paused') {
  active.state = 'playing';
 
@@ -1531,10 +1564,10 @@ function toggleOverlayPauseResume(overlay) {
  if (curr && curr.sourceNode === src) {
  if (curr.state === 'playing') {
  curr.state = 'ended';
- if (curr.startTimeInBase !== null && (isPlayingBase || smSoftPaused)) {
- const played = smVirtualTime - curr.startTimeInBase;
- curr.clipEntry.cropEnd = curr.clipEntry.cropStart + played;
- }
+  if (curr.startTimeInBase !== null && (isPlayingBase || smSoftPaused)) {
+      const played = elapsedWall;
+      curr.clipEntry.cropEnd = active.buffer ? active.buffer.duration : buffer.duration;
+  }
  delete activeOverlayAudios[currId];
  renderSmActiveKeysList();
  renderSmMixLog();
@@ -1558,11 +1591,12 @@ function toggleOverlayPauseResume(overlay) {
  if (entry.timerId) clearTimeout(entry.timerId);
  entry.paused = true;
  
- // Punch-out: permanently trim the clip's cropEnd to the current timeline position
- const played = smVirtualTime - entry.clip.timelineStart;
- if (played >0) {
- entry.clip.cropEnd = (entry.clip.cropStart || 0) + played;
- }
+  // Punch-out: permanently trim the clip's cropEnd to the current timeline position
+  const exactVirtualTime = smVirtualTime + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
+  const played = exactVirtualTime - entry.clip.timelineStart;
+  if (played > 0) {
+      entry.clip.cropEnd = (entry.clip.cropStart || 0) + played;
+  }
  });
  // announce(`Paused timeline playback for ${overlay.name}.`, true);
  renderSmMixLog();
@@ -1647,9 +1681,8 @@ function resumeSmAllOverlays() {
  if (curr && curr.sourceNode === src) {
  if (curr.state === 'playing') {
  if (curr.startTimeInBase !== null && smIsActive()) {
- const played = smVirtualTime - curr.startTimeInBase;
- curr.clipEntry.cropEnd = curr.clipEntry.cropStart + played;
- }
+  curr.clipEntry.cropEnd = active.buffer ? active.buffer.duration : buffer.duration;
+  }
  delete activeOverlayAudios[active.clipEntry.id];
  renderSmActiveKeysList();
  renderSmMixLog();
@@ -1703,10 +1736,11 @@ function capActiveOverlayRecordings(preserveTail = false) {
  Object.keys(activeOverlayAudios).forEach(id =>{
  const active = activeOverlayAudios[id];
  if (active.state === 'playing' && active.startTimeInBase !== null) {
- if (!preserveTail) {
- const played = tb - active.startTimeInBase;
- active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
- }
+  if (!preserveTail) {
+      const exactVirtualTime = tb + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
+      const played = exactVirtualTime - active.startTimeInBase;
+      active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
+  }
  active.startTimeInBase = null;
  }
  });

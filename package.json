@@ -1,6 +1,6 @@
 {
   "name": "accessible-media-studio",
-  "version": "1.4.1",
+  "version": "1.4.1.1",
   "description": "Merge, trim, and convert audio and video files in the browser.",
   "scripts": {
     "dev": "npx -y http-server . -p 3000"
