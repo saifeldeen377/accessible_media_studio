@@ -26,8 +26,8 @@ function initMergeVideo() {
  announce(`"${asset.name}"added to the video merge queue.`);
  });
 
-  document.getElementById('btn-mv-export').addEventListener('click', () => exportMergeVideo(false));
-  document.getElementById('btn-mv-save').addEventListener('click', () => exportMergeVideo(true));
+  document.getElementById('btn-mv-export').addEventListener('click', () =>exportMergeVideo(false));
+  document.getElementById('btn-mv-save').addEventListener('click', () =>exportMergeVideo(true));
 
   const btnPreview = document.getElementById('btn-mv-preview');
   const btnReplay = document.getElementById('btn-mv-replay-preview');
@@ -47,12 +47,15 @@ function initMergeVideo() {
     mvActiveVideoElement = null;
     btnPreview.textContent = 'Preview Video Mix';
     btnPreview.setAttribute('aria-label', `Preview video mix`);
-    if (btnReplay) {
-      if (document.activeElement === btnReplay) btnPreview.focus();
-      btnReplay.style.display = 'none';
+      if (btnReplay) {
+        if (document.activeElement === btnReplay) btnPreview.focus();
+        btnReplay.style.display = 'none';
+      }
+      if (btnStop) {
+        if (document.activeElement === btnStop) btnPreview.focus();
+        btnStop.style.display = 'none';
+      }
     }
-    btnStop.style.display = 'none';
-  }
 
   function playNextMvClip() {
     if (mvPreviewClipIndex >= mvClips.length) {
@@ -80,11 +83,11 @@ function initMergeVideo() {
     const cropEnd = clip.cropEnd || Infinity;
 
     mvActiveVideoElement.currentTime = cropStart;
-    mvActiveVideoElement.play().catch(e => console.error(e));
+    mvActiveVideoElement.play().catch(e =>console.error(e));
     
     statusEl.textContent = `Previewing clip ${mvPreviewClipIndex + 1} of ${mvClips.length}...`;
 
-    mvActiveVideoElement.ontimeupdate = () => {
+    mvActiveVideoElement.ontimeupdate = () =>{
       if (mvActiveVideoElement.currentTime >= cropEnd) {
         mvActiveVideoElement.pause();
         mvPreviewClipIndex++;
@@ -92,26 +95,26 @@ function initMergeVideo() {
       }
     };
 
-    mvActiveVideoElement.onended = () => {
+    mvActiveVideoElement.onended = () =>{
       mvPreviewClipIndex++;
       playNextMvClip();
     };
   }
 
-  btnPreview.addEventListener('click', () => {
+  btnPreview.addEventListener('click', () =>{
     if (mvClips.length === 0) { alert('Add at least one video clip first.'); return; }
 
     if (mvIsPreviewing) {
       if (mvActiveVideoElement) {
         if (!mvActiveVideoElement.paused) {
           mvActiveVideoElement.pause();
-          btnPreview.textContent = '▶️ Resume Mix';
+          btnPreview.textContent = 'Resume Mix';
           btnPreview.setAttribute('aria-label', `Resume video mix preview`);
           statusEl.textContent = '';
 
         } else {
           mvActiveVideoElement.play();
-          btnPreview.textContent = '⏸️ Pause Mix';
+          btnPreview.textContent = 'Pause Mix';
           btnPreview.setAttribute('aria-label', `Pause video mix preview`);
           statusEl.textContent = `Previewing clip ${mvPreviewClipIndex + 1} of ${mvClips.length}...`;
 
@@ -121,44 +124,45 @@ function initMergeVideo() {
     }
 
     mvIsPreviewing = true;
-    btnPreview.textContent = '⏸️ Pause Mix';
+    btnPreview.textContent = 'Pause Mix';
     btnPreview.setAttribute('aria-label', `Pause video mix preview`);
     btnReplay.style.display = 'inline-block';
     btnStop.style.display = 'inline-block';
     playNextMvClip();
   });
 
-  btnReplay.addEventListener('click', () => {
+  btnReplay.addEventListener('click', () =>{
     mvPreviewClipIndex = 0;
     if (mvActiveVideoElement) {
       mvActiveVideoElement.pause();
     }
-    btnPreview.textContent = '⏸️ Pause Mix';
+    btnPreview.textContent = 'Pause Mix';
     playNextMvClip();
   });
 
-  btnStop.addEventListener('click', () => {
+  btnStop.addEventListener('click', () =>{
     stopMvPreview();
-    statusEl.textContent = 'Stopped.';
+    statusEl.textContent = '';
+    btnPreview.focus();
   });
 }
 
 function renderMvTable() {
  const tbody = document.getElementById('mv-tbody');
- document.getElementById('mv-empty').style.display = mvClips.length ? 'none' : '';
+ document.getElementById('mv-empty').style.display = mvClips.length ? 'none': '';
  tbody.querySelectorAll('tr.data-row').forEach(r =>r.remove());
 
  mvClips.forEach((clip, i) =>{
  const tr = document.createElement('tr');
  tr.className = 'data-row';
- const crop = `${clip.cropStart}s → ${clip.cropEnd != null ? clip.cropEnd + 's' : 'end of file'}`;
+ const crop = `${clip.cropStart}s → ${clip.cropEnd != null ? clip.cropEnd + 's': 'end of file'}`;
  tr.innerHTML = `
 <td>${i + 1}</td>
 <td>${escapeHTML(clip.name)}</td>
 <td>${crop}</td>
 <td><button class="btn btn-sm btn-danger"
  onclick="removeMvClip('${clip.id}')"
- aria-label="Remove ${escapeHTML(clip.name)}">✕</button></td>
+ aria-label="Remove ${escapeHTML(clip.name)}"></button></td>
  `;
  tbody.appendChild(tr);
  });
@@ -196,7 +200,7 @@ async function exportMergeVideo(isSaveToLib = false) {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
-  canvasStream.getTracks().forEach(t => t.stop());
+  canvasStream.getTracks().forEach(t =>t.stop());
   const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = 'merged_video.webm';

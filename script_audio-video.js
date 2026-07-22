@@ -25,8 +25,8 @@ function initAudioToVideo() {
  announce(`"${asset.name}"added: shown from ${start}s to ${end}s.`);
  });
 
-  document.getElementById('btn-av-export').addEventListener('click', () => exportAudioToVideo(false));
-  document.getElementById('btn-av-save').addEventListener('click', () => exportAudioToVideo(true));
+  document.getElementById('btn-av-export').addEventListener('click', () =>exportAudioToVideo(false));
+  document.getElementById('btn-av-save').addEventListener('click', () =>exportAudioToVideo(true));
 
   const btnPreview = document.getElementById('btn-av-preview');
   const btnReplay = document.getElementById('btn-av-replay-preview');
@@ -61,11 +61,14 @@ function initAudioToVideo() {
       if (document.activeElement === btnReplay) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
-    if (btnStop) btnStop.style.display = 'none';
+    if (btnStop) {
+      if (document.activeElement === btnStop) btnPreview.focus();
+      btnStop.style.display = 'none';
+    }
   }
 
   if (btnPreview) {
-    btnPreview.addEventListener('click', async () => {
+    btnPreview.addEventListener('click', async () =>{
       const audioAssetId = document.getElementById('av-audio-select').value;
       if (!audioAssetId) { alert('Please select an audio file in Step 1.'); return; }
       if (avSlides.length === 0) { alert('Please add at least one image slide in Step 2.'); return; }
@@ -78,14 +81,14 @@ function initAudioToVideo() {
         }
         if (avPreviewTimer) clearInterval(avPreviewTimer);
         avIsPreviewing = false;
-        btnPreview.textContent = '▶️ Resume Preview';
+        btnPreview.textContent = 'Resume Preview';
         btnPreview.setAttribute('aria-label', `Resume preview`);
         statusEl.textContent = '';
 
         return;
       }
 
-      const totalDur = Math.max(...avSlides.map(s => s.end));
+      const totalDur = Math.max(...avSlides.map(s =>s.end));
       if (avPreviewOffset >= totalDur) avPreviewOffset = 0;
 
       const actx = getAudioCtx();
@@ -103,11 +106,11 @@ function initAudioToVideo() {
 
       // Pre-load all images
       const imgCache = {};
-      await Promise.all(avSlides.map(slide => new Promise(res => {
+      await Promise.all(avSlides.map(slide =>new Promise(res =>{
         const asset = getAsset(slide.assetId);
         const img = new Image();
-        img.onload = () => { imgCache[slide.id] = img; res(); };
-        img.onerror = () => { console.warn('Failed to load image', slide.id); res(); };
+        img.onload = () =>{ imgCache[slide.id] = img; res(); };
+        img.onerror = () =>{ console.warn('Failed to load image', slide.id); res(); };
         img.src = asset.objectURL;
       })));
 
@@ -115,11 +118,11 @@ function initAudioToVideo() {
       container.innerHTML = '<canvas width="1280" height="720" style="max-width:100%; max-height:400px; background:#000;"></canvas>';
       const canvas = container.querySelector('canvas');
       
-      if (avSlides.length > 0 && imgCache[avSlides[0].id]) {
+      if (avSlides.length >0 && imgCache[avSlides[0].id]) {
         const firstImg = imgCache[avSlides[0].id];
         let w = firstImg.width;
         let h = firstImg.height;
-        if (w > 1920 || h > 1080) {
+        if (w >1920 || h >1080) {
           const scale = Math.min(1920 / w, 1080 / h);
           w = Math.round(w * scale);
           h = Math.round(h * scale);
@@ -137,21 +140,21 @@ function initAudioToVideo() {
       avPreviewStartTime = actx.currentTime;
       avIsPreviewing = true;
       
-      btnPreview.textContent = '⏸️ Pause Preview';
+      btnPreview.textContent = 'Pause Preview';
       btnPreview.setAttribute('aria-label', `Pause preview`);
       if (btnReplay) btnReplay.style.display = 'inline-block';
       if (btnStop) btnStop.style.display = 'inline-block';
 
       statusEl.textContent = '';
 
-      avPreviewAudioSrc.onended = () => {
+      avPreviewAudioSrc.onended = () =>{
         if (!avIsPreviewing) return; // paused
         stopAvPreview();
         statusEl.textContent = '';
 
       };
 
-      avPreviewTimer = setInterval(() => {
+      avPreviewTimer = setInterval(() =>{
         const elapsed = avPreviewOffset + (actx.currentTime - avPreviewStartTime);
         if (elapsed >= totalDur) {
           stopAvPreview();
@@ -160,7 +163,7 @@ function initAudioToVideo() {
           return;
         }
 
-        const slide = avSlides.find(s => elapsed >= s.start && elapsed < s.end);
+        const slide = avSlides.find(s =>elapsed >= s.start && elapsed < s.end);
         ctx2d.fillStyle = 'black';
         ctx2d.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -178,7 +181,7 @@ function initAudioToVideo() {
   }
 
   if (btnReplay) {
-    btnReplay.addEventListener('click', () => {
+    btnReplay.addEventListener('click', () =>{
       avPreviewOffset = 0;
       if (avIsPreviewing) {
         if (avPreviewTimer) clearInterval(avPreviewTimer);
@@ -192,16 +195,17 @@ function initAudioToVideo() {
   }
 
   if (btnStop) {
-    btnStop.addEventListener('click', () => {
+    btnStop.addEventListener('click', () =>{
       stopAvPreview();
       statusEl.textContent = '';
+      btnPreview.focus();
     });
   }
 }
 
 function renderAvTable() {
  const tbody = document.getElementById('av-tbody');
- document.getElementById('av-empty').style.display = avSlides.length ? 'none' : '';
+ document.getElementById('av-empty').style.display = avSlides.length ? 'none': '';
  tbody.querySelectorAll('tr.data-row').forEach(r =>r.remove());
 
  avSlides.forEach(slide =>{
@@ -213,7 +217,7 @@ function renderAvTable() {
 <td>${slide.end}s</td>
 <td><button class="btn btn-sm btn-danger"
  onclick="removeAvSlide('${slide.id}')"
- aria-label="Remove ${escapeHTML(slide.name)}">✕</button></td>
+ aria-label="Remove ${escapeHTML(slide.name)}"></button></td>
  `;
  tbody.appendChild(tr);
  });
@@ -255,13 +259,13 @@ async function exportAudioToVideo(isSaveToLib = false) {
  canvas.width = 1280; 
  canvas.height = 720;
  // Use first image dimensions if available, but cap at 1080p
- if (avSlides.length > 0 && imgCache[avSlides[0].id]) {
+ if (avSlides.length >0 && imgCache[avSlides[0].id]) {
  const firstImg = imgCache[avSlides[0].id];
  let w = firstImg.width;
  let h = firstImg.height;
 
  // Cap at 1920x1080 preserving aspect ratio
- if (w > 1920 || h > 1080) {
+ if (w >1920 || h >1080) {
  const scale = Math.min(1920 / w, 1080 / h);
  w = Math.round(w * scale);
  h = Math.round(h * scale);
@@ -299,7 +303,7 @@ async function exportAudioToVideo(isSaveToLib = false) {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
- canvasStream.getTracks().forEach(t => t.stop()); // Free memory
+ canvasStream.getTracks().forEach(t =>t.stop()); // Free memory
  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = 'slideshow_video.webm';

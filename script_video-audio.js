@@ -34,8 +34,8 @@ function initVideoToAudio() {
   }
   };
 
-  document.getElementById('btn-va-export').addEventListener('click', () => performVideoToAudioExport(false));
-  document.getElementById('btn-va-save').addEventListener('click', () => performVideoToAudioExport(true));
+  document.getElementById('btn-va-export').addEventListener('click', () =>performVideoToAudioExport(false));
+  document.getElementById('btn-va-save').addEventListener('click', () =>performVideoToAudioExport(true));
 
   const btnPreview = document.getElementById('btn-va-preview');
   const btnReplay = document.getElementById('btn-va-replay-preview');
@@ -67,11 +67,14 @@ function initVideoToAudio() {
       if (document.activeElement === btnReplay) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
-    if (btnStop) btnStop.style.display = 'none';
+    if (btnStop) {
+      if (document.activeElement === btnStop) btnPreview.focus();
+      btnStop.style.display = 'none';
+    }
   }
 
   if (btnPreview) {
-    btnPreview.addEventListener('click', async () => {
+    btnPreview.addEventListener('click', async () =>{
       const assetId = document.getElementById('va-video-select').value;
       if (!assetId) { alert('Please select a video file from the library.'); return; }
 
@@ -82,7 +85,7 @@ function initVideoToAudio() {
           vaPreviewAudioSrc = null;
         }
         vaIsPreviewing = false;
-        btnPreview.textContent = '▶️ Resume Preview';
+        btnPreview.textContent = 'Resume Preview';
         btnPreview.setAttribute('aria-label', `Resume preview`);
         statusEl.textContent = '';
 
@@ -115,14 +118,14 @@ function initVideoToAudio() {
       vaPreviewStartTime = actx.currentTime;
       vaIsPreviewing = true;
       
-      btnPreview.textContent = '⏸️ Pause Preview';
+      btnPreview.textContent = 'Pause Preview';
       btnPreview.setAttribute('aria-label', `Pause preview`);
       if (btnReplay) btnReplay.style.display = 'inline-block';
       if (btnStop) btnStop.style.display = 'inline-block';
 
       statusEl.textContent = '';
 
-      vaPreviewAudioSrc.onended = () => {
+      vaPreviewAudioSrc.onended = () =>{
         if (!vaIsPreviewing) return; // paused
         stopVaPreview();
         statusEl.textContent = '';
@@ -132,7 +135,7 @@ function initVideoToAudio() {
   }
 
   if (btnReplay) {
-    btnReplay.addEventListener('click', () => {
+    btnReplay.addEventListener('click', () =>{
       vaPreviewOffset = 0;
       if (vaIsPreviewing) {
         if (vaPreviewAudioSrc) {
@@ -145,9 +148,10 @@ function initVideoToAudio() {
   }
 
   if (btnStop) {
-    btnStop.addEventListener('click', () => {
+    btnStop.addEventListener('click', () =>{
       stopVaPreview();
       statusEl.textContent = '';
+      btnPreview.focus();
     });
   }
 }

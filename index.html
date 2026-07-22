@@ -31,14 +31,14 @@ window.onerror = function(msg, url, line, col, error) {
 <header class="app-header">
 <div class="header-container">
 <div class="logo-area">
-<h1> Accessible Media Studio </h1>
-<p class="subtitle"> Merge, trim, and convert audio &amp; video files. Optimized for NVDA and screen readers.</p>
+<h1>Accessible Media Studio </h1>
+<p class="subtitle">Merge, trim, and convert audio &amp; video files. Optimized for NVDA and screen readers.</p>
 </div>
 <div class="header-actions">
-<a href="README.html" class="btn btn-secondary" target="_blank" style="margin-right: 10px; text-decoration: none;" aria-label="Read Documentation"> Readme </a>
-<button id="btn-enter-super-mode" class="btn btn-primary" aria-label="Enter Super Merger, shortcut key m"> Super Merger </button>
-<button id="btn-enter-super-trim" class="btn btn-primary" aria-label="Enter Super Trim, shortcut key t" style="margin-left: 10px;"> Super Trim </button>
-<button id="btn-enter-super-cut" class="btn btn-primary" aria-label="Enter Super Cut, shortcut key c" style="margin-left: 10px;"> Super Cut </button>
+<a href="README.html" class="btn btn-secondary" target="_blank" style="margin-right: 10px; text-decoration: none;" aria-label="Read Documentation">Readme </a>
+<button id="btn-enter-super-mode" class="btn btn-primary" aria-label="Enter Super Merger, shortcut key m">Super Merger </button>
+<button id="btn-enter-super-trim" class="btn btn-primary" aria-label="Enter Super Trim, shortcut key t" style="margin-left: 10px;">Super Trim </button>
+<button id="btn-enter-super-cut" class="btn btn-primary" aria-label="Enter Super Cut, shortcut key c" style="margin-left: 10px;">Super Cut </button>
 </div>
 </div>
 </header>
@@ -48,27 +48,27 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ══════════════════════════════════════════ -->
 <section class="library-section" aria-labelledby="library-title">
 <div class="library-header">
-<h2 id="library-title"> Media Library </h2>
+<h2 id="library-title">Media Library </h2>
 <p class="section-desc">
  Upload your files here once. They will be available in all tools below.
-<span id="lib-db-status" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);"> Connecting to database...</span>
+<span id="lib-db-status" class="db-status-badge" style="font-size: 0.8rem; margin-left: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: var(--text-sub); border: 1px solid var(--border);">Connecting to database...</span>
 </p>
 </div>
 
 <div class="library-upload-bar">
 <div class="control-group">
-<label for="lib-file-name"> Asset Name:</label>
+<label for="lib-file-name">Asset Name:</label>
 <input type="text" id="lib-file-name" placeholder="e.g. rain_sound or cat_photo">
 </div>
 <div class="control-group">
-<label for="lib-file-input"> Choose File (audio, video, or image):</label>
+<label for="lib-file-input">Choose File (audio, video, or image):</label>
 <input type="file" id="lib-file-input" accept="audio/*,video/*,image/*">
 </div>
-<button id="btn-add-to-library" class="btn btn-secondary"> Add to Library </button>
+<button id="btn-add-to-library" class="btn btn-secondary">Add to Library </button>
 </div>
 
 <div class="library-items" id="library-items" role="list" aria-label="Uploaded media assets">
-<p class="empty-hint"> No files uploaded yet. Upload a file above to get started.</p>
+<p class="empty-hint">No files uploaded yet. Upload a file above to get started.</p>
 </div>
 </section>
 
@@ -79,131 +79,131 @@ window.onerror = function(msg, url, line, col, error) {
 
 <!-- Tab Navigation Bar -->
 <div class="tab-bar" role="tablist" aria-label="Media Studio Tools">
-<button role="tab" id="tab-merge-audio" aria-controls="panel-merge-audio" aria-selected="true" class="tab-btn active"> Merge Audio </button>
-<button role="tab" id="tab-merge-video" aria-controls="panel-merge-video" aria-selected="false" class="tab-btn"> Merge Video </button>
-<button role="tab" id="tab-audio-to-video" aria-controls="panel-audio-to-video" aria-selected="false" class="tab-btn"> Audio → Video </button>
-<button role="tab" id="tab-video-to-audio" aria-controls="panel-video-to-audio" aria-selected="false" class="tab-btn"> Video → Audio </button>
-<button role="tab" id="tab-trim-audio" aria-controls="panel-trim-audio" aria-selected="false" class="tab-btn"> Trim Audio </button>
-<button role="tab" id="tab-trim-video" aria-controls="panel-trim-video" aria-selected="false" class="tab-btn"> Trim Video </button>
+<button role="tab" id="tab-merge-audio" aria-controls="panel-merge-audio" aria-selected="true" class="tab-btn active">Merge Audio </button>
+<button role="tab" id="tab-merge-video" aria-controls="panel-merge-video" aria-selected="false" class="tab-btn">Merge Video </button>
+<button role="tab" id="tab-audio-to-video" aria-controls="panel-audio-to-video" aria-selected="false" class="tab-btn">Audio → Video </button>
+<button role="tab" id="tab-video-to-audio" aria-controls="panel-video-to-audio" aria-selected="false" class="tab-btn">Video → Audio </button>
+<button role="tab" id="tab-trim-audio" aria-controls="panel-trim-audio" aria-selected="false" class="tab-btn">Trim Audio </button>
+<button role="tab" id="tab-trim-video" aria-controls="panel-trim-video" aria-selected="false" class="tab-btn">Trim Video </button>
 </div>
 
 <!-- ── PANEL 1: MERGE AUDIO ────────────────── -->
 <section role="tabpanel" id="panel-merge-audio" aria-labelledby="tab-merge-audio" class="panel">
 <div class="panel-header">
-<h2> Merge Audio </h2>
-<p> Combine multiple audio files into one. For each clip, choose when it starts on the timeline and optionally crop it.</p>
+<h2>Merge Audio </h2>
+<p>Combine multiple audio files into one. For each clip, choose when it starts on the timeline and optionally crop it.</p>
 </div>
 
 <form id="form-merge-audio" class="clip-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="ma-sound-select"> Select Audio File from Library:</label>
+<label for="ma-sound-select">Select Audio File from Library:</label>
 <select id="ma-sound-select"required>
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="ma-start"> Start on Timeline (seconds) — at what second in the final mix does this clip begin:</label>
+<label for="ma-start">Start on Timeline (seconds) — at what second in the final mix does this clip begin:</label>
 <input type="number" id="ma-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="ma-crop-start"> Crop Start (seconds) — skip this many seconds from the beginning of the file:</label>
+<label for="ma-crop-start">Crop Start (seconds) — skip this many seconds from the beginning of the file:</label>
 <input type="number" id="ma-crop-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="ma-crop-end"> Crop End (seconds, optional) — stop playing the file at this second (empty = play full file):</label>
+<label for="ma-crop-end">Crop End (seconds, optional) — stop playing the file at this second (empty = play full file):</label>
 <input type="number" id="ma-crop-end" min="0" step="0.1" placeholder="End of file">
 </div>
 <div class="control-group">
-<label for="ma-volume"> Volume:<span id="ma-vol-val">100</span>%</label>
+<label for="ma-volume">Volume:<span id="ma-vol-val">100</span>%</label>
 <input type="range" id="ma-volume" min="0" max="100" step="5" value="100"
  aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
 </div>
 </div>
-<button type="submit" class="btn btn-secondary"> Add Clip to Mix </button>
+<button type="submit" class="btn btn-secondary">Add Clip to Mix </button>
 </form>
 
 <div class="clips-table-wrapper">
-<h3> Clips Added to Mix:</h3>
+<h3>Clips Added to Mix:</h3>
 <div class="table-scroll">
 <table id="ma-table" aria-label="Audio clips scheduled for merging">
 <thead>
 <tr>
-<th scope="col"> File Name </th>
-<th scope="col"> Timeline Start </th>
-<th scope="col"> Crop Range (in file)</th>
-<th scope="col"> Volume </th>
-<th scope="col"> Remove </th>
+<th scope="col">File Name </th>
+<th scope="col">Timeline Start </th>
+<th scope="col">Crop Range (in file)</th>
+<th scope="col">Volume </th>
+<th scope="col">Remove </th>
 </tr>
 </thead>
 <tbody id="ma-tbody">
-<tr id="ma-empty"><td colspan="5" class="empty-cell"> No clips added yet.</td></tr>
+<tr id="ma-empty"><td colspan="5" class="empty-cell">No clips added yet.</td></tr>
 </tbody>
 </table>
 </div>
 </div>
 
 <div class="panel-actions">
-<button id="btn-ma-play" class="btn btn-success"> Preview Mix </button>
-<button id="btn-ma-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-ma-stop" class="btn btn-danger"> Stop </button>
-<button id="btn-ma-export" class="btn btn-primary"> Download Merged WAV </button>
-<button id="btn-ma-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-ma-play" class="btn btn-success">Preview Mix </button>
+<button id="btn-ma-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-ma-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-ma-export" class="btn btn-primary">Download Merged WAV </button>
+<button id="btn-ma-save" class="btn btn-secondary">Save to Library </button>
 </div>
 </section>
 
 <!-- ── PANEL 2: MERGE VIDEO ────────────────── -->
 <section role="tabpanel" id="panel-merge-video" aria-labelledby="tab-merge-video" class="panel"hidden>
 <div class="panel-header">
-<h2> Merge Video </h2>
-<p> Concatenate multiple video clips into one video. Clips play one after another in the order listed below.</p>
+<h2>Merge Video </h2>
+<p>Concatenate multiple video clips into one video. Clips play one after another in the order listed below.</p>
 </div>
 
 <form id="form-merge-video" class="clip-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="mv-video-select"> Select Video File from Library:</label>
+<label for="mv-video-select">Select Video File from Library:</label>
 <select id="mv-video-select"required>
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="mv-crop-start"> Crop Start (seconds) — skip this many seconds from the beginning of the clip:</label>
+<label for="mv-crop-start">Crop Start (seconds) — skip this many seconds from the beginning of the clip:</label>
 <input type="number" id="mv-crop-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="mv-crop-end"> Crop End (seconds, optional) — stop at this second in the clip (empty = play full clip):</label>
+<label for="mv-crop-end">Crop End (seconds, optional) — stop at this second in the clip (empty = play full clip):</label>
 <input type="number" id="mv-crop-end" min="0" step="0.1" placeholder="End of clip">
 </div>
 </div>
-<button type="submit" class="btn btn-secondary"> Add Clip to Queue </button>
+<button type="submit" class="btn btn-secondary">Add Clip to Queue </button>
 </form>
 
 <div class="clips-table-wrapper">
-<h3> Video Clips to Merge (played in this order):</h3>
+<h3>Video Clips to Merge (played in this order):</h3>
 <div class="table-scroll">
 <table id="mv-table" aria-label="Video clips queued for merging">
 <thead>
 <tr>
 <th scope="col">#</th>
-<th scope="col"> File Name </th>
-<th scope="col"> Crop Range (in file)</th>
-<th scope="col"> Remove </th>
+<th scope="col">File Name </th>
+<th scope="col">Crop Range (in file)</th>
+<th scope="col">Remove </th>
 </tr>
 </thead>
 <tbody id="mv-tbody">
-<tr id="mv-empty"><td colspan="4" class="empty-cell"> No video clips added yet.</td></tr>
+<tr id="mv-empty"><td colspan="4" class="empty-cell">No video clips added yet.</td></tr>
 </tbody>
 </table>
 </div>
 </div>
 
 <div class="panel-actions">
-<button id="btn-mv-preview" class="btn btn-success"> Preview Video Mix </button>
-<button id="btn-mv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-mv-stop" class="btn btn-danger" style="display: none;"> Stop </button>
-<button id="btn-mv-export" class="btn btn-primary"> Download Merged Video (WebM)</button>
-<button id="btn-mv-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-mv-preview" class="btn btn-success">Preview Video Mix </button>
+<button id="btn-mv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-mv-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-mv-export" class="btn btn-primary">Download Merged Video (WebM)</button>
+<button id="btn-mv-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <p id="mv-status" class="status-text" aria-live="polite"></p>
 <div id="mv-preview-container" hidden></div>
@@ -214,60 +214,60 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ── PANEL 3: AUDIO → VIDEO ──────────────── -->
 <section role="tabpanel" id="panel-audio-to-video" aria-labelledby="tab-audio-to-video" class="panel"hidden>
 <div class="panel-header">
-<h2> Audio → Video (Slideshow)</h2>
-<p> Create a video from an audio track and a sequence of images. Each image is shown during a specific time range in the video.</p>
+<h2>Audio → Video (Slideshow)</h2>
+<p>Create a video from an audio track and a sequence of images. Each image is shown during a specific time range in the video.</p>
 </div>
 
 <!-- Step 1: Audio -->
 <div class="sub-section">
-<h3> Step 1 — Choose the Audio Track </h3>
+<h3>Step 1 — Choose the Audio Track </h3>
 <div class="control-group">
-<label for="av-audio-select"> Select Audio File from Library:</label>
+<label for="av-audio-select">Select Audio File from Library:</label>
 <select id="av-audio-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 </div>
 
 <!-- Step 2: Images with time ranges -->
 <div class="sub-section">
-<h3> Step 2 — Add Images with Time Ranges </h3>
-<p class="section-desc"> Each image will be displayed during the time range you specify. Example: show cat.png from second 0 to second 5, then show dog.jpg from second 5 to second 10.</p>
+<h3>Step 2 — Add Images with Time Ranges </h3>
+<p class="section-desc">Each image will be displayed during the time range you specify. Example: show cat.png from second 0 to second 5, then show dog.jpg from second 5 to second 10.</p>
 
 <form id="form-av-images" class="clip-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="av-image-select"> Select Image from Library:</label>
+<label for="av-image-select">Select Image from Library:</label>
 <select id="av-image-select"required>
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="av-img-start"> Show from (seconds) — this image appears at this second:</label>
+<label for="av-img-start">Show from (seconds) — this image appears at this second:</label>
 <input type="number" id="av-img-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="av-img-end"> Show until (seconds) — this image disappears at this second:</label>
+<label for="av-img-end">Show until (seconds) — this image disappears at this second:</label>
 <input type="number" id="av-img-end" min="0.1" step="0.1" value="5">
 </div>
 </div>
-<button type="submit" class="btn btn-secondary"> Add Image Slide </button>
+<button type="submit" class="btn btn-secondary">Add Image Slide </button>
 </form>
 
 <div class="clips-table-wrapper">
-<h4> Image Slideshow Schedule:</h4>
+<h4>Image Slideshow Schedule:</h4>
 <div class="table-scroll">
 <table id="av-table" aria-label="Image slideshow schedule">
 <thead>
 <tr>
-<th scope="col"> Image Name </th>
-<th scope="col"> Show From </th>
-<th scope="col"> Show Until </th>
-<th scope="col"> Remove </th>
+<th scope="col">Image Name </th>
+<th scope="col">Show From </th>
+<th scope="col">Show Until </th>
+<th scope="col">Remove </th>
 </tr>
 </thead>
 <tbody id="av-tbody">
-<tr id="av-empty"><td colspan="4" class="empty-cell"> No image slides added yet.</td></tr>
+<tr id="av-empty"><td colspan="4" class="empty-cell">No image slides added yet.</td></tr>
 </tbody>
 </table>
 </div>
@@ -275,11 +275,11 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 
 <div class="panel-actions">
-<button id="btn-av-preview" class="btn btn-success"> Preview Slideshow </button>
-<button id="btn-av-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-av-stop" class="btn btn-danger" style="display: none;"> Stop </button>
-<button id="btn-av-export" class="btn btn-primary"> Download Slideshow Video (WebM)</button>
-<button id="btn-av-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-av-preview" class="btn btn-success">Preview Slideshow </button>
+<button id="btn-av-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-av-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-av-export" class="btn btn-primary">Download Slideshow Video (WebM)</button>
+<button id="btn-av-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <div id="av-preview-container" hidden></div>
 <p id="av-status" class="status-text" aria-live="polite"></p>
@@ -289,23 +289,23 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ── PANEL 4: VIDEO → AUDIO ──────────────── -->
 <section role="tabpanel" id="panel-video-to-audio" aria-labelledby="tab-video-to-audio" class="panel"hidden>
 <div class="panel-header">
-<h2> Video → Audio </h2>
-<p> Extract the audio track from a video file and download it as a WAV file. The video itself is not modified.</p>
+<h2>Video → Audio </h2>
+<p>Extract the audio track from a video file and download it as a WAV file. The video itself is not modified.</p>
 </div>
 
 <div class="simple-form">
 <div class="control-group">
-<label for="va-video-select"> Select Video File from Library:</label>
+<label for="va-video-select">Select Video File from Library:</label>
 <select id="va-video-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="panel-actions">
-<button id="btn-va-preview" class="btn btn-success"> Preview Extracted Audio </button>
-<button id="btn-va-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-va-stop" class="btn btn-danger" style="display: none;"> Stop </button>
-<button id="btn-va-export" class="btn btn-primary"> Extract &amp; Download Audio (WAV)</button>
-<button id="btn-va-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-va-preview" class="btn btn-success">Preview Extracted Audio </button>
+<button id="btn-va-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-va-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-va-export" class="btn btn-primary">Extract &amp; Download Audio (WAV)</button>
+<button id="btn-va-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <p id="va-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -314,33 +314,33 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ── PANEL 5: TRIM AUDIO ─────────────────── -->
 <section role="tabpanel" id="panel-trim-audio" aria-labelledby="tab-trim-audio" class="panel"hidden>
 <div class="panel-header">
-<h2> Trim Audio </h2>
-<p> Cut out a section of an audio file. Specify where to start and where to stop. The rest is discarded.</p>
+<h2>Trim Audio </h2>
+<p>Cut out a section of an audio file. Specify where to start and where to stop. The rest is discarded.</p>
 </div>
 
 <div class="simple-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="ta-audio-select"> Select Audio File from Library:</label>
+<label for="ta-audio-select">Select Audio File from Library:</label>
 <select id="ta-audio-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="ta-start"> Trim Start (seconds) — keep audio from this second onwards:</label>
+<label for="ta-start">Trim Start (seconds) — keep audio from this second onwards:</label>
 <input type="number" id="ta-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="ta-end"> Trim End (seconds, optional) — keep audio up to this second (empty = keep until end of file):</label>
+<label for="ta-end">Trim End (seconds, optional) — keep audio up to this second (empty = keep until end of file):</label>
 <input type="number" id="ta-end" min="0" step="0.1" placeholder="End of file">
 </div>
 </div>
 <div class="panel-actions">
-<button id="btn-ta-preview" class="btn btn-success"> Preview Trim </button>
-<button id="btn-ta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-ta-stop" class="btn btn-danger"> Stop </button>
-<button id="btn-ta-export" class="btn btn-primary"> Download Trimmed WAV </button>
-<button id="btn-ta-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-ta-preview" class="btn btn-success">Preview Trim </button>
+<button id="btn-ta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-ta-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-ta-export" class="btn btn-primary">Download Trimmed WAV </button>
+<button id="btn-ta-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <p id="ta-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -349,33 +349,33 @@ window.onerror = function(msg, url, line, col, error) {
 <!-- ── PANEL 6: TRIM VIDEO ─────────────────── -->
 <section role="tabpanel" id="panel-trim-video" aria-labelledby="tab-trim-video" class="panel"hidden>
 <div class="panel-header">
-<h2> Trim Video </h2>
-<p> Cut out a section of a video file. Specify where to start and where to stop. The rest is discarded.</p>
+<h2>Trim Video </h2>
+<p>Cut out a section of a video file. Specify where to start and where to stop. The rest is discarded.</p>
 </div>
 
 <div class="simple-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="tv-video-select"> Select Video File from Library:</label>
+<label for="tv-video-select">Select Video File from Library:</label>
 <select id="tv-video-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="tv-start"> Trim Start (seconds) — keep video from this second onwards:</label>
+<label for="tv-start">Trim Start (seconds) — keep video from this second onwards:</label>
 <input type="number" id="tv-start" min="0" step="0.1" value="0">
 </div>
 <div class="control-group">
-<label for="tv-end"> Trim End (seconds, optional) — keep video up to this second (empty = keep until end of file):</label>
+<label for="tv-end">Trim End (seconds, optional) — keep video up to this second (empty = keep until end of file):</label>
 <input type="number" id="tv-end" min="0" step="0.1" placeholder="End of file">
 </div>
 </div>
 <div class="panel-actions">
-<button id="btn-tv-preview" class="btn btn-success"> Preview Trim </button>
-<button id="btn-tv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-tv-stop" class="btn btn-danger" style="display: none;"> Stop </button>
-<button id="btn-tv-export" class="btn btn-primary"> Download Trimmed Video (WebM)</button>
-<button id="btn-tv-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-tv-preview" class="btn btn-success">Preview Trim </button>
+<button id="btn-tv-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-tv-stop" class="btn btn-danger" style="display: none;">Stop </button>
+<button id="btn-tv-export" class="btn btn-primary">Download Trimmed Video (WebM)</button>
+<button id="btn-tv-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <div id="tv-preview-container" hidden></div>
 <p id="tv-status" class="status-text" aria-live="polite"></p>
@@ -386,7 +386,7 @@ window.onerror = function(msg, url, line, col, error) {
 </main>
 
 <footer class="app-footer">
-<p> Accessible Media Studio &copy; 2026 — Designed for screen readers and keyboard navigation.</p>
+<p>Accessible Media Studio &copy; 2026 — Designed for screen readers and keyboard navigation.</p>
 </footer>
 
 <!-- ══════════════════════════════════════════ -->
@@ -395,12 +395,12 @@ window.onerror = function(msg, url, line, col, error) {
 <div id="super-mode-overlay" class="sm-overlay" hidden>
 <div class="sm-container" role="application" tabindex="-1" aria-label="Super Merger Live Mixer">
 <header class="sm-header">
-<h2 id="sm-title"> Super Merger </h2>
+<h2 id="sm-title">Super Merger </h2>
 <div style="display: flex; gap: 8px; align-items: center;">
-<button id="btn-sm-export" class="btn btn-primary btn-sm" aria-label="Download Merged WAV" style="display: none;"> Download WAV </button>
-<button id="btn-sm-save" class="btn btn-secondary btn-sm" aria-label="Save Merged to Library" style="display: none;"> Save to Library </button>
-<button id="btn-sm-reset-mix" class="btn btn-danger btn-sm" aria-label="Reset and record from scratch" style="display: none;"> Reset &amp; Restart </button>
-<button id="btn-close-super-mode" class="btn btn-danger btn-sm" aria-label="Exit Super Merger">🚪 Close </button>
+<button id="btn-sm-export" class="btn btn-primary btn-sm" aria-label="Download Merged WAV" style="display: none;">Download WAV </button>
+<button id="btn-sm-save" class="btn btn-secondary btn-sm" aria-label="Save Merged to Library" style="display: none;">Save to Library </button>
+<button id="btn-sm-reset-mix" class="btn btn-danger btn-sm" aria-label="Reset and record from scratch" style="display: none;">Reset &amp; Restart </button>
+<button id="btn-close-super-mode" class="btn btn-danger btn-sm" aria-label="Exit Super Merger">Close </button>
 </div>
 </header>
 
@@ -415,36 +415,42 @@ window.onerror = function(msg, url, line, col, error) {
 <div class="sm-card">
 <h3>1. Base Audio File </h3>
 <div class="control-group">
-<label for="sm-base-select"> Select Base Audio from Library:</label>
+<label for="sm-base-select">Select Base Audio from Library:</label>
 <select id="sm-base-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="sm-base-volume"> Base Audio Volume:<span id="sm-base-vol-val">100</span>%</label>
+<label for="sm-base-volume">Base Audio Volume:<span id="sm-base-vol-val">100</span>%</label>
 <input type="range" id="sm-base-volume" min="0" max="100" step="5" value="100"
  aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
 </div>
 <div class="control-group" style="margin-top: 15px;">
-<label for="sm-base-end-behavior"> When Base Audio Ends:</label>
+<label for="sm-base-end-behavior">When Base Audio Ends:</label>
 <select id="sm-base-end-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="stop"selected> Stop Timeline (Press Ctrl+Space to continue)</option>
-<option value="continue"> Auto-Continue Timeline (Keep recording overlays)</option>
+<option value="stop"selected>Stop Timeline (Press Ctrl+Space to continue)</option>
+<option value="continue">Auto-Continue Timeline (Keep recording overlays)</option>
 </select>
 </div>
 <div class="control-group" style="margin-top: 15px;">
-<label for="sm-undo-behavior"> Undo Behavior (Ctrl + Left/Right):</label>
+<label for="sm-undo-behavior">Undo Behavior (Ctrl + Left/Right):</label>
 <select id="sm-undo-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="seek"selected> Delete and jump to clip's position </option>
-<option value="delete_only"> Delete only (Do not move timeline)</option>
+<option value="seek"selected>Delete and jump to clip's position </option>
+<option value="delete_only">Delete only (Do not move timeline)</option>
 </select>
 </div>
 <div class="control-group" style="margin-top: 15px;">
-<label for="sm-cancel-gap-behavior"> Ctrl+Shift+Space — Cancel Gap:</label>
+<label for="sm-cancel-gap-behavior">Ctrl+Shift+Space — Cancel Gap:</label>
 <select id="sm-cancel-gap-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="empty_only" selected> Only when gap has no overlays </option>
-<option value="always"> Always (also deletes overlays in gap) </option>
+<option value="empty_only" selected>Only when gap has no overlays </option>
+<option value="always">Always (also deletes overlays in gap) </option>
 </select>
+</div>
+
+<!-- Calibration Button in Setup View -->
+<div class="control-group" style="margin-top: 15px;">
+    <button type="button" id="btn-sm-calibrate-headphones" class="btn btn-secondary">Please click if you are using a headphone to calibrate delay</button>
+    <p id="sm-latency-display" class="field-hint" aria-live="polite">Current headphone delay correction: 0 ms</p>
 </div>
 </div>
 
@@ -454,38 +460,38 @@ window.onerror = function(msg, url, line, col, error) {
 <form id="form-sm-overlay" class="clip-form">
 <div class="form-grid">
 <div class="control-group">
-<label for="sm-overlay-select"> Select Audio File:</label>
+<label for="sm-overlay-select">Select Audio File:</label>
 <select id="sm-overlay-select"required>
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 <div class="control-group">
-<label for="sm-overlay-key"> Shortcut Key (single letter/number):</label>
+<label for="sm-overlay-key">Shortcut Key (single letter/number):</label>
 <input type="text" id="sm-overlay-key" placeholder="e.g. 1, a, q" maxlength="1"required
  aria-describedby="sm-key-hint">
-<span id="sm-key-hint" class="field-hint"> Pressing this key during playback triggers this sound.</span>
+<span id="sm-key-hint" class="field-hint">Pressing this key during playback triggers this sound.</span>
 </div>
 <div class="control-group">
-<label for="sm-overlay-volume"> Overlay Volume:<span id="sm-overlay-vol-val">100</span>%</label>
+<label for="sm-overlay-volume">Overlay Volume:<span id="sm-overlay-vol-val">100</span>%</label>
 <input type="range" id="sm-overlay-volume" min="0" max="100" step="5" value="100"
  aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
 </div>
 <div class="control-group">
-<label for="sm-overlay-behavior"> Trigger Behavior:</label>
+<label for="sm-overlay-behavior">Trigger Behavior:</label>
 <select id="sm-overlay-behavior"required style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="overlap"selected> Overlap (Play on top)</option>
-<option value="cutoff"> Cutoff (Restart sound)</option>
+<option value="overlap"selected>Overlap (Play on top)</option>
+<option value="cutoff">Cutoff (Restart sound)</option>
 </select>
 </div>
 </div>
-<button type="submit" class="btn btn-secondary"> Add to Super Mix </button>
+<button type="submit" class="btn btn-secondary">Add to Super Mix </button>
 </form>
 </div>
 
 </div>
 
 <div class="sm-card sm-list-card">
-<h3> Configured Shortcuts:</h3>
+<h3>Configured Shortcuts:</h3>
 <p id="sm-shortcuts-summary" style="margin-bottom: 15px; color: var(--text-muted);">0 overlays configured.</p>
 <div style="display: flex; gap: 10px;">
 <button id="btn-sm-manage-overlays" class="btn btn-secondary btn-sm">Manage Overlays</button>
@@ -493,8 +499,8 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 
 <div class="sm-setup-actions" style="display: flex; gap: 10px;">
-<button id="btn-sm-go" class="btn btn-success btn-lg"disabled> Go Now — Start Live Mixer </button>
-<button id="btn-sm-continue" class="btn btn-warning btn-lg" style="display: none;"> Continue Recording </button>
+<button id="btn-sm-go" class="btn btn-success btn-lg"disabled>Go Now — Start Live Mixer </button>
+<button id="btn-sm-continue" class="btn btn-warning btn-lg" style="display: none;">Continue Recording </button>
 </div>
 </div>
 
@@ -504,11 +510,11 @@ window.onerror = function(msg, url, line, col, error) {
  
 <!-- Live Playback Status & Timeline -->
 <div class="sm-card sm-playback-card">
-<h3> Playback Control </h3>
+<h3>Playback Control </h3>
 <div class="sm-playback-status">
-<span id="sm-playback-state-text" class="status-badge status-playing"> Playing </span>
+<span id="sm-playback-state-text" class="status-badge status-playing">Playing </span>
 <div class="sm-time-display">
-<span id="sm-current-time">0.0</span> s /<span id="sm-total-duration">0.0</span> s
+<span id="sm-current-time">0.0</span>s /<span id="sm-total-duration">0.0</span>s
 </div>
 </div>
 <!-- Progress Bar -->
@@ -523,7 +529,7 @@ window.onerror = function(msg, url, line, col, error) {
 
 <!-- Shortcuts Reference Guide -->
 <div class="sm-card sm-guide-card">
-<h3> Active Shortcuts (Press key to play &amp; record):</h3>
+<h3>Active Shortcuts (Press key to play &amp; record):</h3>
 <div id="sm-active-keys-list" class="sm-keys-list">
 <!-- Dynamically populated shortcut badges -->
 </div>
@@ -532,11 +538,11 @@ window.onerror = function(msg, url, line, col, error) {
 
 <!-- Live Activity Stream / Recorded Mix Log -->
 <div class="sm-card sm-log-card">
-<h3> Recorded Mix Log:</h3>
+<h3>Recorded Mix Log:</h3>
 <div id="sm-live-alert" style="padding: 4px 10px; font-weight: 600; min-height: 1.5em; font-size: 0.9rem; text-align: center;" aria-hidden="true"></div>
 <div class="sm-log-container">
 <ul id="sm-mix-log" class="sm-mix-log">
-<li class="empty-log"> No clips recorded yet. Press shortcut keys while the base audio is playing.</li>
+<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>
 </ul>
 </div>
 </div>
@@ -549,12 +555,28 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 </div>
 
+<!-- Calibration Modal Dialog -->
+<dialog id="sm-calibration-dialog" style="padding: 20px; max-width: 500px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text);">
+    <h3 id="calibration-title">Headphone Latency Calibration</h3>
+    
+    <!-- role="application" forces Focus Mode so Spacebar passes directly to JavaScript -->
+    <div id="calibration-instructions" role="application" aria-roledescription="Calibration Area" aria-labelledby="calibration-title" tabindex="0" style="margin-bottom: 20px; line-height: 1.6; outline: none;">
+        We will play a rhythmic ticking sound. Please tap the <strong>Spacebar</strong>exactly in sync with each "tick" you hear. Do this 5 times consecutively. Press <strong>Escape</strong>anytime to cancel.
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button type="button" id="btn-start-calibration" class="btn btn-success">Press here or Spacebar to Start</button>
+    </div>
+    
+    <div id="calibration-status" aria-live="assertive" style="font-weight: bold; text-align: center; min-height: 24px;"></div>
+</dialog>
+
 <!-- Manage Overlays Dialog -->
 <dialog id="sm-manage-overlays-dialog" role="application" aria-label="Manage Overlays" style="padding: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text); max-width: 800px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
   <div class="dialog-content">
     <h3 id="sm-manage-overlays-title" style="margin-top: 0;">Manage Overlays</h3>
     <div id="sm-manage-overlays-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
-      <p id="sm-manage-overlays-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No overlays configured yet.</p>
+      <p id="sm-manage-overlays-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);">No overlays configured yet.</p>
     </div>
     <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
       <button id="btn-sm-manage-overlays-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>
@@ -569,56 +591,57 @@ window.onerror = function(msg, url, line, col, error) {
 <div id="super-trim-overlay" class="sm-overlay" hidden>
 <div class="sm-container" role="application" tabindex="-1" aria-label="Super Trim Audio">
 <header class="sm-header">
-<h2 id="sta-title"> Super Trim Audio </h2>
+<h2 id="sta-title">Super Trim Audio </h2>
 <div style="display: flex; gap: 8px; align-items: center;">
-<button id="btn-close-super-trim" class="btn btn-danger btn-sm" aria-label="Exit Super Trim">✕ Close </button>
+<button id="btn-close-super-trim" class="btn btn-danger btn-sm" aria-label="Exit Super Trim">Close </button>
 </div>
 </header>
 
 <div class="sm-view" tabindex="-1">
 <p class="sm-description">
- Live-trim an audio file. Play the audio and press <kbd> s </kbd>(or <kbd>[</kbd>) to set the Start time, and <kbd> e </kbd>(or <kbd>]</kbd>) to set the End time.
+ Live-trim an audio file. Play the audio and press <kbd>s </kbd>(or <kbd>[</kbd>) to set the Start time, and <kbd>e </kbd>(or <kbd>]</kbd>) to set the End time.
 </p>
 
 <div class="simple-form">
 <div class="control-group">
-<label for="sta-audio-select"> Select Audio File from Library:</label>
+<label for="sta-audio-select">Select Audio File from Library:</label>
 <select id="sta-audio-select">
-<option value=""disabled selected> Select from library...</option>
+<option value=""disabled selected>Select from library...</option>
 </select>
 </div>
 
 <!-- Live Trim Interface -->
 <div class="super-trim-ui" style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
-              <button id="btn-sta-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
-              <button id="btn-sta-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
+              <button id="btn-sta-play" class="btn btn-success" style="font-size: 1.2rem;">Play (Space)</button>
+              <button id="btn-sta-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled>Stop </button>
             </div>
  
 <div style="text-align: center; margin-bottom: 20px;">
 <div id="sta-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
-<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="sta-sr-announcer"> Ready to play.</p>
+<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="sta-sr-announcer">Ready to play.</p>
 </div>
 
 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
-<h3 style="margin: 0 0 10px 0;"> Start Point (In)</h3>
+<h3 style="margin: 0 0 10px 0;">Start Point (In)</h3>
 <div id="sta-start-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">0.00s</div>
-<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd> s </kbd>(or <kbd>[</kbd>) while playing </p>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>s </kbd>(or <kbd>[</kbd>) while playing </p>
 </div>
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
-<h3 style="margin: 0 0 10px 0;"> End Point (Out)</h3>
+<h3 style="margin: 0 0 10px 0;">End Point (Out)</h3>
 <div id="sta-end-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
-<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd> e </kbd>(or <kbd>]</kbd>) while playing </p>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>e </kbd>(or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
 </div>
 
 <div class="panel-actions">
-<button id="btn-sta-preview" class="btn btn-secondary"> Preview Trimmed Range </button>
-<button id="btn-sta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-sta-export" class="btn btn-primary"> Download Trimmed WAV </button>
-<button id="btn-sta-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-sta-preview" class="btn btn-secondary">Preview Trimmed Range </button>
+<button id="btn-sta-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-sta-stop-preview" class="btn btn-danger" style="display: none;">Stop Preview </button>
+<button id="btn-sta-export" class="btn btn-primary">Download Trimmed WAV </button>
+<button id="btn-sta-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <p id="sta-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -632,61 +655,62 @@ window.onerror = function(msg, url, line, col, error) {
 <div id="super-cut-overlay" class="sm-overlay" hidden>
 <div class="sm-container" role="application" tabindex="-1" aria-label="Super Cut Audio">
 <header class="sm-header">
-<h2 id="sct-title"> Super Cut Audio </h2>
+<h2 id="sct-title">Super Cut Audio </h2>
 <div style="display: flex; gap: 8px; align-items: center;">
-<button id="btn-close-super-cut" class="btn btn-danger btn-sm" aria-label="Exit Super Cut">✕ Close </button>
+<button id="btn-close-super-cut" class="btn btn-danger btn-sm" aria-label="Exit Super Cut">Close </button>
 </div>
 </header>
 
 <div class="sm-view" tabindex="-1">
 <p class="sm-description">
- Live-cut an audio file by cutting out mistakes. Play the audio and press <kbd>s</kbd> (or <kbd>[</kbd>) to set the Start of a cut, and <kbd>e</kbd> (or <kbd>]</kbd>) to set the End. You can define multiple cuts to remove all mistakes at once.
+ Live-cut an audio file by cutting out mistakes. Play the audio and press <kbd>s</kbd>(or <kbd>[</kbd>) to set the Start of a cut, and <kbd>e</kbd>(or <kbd>]</kbd>) to set the End. You can define multiple cuts to remove all mistakes at once.
 </p>
 
 <div class="simple-form">
 <div class="control-group">
-<label for="sct-audio-select"> Select Audio File from Library:</label>
+<label for="sct-audio-select">Select Audio File from Library:</label>
 <select id="sct-audio-select">
-<option value="" disabled selected> Select from library...</option>
+<option value="" disabled selected>Select from library...</option>
 </select>
 </div>
 
 <!-- Live Cut Interface -->
 <div class="super-trim-ui" style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border);">
             <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; justify-content: center;">
-              <button id="btn-sct-play" class="btn btn-success" style="font-size: 1.2rem;"> Play (Space)</button>
-              <button id="btn-sct-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled> Stop </button>
+              <button id="btn-sct-play" class="btn btn-success" style="font-size: 1.2rem;">Play (Space)</button>
+              <button id="btn-sct-stop" class="btn btn-danger" style="font-size: 1.2rem;" disabled>Stop </button>
             </div>
 
 <div style="text-align: center; margin-bottom: 20px;">
 <div id="sct-time-display" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--accent);">00:00.0</div>
-<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="sct-sr-announcer"> Ready to play.</p>
+<p style="color: var(--text-sub); margin-top: 5px;" aria-live="polite" id="sct-sr-announcer">Ready to play.</p>
 </div>
 
 <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
-<h3 style="margin: 0 0 10px 0;"> Cut Start (Delete from)</h3>
+<h3 style="margin: 0 0 10px 0;">Cut Start (Delete from)</h3>
 <div id="sct-start-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
-<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>s</kbd> (or <kbd>[</kbd>) while playing </p>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>s</kbd>(or <kbd>[</kbd>) while playing </p>
 </div>
 <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; text-align: center;">
-<h3 style="margin: 0 0 10px 0;"> Cut End (Delete up to)</h3>
+<h3 style="margin: 0 0 10px 0;">Cut End (Delete up to)</h3>
 <div id="sct-end-display" style="font-size: 1.5rem; font-family: monospace; color: var(--text);">Not set</div>
-<p style="margin: 10px 0 0 0; color: var(--text-sub);"> Press <kbd>e</kbd> (or <kbd>]</kbd>) while playing </p>
+<p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>e</kbd>(or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
 </div>
 
 <div class="clips-table-wrapper" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-<h3> Defined Cuts: <span id="sct-cuts-count">0</span></h3>
-<button id="btn-sct-manage-cuts" class="btn btn-secondary btn-sm" aria-label="Manage defined cuts"> Manage Cuts </button>
+<h3>Defined Cuts: <span id="sct-cuts-count">0</span></h3>
+<button id="btn-sct-manage-cuts" class="btn btn-secondary btn-sm" aria-label="Manage defined cuts">Manage Cuts </button>
 </div>
 
 <div class="panel-actions" style="margin-top: 20px;">
-<button id="btn-sct-preview" class="btn btn-secondary"> Preview Remaining Audio </button>
-<button id="btn-sct-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview"> Replay Preview </button>
-<button id="btn-sct-export" class="btn btn-primary"> Download Remaining WAV </button>
-<button id="btn-sct-save" class="btn btn-secondary"> Save to Library </button>
+<button id="btn-sct-preview" class="btn btn-secondary">Preview Remaining Audio </button>
+<button id="btn-sct-replay-preview" class="btn btn-secondary" style="display: none;" aria-label="Replay Preview">Replay Preview </button>
+<button id="btn-sct-stop-preview" class="btn btn-danger" style="display: none;">Stop Preview </button>
+<button id="btn-sct-export" class="btn btn-primary">Download Remaining WAV </button>
+<button id="btn-sct-save" class="btn btn-secondary">Save to Library </button>
 </div>
 <p id="sct-status" class="status-text" aria-live="polite"></p>
 </div>
@@ -697,7 +721,7 @@ window.onerror = function(msg, url, line, col, error) {
   <div class="dialog-content">
     <h3 id="sct-manage-title" style="margin-top: 0;">Manage Defined Cuts</h3>
     <div id="sct-manage-cuts-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
-      <p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No cuts defined yet.</p>
+      <p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);">No cuts defined yet.</p>
     </div>
     <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
       <button id="btn-sct-manage-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>

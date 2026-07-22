@@ -166,17 +166,17 @@ function triggerReviewPlaybacksAtCurrentTime() {
 
 
 // Global Preview Arrow Key Handler for Standard Tools & Library
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', (e) =>{
   const tag = e.target.tagName.toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  if (tag === 'input'|| tag === 'textarea'|| tag === 'select') return;
+  if (e.key !== 'ArrowRight'&& e.key !== 'ArrowLeft') return;
 
   // Ignore Super Tools as they have their own handlers
   if (document.getElementById('panel-super-merger') && !document.getElementById('panel-super-merger').hidden) return;
   if (document.getElementById('panel-super-trim') && !document.getElementById('panel-super-trim').hidden) return;
   if (document.getElementById('panel-super-cut') && !document.getElementById('panel-super-cut').hidden) return;
 
-  const seconds = e.key === 'ArrowRight' ? 5 : -5;
+  const seconds = e.key === 'ArrowRight'? 5 : -5;
   
   // 1. Check Trim Audio
   const panelTrimAudio = document.getElementById('panel-trim-audio');
@@ -213,7 +213,7 @@ window.addEventListener('keydown', (e) => {
   // 5. Handle HTMLMediaElements (for Trim Video, Merge Video, Audio Video, and Library UI)
   const medias = document.querySelectorAll('audio, video');
   let handled = false;
-  medias.forEach(media => {
+  medias.forEach(media =>{
      if (!media.paused && media.duration) {
         media.currentTime = Math.max(0, Math.min(media.duration, media.currentTime + seconds));
         handled = true;

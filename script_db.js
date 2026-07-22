@@ -10,8 +10,8 @@ function setDbStatus(msg, ok = true) {
  const el = document.getElementById('lib-db-status');
  if (!el) return;
  el.textContent = msg;
- el.style.color = ok ? '#4ade80' : '#f87171';
- el.style.borderColor = ok ? '#4ade80' : '#f87171';
+ el.style.color = ok ? '#4ade80': '#f87171';
+ el.style.borderColor = ok ? '#4ade80': '#f87171';
 }
 
 function initDatabase() {
@@ -21,19 +21,19 @@ function initDatabase() {
  req.onupgradeneeded = e =>{
  const db = e.target.result;
  if (!db.objectStoreNames.contains(STORE_NAME)) {
- const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+ const store = db.createObjectStore(STORE_NAME, { keyPath: 'id'});
  store.createIndex('name', 'name', { unique: false });
  }
  };
 
  req.onsuccess = e =>{
  dbInstance = e.target.result;
- setDbStatus('✓ Library autosaved to browser', true);
+ setDbStatus('Library autosaved to browser', true);
  resolve(dbInstance);
  };
 
  req.onerror = e =>{
- setDbStatus('✗ Database unavailable — files won\'t persist', false);
+ setDbStatus('Database unavailable — files won\'t persist', false);
  console.warn('IndexedDB error:', e.target.error);
  resolve(null); // Non-fatal: app still works without persistence
  };
@@ -48,7 +48,7 @@ function dbSaveAsset(id, name, type, blob) {
  const req = store.put({ id, name, type, blob });
  req.onerror = e =>{
  console.warn('IndexedDB save failed (quota?):', e.target.error);
- setDbStatus('⚠ Save failed — storage may be full', false);
+ setDbStatus('Save failed — storage may be full', false);
  alert("Failed to save file to local database (storage might be full).");
  };
  } catch (err) {

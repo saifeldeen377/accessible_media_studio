@@ -42,20 +42,24 @@ function initMergeAudio() {
  });
 
  document.getElementById('btn-ma-play').addEventListener('click', previewMergeAudio);
- document.getElementById('btn-ma-stop').addEventListener('click', stopMergeAudio);
- document.getElementById('btn-ma-export').addEventListener('click', () => exportMergeAudio(false));
- document.getElementById('btn-ma-save').addEventListener('click', () => exportMergeAudio(true));
+ document.getElementById('btn-ma-stop').addEventListener('click', () =>{
+   stopMergeAudio(true);
+   const btnPreview = document.getElementById('btn-ma-play');
+   if (btnPreview) btnPreview.focus();
+ });
+ document.getElementById('btn-ma-export').addEventListener('click', () =>exportMergeAudio(false));
+ document.getElementById('btn-ma-save').addEventListener('click', () =>exportMergeAudio(true));
 }
 
 function renderMaTable() {
  const tbody = document.getElementById('ma-tbody');
- document.getElementById('ma-empty').style.display = maClips.length ? 'none' : '';
+ document.getElementById('ma-empty').style.display = maClips.length ? 'none': '';
  tbody.querySelectorAll('tr.data-row').forEach(r =>r.remove());
 
  maClips.forEach(clip =>{
  const tr = document.createElement('tr');
  tr.className = 'data-row';
- const crop = `${clip.cropStart}s → ${clip.cropEnd != null ? clip.cropEnd + 's' : 'end of file'}`;
+ const crop = `${clip.cropStart}s → ${clip.cropEnd != null ? clip.cropEnd + 's': 'end of file'}`;
  tr.innerHTML = `
 <td>${escapeHTML(clip.name)}</td>
 <td>${clip.timelineStart}s</td>
@@ -63,7 +67,7 @@ function renderMaTable() {
 <td>${Math.round(clip.volume * 100)}%</td>
 <td><button class="btn btn-sm btn-danger"
  onclick="removeMaClip('${clip.id}')"
- aria-label="Remove ${escapeHTML(clip.name)}">✕</button></td>
+ aria-label="Remove ${escapeHTML(clip.name)}"></button></td>
  `;
  tbody.appendChild(tr);
  });
@@ -145,14 +149,14 @@ let maPreviewBuffer = null;
 async function previewMergeAudio() {
   const btnPreview = document.getElementById('btn-ma-play');
   const btnReplay = document.getElementById('btn-ma-replay-preview');
+  const btnStop = document.getElementById('btn-ma-stop');
 
   if (maIsPreviewing) {
     if (previewSource) { try { previewSource.stop(); } catch (_) {} }
     maPreviewOffset += (getAudioCtx().currentTime - maPreviewStartTime);
     maIsPreviewing = false;
-    btnPreview.textContent = '▶️ Resume Mix';
+    btnPreview.textContent = 'Resume Mix';
     btnPreview.setAttribute('aria-label', `Resume mix preview`);
-
     return;
   }
 
@@ -175,12 +179,13 @@ async function previewMergeAudio() {
   previewSource.start(0, maPreviewOffset);
   maPreviewStartTime = ctx.currentTime;
   maIsPreviewing = true;
-  btnPreview.textContent = '⏸️ Pause Mix';
+  btnPreview.textContent = 'Pause Mix';
   btnPreview.setAttribute('aria-label', `Pause mix preview`);
-  btnReplay.style.display = 'inline-block';
+  if (btnReplay) btnReplay.style.display = 'inline-block';
+  if (btnStop) btnStop.style.display = 'inline-block';
   
 
-  previewSource.onended = () => {
+  previewSource.onended = () =>{
     if (!maIsPreviewing) return; // Means it was paused
     maIsPreviewing = false;
     maPreviewOffset = 0;
@@ -190,7 +195,10 @@ async function previewMergeAudio() {
       if (document.activeElement === btnReplay) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
-
+    if (btnStop) {
+      if (document.activeElement === btnStop) btnPreview.focus();
+      btnStop.style.display = 'none';
+    }
   };
 }
 
@@ -201,6 +209,7 @@ function stopMergeAudio(resetOffset = true) {
     maPreviewOffset = 0;
     const btnPreview = document.getElementById('btn-ma-play');
     const btnReplay = document.getElementById('btn-ma-replay-preview');
+    const btnStop = document.getElementById('btn-ma-stop');
     if (btnPreview) {
       btnPreview.textContent = 'Preview Mix';
       btnPreview.setAttribute('aria-label', `Preview mix`);
@@ -209,13 +218,17 @@ function stopMergeAudio(resetOffset = true) {
       if (document.activeElement === btnReplay && btnPreview) btnPreview.focus();
       btnReplay.style.display = 'none';
     }
+    if (btnStop) {
+      if (document.activeElement === btnStop && btnPreview) btnPreview.focus();
+      btnStop.style.display = 'none';
+    }
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () =>{
   const btnReplay = document.getElementById('btn-ma-replay-preview');
   if (btnReplay) {
-    btnReplay.addEventListener('click', () => {
+    btnReplay.addEventListener('click', () =>{
       maPreviewOffset = 0;
       maIsPreviewing = false;
       if (previewSource) { try { previewSource.stop(); } catch (_) {} }

@@ -28,14 +28,17 @@ function initTrimVideo() {
     tvIsPreviewing = false;
     btnPreview.textContent = 'Preview Trim';
     btnPreview.setAttribute('aria-label', `Preview trim`);
-    if (btnReplay) {
-      if (document.activeElement === btnReplay) btnPreview.focus();
-      btnReplay.style.display = 'none';
+      if (btnReplay) {
+        if (document.activeElement === btnReplay) btnPreview.focus();
+        btnReplay.style.display = 'none';
+      }
+      if (btnStop) {
+        if (document.activeElement === btnStop) btnPreview.focus();
+        btnStop.style.display = 'none';
+      }
     }
-    btnStop.style.display = 'none';
-  }
 
-  btnPreview.addEventListener('click', () => {
+  btnPreview.addEventListener('click', () =>{
     const assetId = document.getElementById('tv-video-select').value;
     if (!assetId) { alert('Please select a video file from the library.'); return; }
     
@@ -44,16 +47,15 @@ function initTrimVideo() {
       if (vid) {
         if (!vid.paused) {
           vid.pause();
-          btnPreview.textContent = '▶️ Resume Trim';
+          btnPreview.textContent = 'Resume Trim';
           btnPreview.setAttribute('aria-label', `Resume trim preview`);
           statusEl.textContent = '';
 
         } else {
           vid.play();
-          btnPreview.textContent = '⏸️ Pause Trim';
+          btnPreview.textContent = 'Pause Trim';
           btnPreview.setAttribute('aria-label', `Pause trim preview`);
-          statusEl.textContent = 'Preview resumed.';
-
+          statusEl.textContent = '';
         }
       }
       return;
@@ -71,16 +73,16 @@ function initTrimVideo() {
     
     const vid = document.getElementById('vid-tv-preview');
     vid.currentTime = start;
-    vid.play().catch(e => console.error(e));
+    vid.play().catch(e =>console.error(e));
 
     tvIsPreviewing = true;
-    btnPreview.textContent = '⏸️ Pause Trim';
+    btnPreview.textContent = 'Pause Trim';
     btnPreview.setAttribute('aria-label', `Pause trim preview`);
     btnReplay.style.display = 'inline-block';
     btnStop.style.display = 'inline-block';
     statusEl.textContent = '';
 
-    vid.ontimeupdate = () => {
+    vid.ontimeupdate = () =>{
       if (vid.currentTime >= end) {
         vid.pause();
         stopTvPreview();
@@ -89,27 +91,28 @@ function initTrimVideo() {
       }
     };
 
-    vid.onended = () => {
+    vid.onended = () =>{
       stopTvPreview();
       statusEl.textContent = '';
 
     };
   });
 
-  btnReplay.addEventListener('click', () => {
+  btnReplay.addEventListener('click', () =>{
     const vid = document.getElementById('vid-tv-preview');
     if (vid) {
       const start = parseFloat(tvStart.value) || 0;
       vid.currentTime = start;
       vid.play();
-      btnPreview.textContent = '⏸️ Pause Trim';
+      btnPreview.textContent = 'Pause Trim';
       btnPreview.setAttribute('aria-label', `Pause trim preview`);
     }
   });
 
-  btnStop.addEventListener('click', () => {
+  btnStop.addEventListener('click', () =>{
     stopTvPreview();
-    statusEl.textContent = 'Stopped.';
+    statusEl.textContent = '';
+    btnPreview.focus();
   });
 
   const performTrimVideoExport = async (isSaveToLib) =>{
@@ -144,7 +147,7 @@ function initTrimVideo() {
  recorder.ondataavailable = e =>{ if (e.data.size >0) chunks.push(e.data); };
  let recordStart = 0;
  recorder.onstop = () =>{
- canvasStream.getTracks().forEach(t => t.stop());
+ canvasStream.getTracks().forEach(t =>t.stop());
  const durationMs = Date.now() - recordStart;
  const blob = new Blob(chunks, { type: recorder.mimeType });
  const fileName = `${asset.name}_trimmed.webm`;
@@ -197,7 +200,7 @@ function initTrimVideo() {
  }
  };
 
- document.getElementById('btn-tv-export').addEventListener('click', () => performTrimVideoExport(false));
- document.getElementById('btn-tv-save').addEventListener('click', () => performTrimVideoExport(true));
+ document.getElementById('btn-tv-export').addEventListener('click', () =>performTrimVideoExport(false));
+ document.getElementById('btn-tv-save').addEventListener('click', () =>performTrimVideoExport(true));
 }
 

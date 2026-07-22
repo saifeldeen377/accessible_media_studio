@@ -52,7 +52,7 @@ function initSuperCut() {
 
   setupFocusTrap(overlay);
 
-  btnEnter.addEventListener('click', () => {
+  btnEnter.addEventListener('click', () =>{
     overlay.hidden = false;
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
@@ -60,7 +60,7 @@ function initSuperCut() {
     announce('Entered Super Cut Audio. Application mode active.');
   });
 
-  btnManageCuts.addEventListener('click', () => {
+  btnManageCuts.addEventListener('click', () =>{
     manageDialog.showModal();
     if (sctCutRegions.length === 0 && (sctActiveCut.start === null || sctActiveCut.end === null)) {
       announce('There are no cuts registered to manage or delete.', true);
@@ -75,12 +75,12 @@ function initSuperCut() {
     }
   });
 
-  btnManageClose.addEventListener('click', () => {
+  btnManageClose.addEventListener('click', () =>{
     manageDialog.close();
     btnManageCuts.focus();
   });
 
-  btnManageDeleteAll.addEventListener('click', () => {
+  btnManageDeleteAll.addEventListener('click', () =>{
     if (!confirm('Are you sure you want to delete all cuts?')) return;
     sctCutRegions = [];
     sctActiveCut = { start: null, end: null, id: null };
@@ -93,11 +93,11 @@ function initSuperCut() {
   });
 
   // Global key listener for c
-  window.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', (e) =>{
     const tag = e.target.tagName.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (tag === 'input'|| tag === 'textarea'|| tag === 'select') return;
 
-    if (e.key.toLowerCase() === 'c' && (overlay.hidden || overlay.style.display === 'none')) {
+    if (e.key.toLowerCase() === 'c'&& (overlay.hidden || overlay.style.display === 'none')) {
       const smOverlay = document.getElementById('super-mode-overlay');
       const stOverlay = document.getElementById('super-trim-overlay');
       if ((smOverlay && !smOverlay.hidden) || (stOverlay && !stOverlay.hidden)) return;
@@ -106,7 +106,7 @@ function initSuperCut() {
     }
   });
 
-  btnClose.addEventListener('click', () => {
+  btnClose.addEventListener('click', () =>{
     stopAudio();
     stopPreview();
     overlay.hidden = true;
@@ -116,7 +116,7 @@ function initSuperCut() {
     announce('Exited Super Cut Audio.');
   });
 
-  select.addEventListener('change', () => {
+  select.addEventListener('change', () =>{
     stopAudio();
     stopPreview();
     sctBuffer = null;
@@ -206,7 +206,7 @@ function initSuperCut() {
     clearInterval(sctTimer);
     sctTimer = setInterval(updateTimeDisplay, 100);
     
-    sctPlaySource.onended = () => {
+    sctPlaySource.onended = () =>{
       if (!sctIsPlaying) return; 
       sctIsPlaying = false;
       sctPlayOffset = sctBuffer.duration;
@@ -226,7 +226,7 @@ function initSuperCut() {
       return;
     }
     if (sctIsLoading) {
-      alert("Please wait, the track is still loading...");
+      announce("Please wait, the audio file is currently loading...", true);
       return;
     }
     if (issctPreviewing) {
@@ -245,19 +245,35 @@ function initSuperCut() {
       btnPlay.textContent = "Resume (Space)";
       clearInterval(sctTimer);
     } else {
+      const targetAsset = getAsset(select.value);
+      const targetSize = (targetAsset && (targetAsset.file?.size || targetAsset.size)) || 1000000;
 
       sctIsLoading = true;
+      let loadingAnnounceTimer = null;
+
+      if (targetSize > 30 * 1024 * 1024) {
+        btnPlay.textContent = "Loading... Please wait";
+        announce("Loading audio file... Please wait.");
+        loadingAnnounceTimer = setInterval(() => {
+          announce("Loading... Please wait.");
+        }, 5000);
+      }
+
       try {
         if (currentsctAssetId !== select.value || !sctBuffer) {
-          sctBuffer = await decodeAudio(getAsset(select.value).objectURL);
+          sctBuffer = await decodeAudio(targetAsset.objectURL);
           currentsctAssetId = select.value;
           sctPlayOffset = 0;
         }
       } catch (err) {
+        if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
         statusEl.textContent = "Error loading audio file.";
+        btnPlay.textContent = "Play (Space)";
         sctIsLoading = false;
         return;
       }
+
+      if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
       sctIsLoading = false;
       statusEl.textContent = "";
 
@@ -278,7 +294,7 @@ function initSuperCut() {
       btnStop.disabled = false;
       sctTimer = setInterval(updateTimeDisplay, 100);
 
-      sctPlaySource.onended = () => {
+      sctPlaySource.onended = () =>{
         if (!sctIsPlaying) return; 
         sctIsPlaying = false;
         sctPlayOffset = sctBuffer.duration;
@@ -292,7 +308,7 @@ function initSuperCut() {
   }
 
   btnPlay.addEventListener('click', togglePlay);
-  btnStop.addEventListener('click', () => { stopAudio(); stopPreview(); });
+  btnStop.addEventListener('click', () =>{ stopAudio(); stopPreview(); });
 
   function playClickSound(isStart) {
     const ctx = getAudioCtx();
@@ -321,7 +337,7 @@ function initSuperCut() {
     sctActiveCut.start = curr;
     if (sctActiveCut.end === null) sctActiveCut.end = sctBuffer.duration;
 
-    if (!sctActiveCut.id) sctActiveCut.id = 'cut-' + (++sctCutCounter);
+    if (!sctActiveCut.id) sctActiveCut.id = 'cut-'+ (++sctCutCounter);
 
     displayStart.textContent = sctActiveCut.start.toFixed(2) + "s";
     displayEnd.textContent = sctActiveCut.end.toFixed(2) + "s";
@@ -331,7 +347,7 @@ function initSuperCut() {
 
     playClickSound(true);
     displayStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
-    setTimeout(() => displayStart.style.backgroundColor = "", 300);
+    setTimeout(() =>displayStart.style.backgroundColor = "", 300);
   }
 
   function markEnd() {
@@ -350,9 +366,9 @@ function initSuperCut() {
     sctActiveCut.end = curr;
     if (sctActiveCut.start === null) sctActiveCut.start = 0;
 
-    if (!sctActiveCut.id) sctActiveCut.id = 'cut-' + (++sctCutCounter);
+    if (!sctActiveCut.id) sctActiveCut.id = 'cut-'+ (++sctCutCounter);
 
-    const idx = sctCutRegions.findIndex(c => c.id === sctActiveCut.id);
+    const idx = sctCutRegions.findIndex(c =>c.id === sctActiveCut.id);
     if (idx === -1) {
       sctCutRegions.push({ ...sctActiveCut });
     } else {
@@ -367,11 +383,11 @@ function initSuperCut() {
 
     playClickSound(false);
     displayEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
-    setTimeout(() => displayEnd.style.backgroundColor = "", 300);
+    setTimeout(() =>displayEnd.style.backgroundColor = "", 300);
   }
 
   function renderCutsTable() {
-    sctCutRegions.sort((a, b) => a.start - b.start);
+    sctCutRegions.sort((a, b) =>a.start - b.start);
     
     cutsCountDisplay.textContent = sctCutRegions.length;
 
@@ -382,14 +398,14 @@ function initSuperCut() {
     }
 
     if (sctCutRegions.length === 0 && sctActiveCut.start === null) {
-      manageList.innerHTML = '<p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);"> No cuts defined yet.</p>';
+      manageList.innerHTML = '<p id="sct-cuts-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);">No cuts defined yet.</p>';
       return;
     }
 
     manageList.innerHTML = '';
     
     let count = 1;
-    sctCutRegions.forEach((cut) => {
+    sctCutRegions.forEach((cut) =>{
       const item = document.createElement('div');
       item.style.display = 'flex';
       item.style.justifyContent = 'space-between';
@@ -417,7 +433,7 @@ function initSuperCut() {
       let localCutPreviewSrc = null;
       let localCutIsPreviewing = false;
       
-      btnPreviewCut.addEventListener('click', async () => {
+      btnPreviewCut.addEventListener('click', async () =>{
         if (localCutIsPreviewing) {
             if (localCutPreviewSrc) {
                 localCutPreviewSrc.onended = null;
@@ -447,7 +463,7 @@ function initSuperCut() {
         btnPreviewCut.textContent = 'Stop';
         btnPreviewCut.setAttribute('aria-label', `Stop preview of cut from ${cut.start.toFixed(2)}s to ${cut.end.toFixed(2)}s`);
         
-        localCutPreviewSrc.onended = () => {
+        localCutPreviewSrc.onended = () =>{
             localCutIsPreviewing = false;
             localCutPreviewSrc = null;
             btnPreviewCut.textContent = 'Preview';
@@ -460,8 +476,8 @@ function initSuperCut() {
       btnRemove.textContent = 'Remove';
       btnRemove.setAttribute('aria-label', `Remove cut from ${cut.start.toFixed(2)} to ${cut.end.toFixed(2)}`);
       
-      btnRemove.addEventListener('click', () => {
-        sctCutRegions = sctCutRegions.filter(c => c.id !== cut.id);
+      btnRemove.addEventListener('click', () =>{
+        sctCutRegions = sctCutRegions.filter(c =>c.id !== cut.id);
         announce(`Removed cut from ${cut.start.toFixed(2)} to ${cut.end.toFixed(2)}`);
         if (localCutPreviewSrc) {
             try { localCutPreviewSrc.stop(); } catch(e) {}
@@ -486,7 +502,7 @@ function initSuperCut() {
             btnManageClose.focus();
         } else {
             let counter = 1;
-            manageList.querySelectorAll('div > span').forEach(span => {
+            manageList.querySelectorAll('div >span').forEach(span =>{
                 if (!span.textContent.includes('Active')) {
                     const textParts = span.textContent.split(':');
                     textParts[0] = `Cut ${counter++}`;
@@ -505,7 +521,7 @@ function initSuperCut() {
       manageList.appendChild(item);
     });
 
-    if (sctActiveCut.start !== null && !sctCutRegions.find(c => c.id === sctActiveCut.id)) {
+    if (sctActiveCut.start !== null && !sctCutRegions.find(c =>c.id === sctActiveCut.id)) {
       const item = document.createElement('div');
       item.style.display = 'flex';
       item.style.justifyContent = 'space-between';
@@ -526,7 +542,7 @@ function initSuperCut() {
       btnCancel.textContent = 'Cancel';
       btnCancel.setAttribute('aria-label', `Cancel active cut from ${sctActiveCut.start.toFixed(2)} to the end of the file`);
       
-      btnCancel.addEventListener('click', () => {
+      btnCancel.addEventListener('click', () =>{
         announce(`Cancelled active cut starting at ${sctActiveCut.start.toFixed(2)}`);
         sctActiveCut = { start: null, end: null, id: null };
         sctLastAction = null;
@@ -554,13 +570,13 @@ function initSuperCut() {
   }
 
   // Global Keyboard listener ONLY when overlay is active
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', (e) =>{
     if (overlay.hidden) return;
 
     const code = e.code;
     const key = e.key.toLowerCase();
     
-    if (code === 'Space' && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+    if (code === 'Space'&& (e.target.tagName === 'INPUT'|| e.target.tagName === 'TEXTAREA'|| e.target.tagName === 'BUTTON')) return;
 
     if (code === 'Escape') {
       if (manageDialog.open) {
@@ -577,10 +593,10 @@ function initSuperCut() {
     if (code === 'Space') {
       e.preventDefault();
       togglePlay();
-    } else if (code === 'KeyS' || key === '[') {
+    } else if (code === 'KeyS'|| key === '[') {
       e.preventDefault();
       markStart();
-    } else if (code === 'KeyE' || key === ']') {
+    } else if (code === 'KeyE'|| key === ']') {
       e.preventDefault();
       markEnd();
     } else if (code === 'ArrowRight') {
@@ -599,15 +615,15 @@ function initSuperCut() {
     if (sctActiveCut.start !== null) {
       cutsToProcess.push(sctActiveCut);
     }
-    let sortedCuts = cutsToProcess.sort((a, b) => a.start - b.start);
+    let sortedCuts = cutsToProcess.sort((a, b) =>a.start - b.start);
     let keepRegions = [];
     let currentPos = 0;
 
     for (let cut of sortedCuts) {
-      if (cut.start > currentPos) {
+      if (cut.start >currentPos) {
         keepRegions.push({ start: currentPos, end: cut.start });
       }
-      if (cut.end > currentPos) {
+      if (cut.end >currentPos) {
         currentPos = cut.end;
       }
     }
@@ -618,10 +634,11 @@ function initSuperCut() {
   }
 
   const btnReplayPreview = document.getElementById('btn-sct-replay-preview');
+  const btnStopPreview = document.getElementById('btn-sct-stop-preview');
 
   function stopPreview() {
     if (!issctPreviewing) return;
-    sctPreviewNodes.forEach(node => {
+    sctPreviewNodes.forEach(node =>{
       node.onended = null;
       try { node.stop(); } catch(e) {}
     });
@@ -633,10 +650,14 @@ function initSuperCut() {
       if (document.activeElement === btnReplayPreview) btnPreview.focus();
       btnReplayPreview.style.display = 'none';
     }
+    if (btnStopPreview) {
+      if (document.activeElement === btnStopPreview) btnPreview.focus();
+      btnStopPreview.style.display = 'none';
+    }
     statusEl.textContent = "";
   }
 
-  btnPreview.addEventListener('click', async () => {
+  btnPreview.addEventListener('click', async () =>{
     if (!select.value) return alert("Select a file");
     if (sctIsLoading) {
       alert("Please wait, the track is still loading...");
@@ -646,14 +667,14 @@ function initSuperCut() {
     if (sctIsPlaying) stopAudio();
 
     if (issctPreviewing) {
-      sctPreviewNodes.forEach(node => {
+      sctPreviewNodes.forEach(node =>{
         node.onended = null;
         try { node.stop(); } catch(e) {}
       });
       sctPreviewNodes = [];
       sctPreviewPlayOffset += (getAudioCtx().currentTime - sctPreviewStartTime);
       issctPreviewing = false;
-      btnPreview.textContent = '▶️ Resume Preview';
+      btnPreview.textContent = 'Resume Preview';
       btnPreview.setAttribute('aria-label', `Resume preview`);
       statusEl.textContent = "";
 
@@ -680,7 +701,7 @@ function initSuperCut() {
       return;
     }
 
-    const totalDur = keepRegions.reduce((sum, r) => sum + (r.end - r.start), 0);
+    const totalDur = keepRegions.reduce((sum, r) =>sum + (r.end - r.start), 0);
     if (sctPreviewPlayOffset >= totalDur) sctPreviewPlayOffset = 0;
 
     const ctx = getAudioCtx();
@@ -708,7 +729,7 @@ function initSuperCut() {
       let playStartOffset = region.start;
       let playDuration = dur;
 
-      if (sctPreviewPlayOffset > regionStart) {
+      if (sctPreviewPlayOffset >regionStart) {
         let skipInsideRegion = sctPreviewPlayOffset - regionStart;
         playStartOffset = region.start + skipInsideRegion;
         playDuration = dur - skipInsideRegion;
@@ -719,7 +740,7 @@ function initSuperCut() {
       source.connect(masterCompressor);
       source.start(scheduleTime, playStartOffset, playDuration);
       source.addEventListener('ended', function() {
-        sctPreviewNodes = sctPreviewNodes.filter(n => n !== this);
+        sctPreviewNodes = sctPreviewNodes.filter(n =>n !== this);
       });
       sctPreviewNodes.push(source);
       
@@ -727,9 +748,9 @@ function initSuperCut() {
       accumulated += dur;
     }
 
-    if (sctPreviewNodes.length > 0) {
+    if (sctPreviewNodes.length >0) {
       const lastNode = sctPreviewNodes[sctPreviewNodes.length - 1];
-      lastNode.onended = () => {
+      lastNode.onended = () =>{
         if (!issctPreviewing) return;
         issctPreviewing = false;
         sctPreviewPlayOffset = 0;
@@ -739,22 +760,27 @@ function initSuperCut() {
           if (document.activeElement === btnReplayPreview) btnPreview.focus();
           btnReplayPreview.style.display = 'none';
         }
+        if (btnStopPreview) {
+          if (document.activeElement === btnStopPreview) btnPreview.focus();
+          btnStopPreview.style.display = 'none';
+        }
         statusEl.textContent = "";
       };
     }
 
     sctLastPlayedWasPreview = true;
-    btnPreview.textContent = "⏸️ Pause Preview";
+    btnPreview.textContent = " Pause Preview";
     btnPreview.setAttribute('aria-label', `Pause preview`);
     if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
+    if (btnStopPreview) btnStopPreview.style.display = 'inline-block';
     statusEl.textContent = "";
   });
 
   if (btnReplayPreview) {
-    btnReplayPreview.addEventListener('click', () => {
+    btnReplayPreview.addEventListener('click', () =>{
       sctPreviewPlayOffset = 0;
       if (issctPreviewing) {
-        sctPreviewNodes.forEach(node => {
+        sctPreviewNodes.forEach(node =>{
           node.onended = null;
           try { node.stop(); } catch(e) {}
         });
@@ -762,6 +788,14 @@ function initSuperCut() {
         issctPreviewing = false;
       }
       btnPreview.click();
+    });
+  }
+
+  if (btnStopPreview) {
+    btnStopPreview.addEventListener('click', () =>{
+      sctPreviewPlayOffset = 0;
+      stopPreview();
+      btnPreview.focus();
     });
   }
 
@@ -777,7 +811,7 @@ function initSuperCut() {
     let newRelativeOffset = currentRelativeTime + seconds;
     
     const keepRegions = getKeepRegions(sctBuffer.duration);
-    const totalDur = keepRegions.reduce((sum, r) => sum + (r.end - r.start), 0);
+    const totalDur = keepRegions.reduce((sum, r) =>sum + (r.end - r.start), 0);
     
     if (newRelativeOffset >= totalDur) newRelativeOffset = totalDur - 0.1;
     if (newRelativeOffset < 0) newRelativeOffset = 0;
@@ -807,7 +841,7 @@ function initSuperCut() {
       let playStartOffset = region.start;
       let playDuration = dur;
 
-      if (newRelativeOffset > regionStart) {
+      if (newRelativeOffset >regionStart) {
         let skipInsideRegion = newRelativeOffset - regionStart;
         playStartOffset = region.start + skipInsideRegion;
         playDuration = dur - skipInsideRegion;
@@ -818,7 +852,7 @@ function initSuperCut() {
       source.connect(masterCompressor);
       source.start(scheduleTime, playStartOffset, playDuration);
       source.addEventListener('ended', function() {
-        sctPreviewNodes = sctPreviewNodes.filter(n => n !== this);
+        sctPreviewNodes = sctPreviewNodes.filter(n =>n !== this);
       });
       sctPreviewNodes.push(source);
       
@@ -826,9 +860,9 @@ function initSuperCut() {
       accumulated += dur;
     }
 
-    if (sctPreviewNodes.length > 0) {
+    if (sctPreviewNodes.length >0) {
       const lastNode = sctPreviewNodes[sctPreviewNodes.length - 1];
-      lastNode.onended = () => {
+      lastNode.onended = () =>{
         if (!issctPreviewing) return;
         issctPreviewing = false;
         btnPreview.textContent = "Preview Remaining Audio";
@@ -838,12 +872,12 @@ function initSuperCut() {
     }
     
     sctLastPlayedWasPreview = true;
-    btnPreview.textContent = "⏸️ Pause Preview";
+    btnPreview.textContent = " Pause Preview";
     btnPreview.setAttribute('aria-label', `Pause preview`);
     statusEl.textContent = "";
   }
 
-  const performSuperCutExport = async (isSaveToLib) => {
+  const performSuperCutExport = async (isSaveToLib) =>{
     if (isExportingMedia) { alert('An export is already in progress. Please wait.'); return; }
     if (!select.value) return alert("Select a file to process");
     
@@ -861,7 +895,7 @@ function initSuperCut() {
       const keepRegions = getKeepRegions(sctBuffer.duration);
       if (keepRegions.length === 0) throw new Error("Everything is cut! Cannot export empty file.");
 
-      const totalDur = keepRegions.reduce((sum, r) => sum + (r.end - r.start), 0);
+      const totalDur = keepRegions.reduce((sum, r) =>sum + (r.end - r.start), 0);
       const sr = sctBuffer.sampleRate;
       const numCh = sctBuffer.numberOfChannels;
       const offline = new OfflineAudioContext(numCh, Math.ceil(totalDur * sr), sr);
@@ -897,7 +931,7 @@ function initSuperCut() {
     }
   };
 
-  btnExport.addEventListener('click', () => performSuperCutExport(false));
-  document.getElementById('btn-sct-save').addEventListener('click', () => performSuperCutExport(true));
+  btnExport.addEventListener('click', () =>performSuperCutExport(false));
+  document.getElementById('btn-sct-save').addEventListener('click', () =>performSuperCutExport(true));
 
 }

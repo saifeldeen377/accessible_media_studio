@@ -91,7 +91,7 @@ The Media Library is the central hub. Upload once, and every tool can immediatel
 Each file in your library has three action buttons:
 1. ** Download**: Download the file directly to your device. The correct extension (e.g., `.wav`, `.mp3`, `.webm`) is automatically applied based on the file's exact MIME type.
 2. ** Preview/Show**: Play the audio/video or view the image directly in the library.
-3. ** Remove**: Delete the file from the library to free up space.
+3. ** Remove**: Delete the file from the library to free up space. *(Note: A confirmation dialog will appear first to ensure you don't delete files accidentally.)*
 
 ### Persistence
 Files are saved automatically to your browser's **IndexedDB**. Refresh the page and they're still there. The status badge below the library title always shows the current state:
@@ -130,6 +130,7 @@ Traditional editors require you to carefully place audio clips on a visual timel
 ### Quick Start
 1. Press `M` anywhere on the page - or click **" Super Merger"** in the header. Focus jumps directly to the dialog.
 2. **Step 1:** Select your base audio (the backbone of your mix). Adjust its **Base Audio Volume** (0-100%) to ensure it sits well in the mix. Lastly, configure the **Base Audio End Behavior** and **Undo Behavior** (see below).
+   - **Headphone Calibration:** If you are using wireless headphones with noticeable delay, click **"Calibrate Headphone Delay"** and follow the audio prompts. The studio will calculate your hardware latency and automatically deduct it from your future recordings so your final exported mix is perfectly on beat.
 3. **Step 2:** For each overlay sound you want to trigger during the live performance:
  - Select the audio file from your library.
  - Type a single shortcut key (e.g., `d`).
@@ -137,7 +138,7 @@ Traditional editors require you to carefully place audio clips on a visual timel
  - Select the **Trigger Behavior** (Overlap or Cutoff) for this sound (see below).
  - Click **" Add to Super Mix"**.
  *(Note: If you forget to select a file, forget to type a shortcut, or choose a shortcut that is already in use, the app will announce a warning and automatically return your focus to the correct field so you can fix it.)*
-4. Click **" Go Now - Start Live Mixer"**.
+4. Click **" Go Now - Start Live Mixer"**. *(Focus automatically moves to the **Manage Overlays** button while session files load in the background, accompanied by periodic loading announcements for files larger than 30MB).*
 
 ### Managing Overlays
 If you made a mistake or want to change your assigned overlays, click **"Manage Overlays"** in the setup view. From there, you can:
@@ -167,6 +168,10 @@ If you made a mistake or want to change your assigned overlays, click **"Manage 
 Under the Base Audio File selection, you can configure what happens when the base audio ends physically:
 - **Stop Timeline (Default):** Playback stops and recording is capped immediately. If you decide you want to continue recording, simply press `Ctrl` + `Space` to manually restart the timeline. Press it again when you are finished.
 - **Auto-Continue Timeline:** Automatically transitions into a soft-paused state so the virtual timeline continues to tick, allowing you to seamlessly record extra overlay sounds at the end.
+
+**Important details about timeline behavior at the end of the base track:**
+- **Dynamic Settings Evaluation:** If you replay your mix from the beginning (by pressing `Space`), the behavior at the end of the base audio is always determined by your *current* setting in the dropdown at the exact moment the base ends. For example, if you chose "Auto-Continue", manually stopped the timeline with `Ctrl` + `Space`, and then restarted from the beginning, the timeline will still automatically continue when the base finishes again, regardless of your previous manual pause.
+- **Using `Ctrl` + `Space` after the base ends:** If you press `Ctrl` + `Space` during the "Auto-Continue" phase (when the base audio has already finished but the timeline is still running and overlay sounds are playing), it acts as a clean manual stop. It pauses the timeline and silences any currently playing overlays, without causing any issues or unintended punch-ins to the base audio. Pressing it again will resume the timeline so you can continue adding overlays.
 
 #### Undo Behavior
 Choose how `Ctrl` + `←` / `→` behaves when deleting an overlay clip:
@@ -296,6 +301,12 @@ Strip the audio track out of a video and save it as a WAV file.
 
 Accessibility is not a feature here — it's the foundation.
 
+### Smart Preview Controls
+All tools and the media library use smart, accessible preview buttons:
+- **Play/Pause/Resume**: Toggles the preview. The button label naturally updates, allowing screen readers to announce the state automatically without annoying extra notifications.
+- **Stop**: Hard stops the preview and resets to 0.0s. It is hidden by default, appears only when playing/paused, and disappears when stopped. If triggered by a screen reader or keyboard, focus is safely forced back to the Play button so you never lose your place.
+- **Replay**: Rewinds the preview to 0.0s and continues playing. Like the Stop button, it auto-hides when not needed and safely transfers focus back to Play if activated while visually hidden.
+
 ### Screen Reader Support
 - ARIA live regions (`aria-live=" polite"` and `aria-live=" assertive"`) announce all events.
 - Every button, input, and element has a descriptive `aria-label`.
@@ -377,3 +388,16 @@ The live mixer uses a **timeline-based clip log** (`smRecordedClips`). Each over
 - `cropEnd` — where it stops (set on pause or retrigger).
 
 The exporter replays all clips through an `OfflineAudioContext` — faster than real-time for audio-only exports.
+
+
+## Screen Reader Compatibility
+We designed this app to feel completely natural for screen reader users (like NVDA, JAWS, or VoiceOver). You don't need to learn any complex rules to use it:
+
+- **Quiet and Clean:** We removed unnecessary notifications and emojis. The app only speaks when it's important.
+- **Smart Focus:** When you click buttons that disappear (like stopping a preview), we automatically move your cursor to the next logical place (like the Play button) so you never get lost.
+- **Accident-Proof:** Destructive actions, like removing a file, will always ask you to confirm first, protecting you from accidental clicks.
+- **Full Keyboard Control:** Everything you can do with a mouse, you can do instantly with simple keyboard shortcuts.
+
+
+---
+*Built with care for accessibility. Everyone deserves powerful tools. · Accessible Media Studio*

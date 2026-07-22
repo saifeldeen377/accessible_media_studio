@@ -35,7 +35,7 @@ function initSuperTrimAudio() {
 
  setupFocusTrap(overlay);
 
- btnEnter.addEventListener('click', () => {
+ btnEnter.addEventListener('click', () =>{
     overlay.hidden = false;
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
@@ -46,9 +46,9 @@ function initSuperTrimAudio() {
  // Global key listener for t
  window.addEventListener('keydown', e =>{
  const tag = e.target.tagName.toLowerCase();
- if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+ if (tag === 'input'|| tag === 'textarea'|| tag === 'select') return;
 
- if (e.key.toLowerCase() === 't' && (overlay.hidden || overlay.style.display === 'none')) {
+ if (e.key.toLowerCase() === 't'&& (overlay.hidden || overlay.style.display === 'none')) {
  const smOverlay = document.getElementById('super-mode-overlay');
  if (smOverlay && !smOverlay.hidden) return; // Don't open if Super Merger is open
  e.preventDefault();
@@ -56,7 +56,7 @@ function initSuperTrimAudio() {
  }
  });
 
- btnClose.addEventListener('click', () => {
+ btnClose.addEventListener('click', () =>{
     stopAudio();
     overlay.hidden = true;
     overlay.style.display = 'none';
@@ -147,13 +147,13 @@ function initSuperTrimAudio() {
   let currentStaAssetId = null;
   async function togglePlay() {
   if (!select.value) {
-  alert("Please select an audio file first.");
+  announce("Please select an audio file first.", true);
   return;
   }
-  if (trimIsLoading) {
-      alert("Please wait, the track is still loading...");
-      return;
-  }
+   if (trimIsLoading) {
+       announce("Please wait, the audio file is currently loading...", true);
+       return;
+   }
  
   if (isPreviewing) {
     if (previewSrc) {
@@ -180,23 +180,38 @@ function initSuperTrimAudio() {
  btnPlay.textContent = "Resume (Space)";
  clearInterval(staTimer);
  } else {
-  // Play
-  btnPlay.textContent = "Loading...";
-  trimIsLoading = true;
-  try {
-    if (currentStaAssetId !== select.value || !trimBuffer) {
-    trimBuffer = await decodeAudio(getAsset(select.value).objectURL);
-    currentStaAssetId = select.value;
-    trimPlayOffset = 0;
-    }
-  } catch (err) {
-    statusEl.textContent = "Error loading audio file.";
-    btnPlay.textContent = "Play (Space)";
-    trimIsLoading = false;
-    return;
-  }
-  trimIsLoading = false;
-  statusEl.textContent = "";
+   // Play
+   const targetAsset = getAsset(select.value);
+   const targetSize = (targetAsset && (targetAsset.file?.size || targetAsset.size)) || 1000000;
+
+   trimIsLoading = true;
+   let loadingAnnounceTimer = null;
+
+   if (targetSize > 30 * 1024 * 1024) {
+     btnPlay.textContent = "Loading... Please wait";
+     announce("Loading audio file... Please wait.");
+     loadingAnnounceTimer = setInterval(() => {
+       announce("Loading... Please wait.");
+     }, 5000);
+   }
+
+   try {
+     if (currentStaAssetId !== select.value || !trimBuffer) {
+       trimBuffer = await decodeAudio(targetAsset.objectURL);
+       currentStaAssetId = select.value;
+       trimPlayOffset = 0;
+     }
+   } catch (err) {
+     if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+     statusEl.textContent = "Error loading audio file.";
+     btnPlay.textContent = "Play (Space)";
+     trimIsLoading = false;
+     return;
+   }
+
+   if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+   trimIsLoading = false;
+   statusEl.textContent = "";
 
   if (trimPlayOffset >= trimBuffer.duration) trimPlayOffset = 0;
 
@@ -261,7 +276,7 @@ function initSuperTrimAudio() {
       }
       playClickSound(true);
       displayStart.style.backgroundColor = "rgba(40, 167, 69, 0.4)";
-      setTimeout(() => displayStart.style.backgroundColor = "", 300);
+      setTimeout(() =>displayStart.style.backgroundColor = "", 300);
     }
   
     function markEnd() {
@@ -274,7 +289,7 @@ function initSuperTrimAudio() {
       displayEnd.textContent = curr.toFixed(2) + "s";
       playClickSound(false);
       displayEnd.style.backgroundColor = "rgba(220, 53, 69, 0.4)";
-      setTimeout(() => displayEnd.style.backgroundColor = "", 300);
+      setTimeout(() =>displayEnd.style.backgroundColor = "", 300);
     }
 
  document.addEventListener('keydown', (e) =>{
@@ -283,7 +298,7 @@ function initSuperTrimAudio() {
  const code = e.code;
  
  // Do not intercept Space if typing in an input or focusing a button
- if (code === 'Space' && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON')) return;
+ if (code === 'Space'&& (e.target.tagName === 'INPUT'|| e.target.tagName === 'TEXTAREA'|| e.target.tagName === 'BUTTON')) return;
 
  if (code === 'Escape') {
  e.preventDefault();
@@ -294,10 +309,10 @@ function initSuperTrimAudio() {
  if (code === 'Space') {
  e.preventDefault();
  togglePlay();
- } else if (code === 'KeyS' || code === 'BracketLeft') {
+ } else if (code === 'KeyS'|| code === 'BracketLeft') {
  e.preventDefault();
  markStart();
- } else if (code === 'KeyE' || code === 'BracketRight') {
+ } else if (code === 'KeyE'|| code === 'BracketRight') {
  e.preventDefault();
  markEnd();
  } else if (code === 'ArrowRight') {
@@ -364,7 +379,7 @@ function initSuperTrimAudio() {
   btnPreview.addEventListener('click', async () =>{
     if (!select.value) return alert("Select a file");
     if (trimIsLoading) {
-        alert("Please wait, the track is still loading...");
+        announce("Please wait, the audio file is currently loading...", true);
         return;
     }
    
@@ -378,7 +393,7 @@ function initSuperTrimAudio() {
         previewSrc = null;
       }
       isPreviewing = false;
-      btnPreview.textContent = '▶️ Resume Trim';
+      btnPreview.textContent = 'Resume Trim';
       btnPreview.setAttribute('aria-label', `Resume trim preview`);
       statusEl.textContent = '';
 
@@ -410,7 +425,7 @@ function initSuperTrimAudio() {
     const start = trimStart;
     let end = trimEnd;
     if (start >= buffer.duration) { alert('Start time cannot exceed file duration.'); return; }
-    if (end === null || end > buffer.duration) end = buffer.duration;
+    if (end === null || end >buffer.duration) end = buffer.duration;
     if (end <= start) { alert('Trim End must be after Trim Start.'); return; }
     const trimDuration = end - start;
 
@@ -425,9 +440,11 @@ function initSuperTrimAudio() {
     isPreviewing = true;
     lastPlayedWasPreview = true;
     
-    btnPreview.textContent = '⏸️ Pause Trim';
+    btnPreview.textContent = 'Pause Trim';
     btnPreview.setAttribute('aria-label', `Pause trim preview`);
     if (btnReplayPreview) btnReplayPreview.style.display = 'inline-block';
+    const btnStopPreview = document.getElementById('btn-sta-stop-preview');
+    if (btnStopPreview) btnStopPreview.style.display = 'inline-block';
     
     statusEl.textContent = '';
     
@@ -441,13 +458,17 @@ function initSuperTrimAudio() {
         if (document.activeElement === btnReplayPreview) btnPreview.focus();
         btnReplayPreview.style.display = 'none';
       }
+      if (btnStopPreview) {
+        if (document.activeElement === btnStopPreview) btnPreview.focus();
+        btnStopPreview.style.display = 'none';
+      }
       statusEl.textContent = '';
 
     };
   });
 
   if (btnReplayPreview) {
-    btnReplayPreview.addEventListener('click', () => {
+    btnReplayPreview.addEventListener('click', () =>{
       previewPlayOffset = 0;
       if (isPreviewing) {
         if (previewSrc) {
@@ -457,6 +478,24 @@ function initSuperTrimAudio() {
         isPreviewing = false;
       }
       btnPreview.click();
+    });
+  }
+
+  const btnStopPreview = document.getElementById('btn-sta-stop-preview');
+  if (btnStopPreview) {
+    btnStopPreview.addEventListener('click', () =>{
+      if (previewSrc) {
+        previewSrc.onended = null;
+        try { previewSrc.stop(); } catch(_) {}
+      }
+      isPreviewing = false;
+      previewPlayOffset = 0;
+      btnPreview.textContent = "Preview Trimmed Range";
+      btnPreview.setAttribute('aria-label', `Preview trimmed range`);
+      if (btnReplayPreview) btnReplayPreview.style.display = 'none';
+      btnStopPreview.style.display = 'none';
+      statusEl.textContent = '';
+      btnPreview.focus();
     });
   }
 
@@ -476,9 +515,9 @@ function initSuperTrimAudio() {
 
   const start = trimStart;
   let end = trimEnd;
-  if (end === null || end > buffer.duration) end = buffer.duration;
+  if (end === null || end >buffer.duration) end = buffer.duration;
   if (start >= buffer.duration) throw new Error("Start time cannot exceed file duration.");
-  if (end > buffer.duration) end = buffer.duration;
+  if (end >buffer.duration) end = buffer.duration;
   const dur = end - start;
 
   if (dur<= 0) throw new Error("Trim End must be after Trim Start.");
@@ -511,10 +550,10 @@ function initSuperTrimAudio() {
  }
   };
 
-  btnExport.addEventListener('click', () => performSuperTrimExport(false));
-  document.getElementById('btn-sta-save').addEventListener('click', () => performSuperTrimExport(true));
+  btnExport.addEventListener('click', () =>performSuperTrimExport(false));
+  document.getElementById('btn-sta-save').addEventListener('click', () =>performSuperTrimExport(true));
 
-  select.addEventListener('change', () => {
+  select.addEventListener('change', () =>{
     stopAudio();
     // Stop preview and reset values
     if (isPreviewing) {

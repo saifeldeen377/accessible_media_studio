@@ -2,6 +2,15 @@
 // TOOL 7 — Super Merger (سوبر مود)
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+// Headphone calibration variables
+let smHeadphoneLatencySec = 0; 
+let isCalibrating = false;
+let calibrationTicksPlayed = 0;
+let calibrationTapsCount = 0;
+let tickIntervalId = null;
+const tapTimeDiffs = [];
+let calibrationStartTime = 0;
+
 function initSuperMode() {
  const enterBtn = document.getElementById('btn-enter-super-mode');
  const overlay = document.getElementById('super-mode-overlay');
@@ -51,7 +60,7 @@ function initSuperMode() {
  updateSmGoButton();
  });
 
- document.getElementById('sm-overlay-key').addEventListener('input', (e) => {
+ document.getElementById('sm-overlay-key').addEventListener('input', (e) =>{
      e.target.setCustomValidity('');
  });
 
@@ -63,7 +72,7 @@ function initSuperMode() {
  if (!assetId) { announce('Please select an audio file.', true); return; }
  if (!rawKey) { announce('Please type a shortcut key.', true); return; }
 
- const exists = smOverlays.find(o => o.key.toLowerCase() === rawKey);
+ const exists = smOverlays.find(o =>o.key.toLowerCase() === rawKey);
  if (exists) {
      const keyInput = document.getElementById('sm-overlay-key');
      keyInput.setCustomValidity(`The key "${rawKey.toUpperCase()}" is already assigned to "${exists.name}". Choose a different key.`);
@@ -83,7 +92,7 @@ function initSuperMode() {
  behavior: behaviorVal
  });
 
-    const behaviorText = behaviorVal === 'overlap' ? 'with overlap behavior' : 'with cutoff behavior';
+    const behaviorText = behaviorVal === 'overlap'? 'with overlap behavior': 'with cutoff behavior';
     announce(`Assigned key "${rawKey.toUpperCase()}" to "${asset.name}" at ${Math.round(volVal)}% volume, ${behaviorText}.`, true);
     
     renderSmShortcutsTable();
@@ -99,12 +108,12 @@ function initSuperMode() {
  if (continueBtn) {
      continueBtn.addEventListener('click', continueSuperModeLive);
  }
- exportBtn.addEventListener('click', () => exportSuperModeWav(false));
- document.getElementById('btn-sm-save').addEventListener('click', () => exportSuperModeWav(true));
+ exportBtn.addEventListener('click', () =>exportSuperModeWav(false));
+ document.getElementById('btn-sm-save').addEventListener('click', () =>exportSuperModeWav(true));
  resetMixBtn.addEventListener('click', resetAndRecordFromScratch);
  exitToSetupBtn.addEventListener('click', exitToSetupView);
 
- btnManageOverlays.addEventListener('click', () => {
+ btnManageOverlays.addEventListener('click', () =>{
     smManageEditId = null;
     renderManageOverlaysList();
     manageDialog.showModal();
@@ -113,13 +122,13 @@ function initSuperMode() {
     }
  });
 
- btnManageClose.addEventListener('click', () => {
+ btnManageClose.addEventListener('click', () =>{
     smManageEditId = null;
     manageDialog.close();
     btnManageOverlays.focus();
  });
 
- btnManageReset.addEventListener('click', () => {
+ btnManageReset.addEventListener('click', () =>{
     smOverlays.length = 0;
     renderManageOverlaysList();
     renderSmShortcutsTable();
@@ -129,7 +138,7 @@ function initSuperMode() {
 
  // Global key listener
  window.addEventListener('keydown', e =>{
- if (e.key === 'Escape' && smActive) {
+ if (e.key === 'Escape'&& smActive) {
     if (manageDialog.open) {
         e.preventDefault();
         if (smManageEditId !== null) {
@@ -164,10 +173,10 @@ function initSuperMode() {
  }
 
  const tag = e.target.tagName.toLowerCase();
- if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+ if (tag === 'input'|| tag === 'textarea'|| tag === 'select') return;
 
  // m key globally to open
- if (e.key.toLowerCase() === 'm' && !smActive) {
+ if (e.key.toLowerCase() === 'm'&& !smActive) {
  const stOverlay = document.getElementById('super-trim-overlay');
  if (stOverlay && !stOverlay.hidden && stOverlay.style.display !== 'none') return; // Don't open if Super Trim is open
  e.preventDefault();
@@ -177,14 +186,14 @@ function initSuperMode() {
 
  // Live Mixer keys listener
  window.addEventListener('keydown', e =>{
- if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; // Prevent duplicate triggers (allow held arrows)
+ if (e.repeat && e.key !== 'ArrowLeft'&& e.key !== 'ArrowRight') return; // Prevent duplicate triggers (allow held arrows)
  if (!smActive || !smBaseAudio) return;
 
  const liveView = document.getElementById('sm-live-view');
  if (liveView.hidden) return;
 
  const tag = e.target.tagName.toLowerCase();
- if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+ if (tag === 'input'|| tag === 'textarea'|| tag === 'select') return;
 
  const pressedKey = e.key.toLowerCase();
  const isShift = e.shiftKey;
@@ -192,7 +201,7 @@ function initSuperMode() {
  const isCtrl = e.ctrlKey;
 
  // â”€â”€â”€ Spacebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- if (e.key === ' ' || e.code === 'Space') {
+ if (e.key === ''|| e.code === 'Space') {
  e.preventDefault();
  
   if (isCtrl && isShift) {
@@ -204,9 +213,9 @@ function initSuperMode() {
  
  if (isAtEnd) {
      if (smIsActive()) {
-         smRegularPauseBase(); // Timeline playing -> stop
+         smRegularPauseBase(); // Timeline playing ->stop
      } else {
-         smResumeBase(true);   // Timeline paused -> resume and punch-in
+         smResumeBase(true);   // Timeline paused ->resume and punch-in
      }
  } else {
      if (smSoftPaused) {
@@ -235,7 +244,7 @@ function initSuperMode() {
  }
 
  // Timeline navigation: ArrowLeft (seek back) & ArrowRight (seek forward)
- if (e.key === 'ArrowRight' || e.code === 'ArrowRight') {
+ if (e.key === 'ArrowRight'|| e.code === 'ArrowRight') {
  e.preventDefault();
  if (isCtrl) {
  handleDeleteNext();
@@ -244,7 +253,7 @@ function initSuperMode() {
  }
  return;
  }
- if (e.key === 'ArrowLeft' || e.code === 'ArrowLeft') {
+ if (e.key === 'ArrowLeft'|| e.code === 'ArrowLeft') {
  e.preventDefault();
  if (isCtrl) {
  handleDeletePrevious();
@@ -267,6 +276,135 @@ function initSuperMode() {
  }
  }
  });
+
+  // --- Headphone Latency Calibration ---
+  const calibrateBtn = document.getElementById('btn-sm-calibrate-headphones');
+  const calibrationDialog = document.getElementById('sm-calibration-dialog');
+  const startCalibrateBtn = document.getElementById('btn-start-calibration');
+  const calibrationStatus = document.getElementById('calibration-status');
+  const latencyDisplay = document.getElementById('sm-latency-display');
+  const calibrationInstructions = document.getElementById('calibration-instructions');
+
+  calibrateBtn.addEventListener('click', () =>{
+      // Reset state before starting
+      isCalibrating = false;
+      calibrationTicksPlayed = 0;
+      calibrationTapsCount = 0;
+      tapTimeDiffs.length = 0;
+      if (tickIntervalId) clearInterval(tickIntervalId);
+      
+      calibrationStatus.textContent = "Ready. Click start or press Space.";
+      calibrationDialog.showModal();
+      
+      // Focus the application role container to trigger Focus Mode in Screen Readers immediately
+      calibrationInstructions.focus(); 
+  });
+
+  function playCalibrationTick(time) {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, time); // Tick frequency
+      
+      gain.gain.setValueAtTime(0.5, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05); // Short 50ms tick
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(time);
+      osc.stop(time + 0.06);
+      
+      nextTickTime = time; 
+      calibrationTicksPlayed++;
+  }
+
+  function startTicking() {
+      if (isCalibrating) return;
+      isCalibrating = true;
+      calibrationStatus.textContent = "Listen and tap Space in sync! (0/5)";
+      
+      const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      
+      calibrationStartTime = ctx.currentTime + 1.0;
+      playCalibrationTick(calibrationStartTime);
+      
+      let tickCount = 1;
+      tickIntervalId = setInterval(() =>{
+          playCalibrationTick(calibrationStartTime + tickCount);
+          tickCount++;
+      }, 1000);
+  }
+
+  startCalibrateBtn.addEventListener('click', (e) =>{
+      e.stopPropagation();
+      startTicking();
+      calibrationInstructions.focus(); // Keep focus trapped in application mode
+  });
+
+  calibrationDialog.addEventListener('keydown', (e) =>{
+      if (e.key === 'Escape') {
+          e.stopPropagation(); // Prevent exiting super mode
+          if (tickIntervalId) clearInterval(tickIntervalId);
+          isCalibrating = false;
+          calibrationDialog.close();
+          calibrateBtn.focus(); // Exit application mode and return focus
+          return;
+      }
+      
+      if (e.key === ''|| e.code === 'Space') {
+          e.preventDefault(); // Prevent page scroll or default button click
+          e.stopPropagation(); // Prevent entering live recording logic
+          
+          if (!isCalibrating) {
+              startTicking();
+              return;
+          }
+          
+          if (calibrationTicksPlayed === 0) return;
+          
+          const ctx = getAudioCtx();
+          const userTapTime = ctx.currentTime;
+          
+          // Find the exact expected time for the closest tick
+          let timeSinceStart = userTapTime - calibrationStartTime;
+          let expectedTickTime = calibrationStartTime + Math.round(timeSinceStart);
+          
+          let diff = userTapTime - expectedTickTime;
+          
+          tapTimeDiffs.push(diff);
+          calibrationTapsCount++;
+          
+          // Removed text update here so screen reader doesn't speak over ticks
+          
+          if (calibrationTapsCount >= 5) {
+              clearInterval(tickIntervalId);
+              isCalibrating = false;
+              
+              // Calculate average latency
+              const sum = tapTimeDiffs.reduce((a, b) =>a + b, 0);
+              let avgLatency = sum / tapTimeDiffs.length;
+              
+              // Floor negative or tiny positive values to 0
+              if (avgLatency < 0.02) avgLatency = 0; 
+              
+              smHeadphoneLatencySec = avgLatency;
+              
+              const ms = Math.round(smHeadphoneLatencySec * 1000);
+              calibrationStatus.textContent = `Done! Delay calibrated: ${ms} ms`;
+              latencyDisplay.textContent = `Current headphone delay correction: ${ms} ms`;
+              announce(`Calibration complete. Delay set to ${ms} milliseconds.`, true);
+              
+              setTimeout(() =>{
+                  calibrationDialog.close();
+                  calibrateBtn.focus();
+              }, 1500);
+          }
+      }
+  });
 }
 
 function enterSuperMode() {
@@ -340,7 +478,7 @@ function exitSuperMode() {
   // Close any active base segments safely
   if (smBaseSegmentStartSource !== null && smBaseAudio) {
       const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
-      if (duration > 0) {
+      if (duration >0) {
           smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
       }
       smBaseSegmentStartTimeline = null;
@@ -364,7 +502,7 @@ function updateSmGoButton() {
   goBtn.disabled = !smBaseAsset;
   
   if (continueBtn) {
-      if (smBaseAsset && (smRecordedClips.length > 0 || smVirtualTime > 0)) {
+      if (smBaseAsset && (smRecordedClips.length >0 || smVirtualTime >0)) {
           continueBtn.style.display = 'inline-block';
       } else {
           continueBtn.style.display = 'none';
@@ -376,7 +514,7 @@ function renderSmShortcutsTable() {
     const summary = document.getElementById('sm-shortcuts-summary');
     if (summary) {
         const count = smOverlays.length;
-        summary.textContent = `${count} overlay${count === 1 ? '' : 's'} configured.`;
+        summary.textContent = `${count} overlay${count === 1 ? '': 's'} configured.`;
     }
 }
 
@@ -386,7 +524,7 @@ function renderManageOverlaysList() {
     const listContainer = document.getElementById('sm-manage-overlays-list');
     const resetBtn = document.getElementById('btn-sm-manage-overlays-reset');
     
-    Array.from(listContainer.children).forEach(child => {
+    Array.from(listContainer.children).forEach(child =>{
         if (child.id !== 'sm-manage-overlays-empty') {
             child.remove();
         }
@@ -402,7 +540,7 @@ function renderManageOverlaysList() {
     document.getElementById('sm-manage-overlays-empty').style.display = 'none';
     resetBtn.style.display = 'inline-block';
     
-    smOverlays.forEach((item, idx) => {
+    smOverlays.forEach((item, idx) =>{
         const card = document.createElement('fieldset');
         card.className = 'sm-card data-row';
         card.setAttribute('data-id', item.id);
@@ -417,8 +555,8 @@ function renderManageOverlaysList() {
         
         let optionsHtml = '<option value="" disabled>Select from library...</option>';
         if (typeof assetLibrary !== 'undefined') {
-            assetLibrary.forEach(asset => {
-                const selected = asset.id === item.assetId ? 'selected' : '';
+            assetLibrary.forEach(asset =>{
+                const selected = asset.id === item.assetId ? 'selected': '';
                 optionsHtml += `<option value="${asset.id}" ${selected}>${escapeHTML(asset.name)}</option>`;
             });
         }
@@ -426,12 +564,12 @@ function renderManageOverlaysList() {
         const isEditing = smManageEditId === item.id;
         
         card.innerHTML = `
-            <div class="sm-summary-view" style="display: flex; gap: 10px; align-items: center;" ${isEditing ? 'hidden' : ''}>
+            <div class="sm-summary-view" style="display: flex; gap: 10px; align-items: center;" ${isEditing ? 'hidden': ''}>
                 <button class="btn btn-secondary btn-manage-edit" style="flex: 1; text-align: left;">Edit ${detailsText}</button>
                 <button class="btn btn-danger btn-manage-delete" style="flex: 1; text-align: left;">Remove ${detailsText}</button>
             </div>
             
-            <div class="sm-edit-view" ${!isEditing ? 'hidden' : ''}>
+            <div class="sm-edit-view" ${!isEditing ? 'hidden': ''}>
                 <legend style="font-weight: bold; padding: 0 5px;">Editing Overlay ${idx + 1}</legend>
                 <div class="form-grid" style="grid-template-columns: 1fr; gap: 10px;">
                     <div class="control-group">
@@ -449,8 +587,8 @@ function renderManageOverlaysList() {
                     <div class="control-group">
                         <label>Trigger Behavior:</label>
                         <select class="sm-edit-behavior" aria-label="Behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-                            <option value="overlap" ${!isCutoff ? 'selected' : ''}>Overlap (Play on top)</option>
-                            <option value="cutoff" ${isCutoff ? 'selected' : ''}>Cutoff (Restart sound)</option>
+                            <option value="overlap" ${!isCutoff ? 'selected': ''}>Overlap (Play on top)</option>
+                            <option value="cutoff" ${isCutoff ? 'selected': ''}>Cutoff (Restart sound)</option>
                         </select>
                     </div>
                     <div style="text-align: right; margin-top: 10px;">
@@ -462,9 +600,9 @@ function renderManageOverlaysList() {
         
         // --- Edit View Events ---
         const fileSelect = card.querySelector('.sm-edit-file');
-        fileSelect.addEventListener('change', (e) => {
+        fileSelect.addEventListener('change', (e) =>{
             const newAssetId = e.target.value;
-            const newAsset = typeof getAsset === 'function' ? getAsset(newAssetId) : null;
+            const newAsset = typeof getAsset === 'function'? getAsset(newAssetId) : null;
             if (newAsset) {
                 item.assetId = newAssetId;
                 item.name = newAsset.name;
@@ -474,9 +612,9 @@ function renderManageOverlaysList() {
             }
         });
         
-        card.querySelector('.sm-edit-key').addEventListener('change', (e) => {
+        card.querySelector('.sm-edit-key').addEventListener('change', (e) =>{
             const val = e.target.value.toLowerCase();
-            if (val && !smOverlays.find((o, i) => i !== idx && o.key.toLowerCase() === val)) {
+            if (val && !smOverlays.find((o, i) =>i !== idx && o.key.toLowerCase() === val)) {
                 item.key = val;
                 renderSmShortcutsTable();
                 updateCardSummaryText();
@@ -488,16 +626,16 @@ function renderManageOverlaysList() {
         
         const volInput = card.querySelector('.sm-edit-vol');
         const volVal = card.querySelector('.sm-edit-vol-val');
-        volInput.addEventListener('input', (e) => {
+        volInput.addEventListener('input', (e) =>{
             volVal.textContent = e.target.value;
         });
-        volInput.addEventListener('change', (e) => {
+        volInput.addEventListener('change', (e) =>{
             item.volume = parseFloat(e.target.value) / 100;
             renderSmShortcutsTable();
             updateCardSummaryText();
         });
         
-        card.querySelector('.sm-edit-behavior').addEventListener('change', (e) => {
+        card.querySelector('.sm-edit-behavior').addEventListener('change', (e) =>{
             item.behavior = e.target.value;
             renderSmShortcutsTable();
             updateCardSummaryText();
@@ -510,7 +648,7 @@ function renderManageOverlaysList() {
             card.querySelector('.btn-manage-delete').textContent = `Remove ${newText}`;
         }
         
-        card.querySelector('.btn-manage-save').addEventListener('click', () => {
+        card.querySelector('.btn-manage-save').addEventListener('click', () =>{
             announce("Changes saved.", true);
             smManageEditId = null;
             card.querySelector('.sm-edit-view').hidden = true;
@@ -519,9 +657,9 @@ function renderManageOverlaysList() {
         });
         
         // --- Summary View Events ---
-        card.querySelector('.btn-manage-edit').addEventListener('click', () => {
+        card.querySelector('.btn-manage-edit').addEventListener('click', () =>{
             // Close any currently open edits
-            document.querySelectorAll('#sm-manage-overlays-list .sm-card').forEach(c => {
+            document.querySelectorAll('#sm-manage-overlays-list .sm-card').forEach(c =>{
                 c.querySelector('.sm-edit-view').hidden = true;
                 c.querySelector('.sm-summary-view').hidden = false;
             });
@@ -531,7 +669,7 @@ function renderManageOverlaysList() {
             card.querySelector('.sm-edit-file').focus();
         });
         
-        card.querySelector('.btn-manage-delete').addEventListener('click', () => {
+        card.querySelector('.btn-manage-delete').addEventListener('click', () =>{
             smOverlays.splice(idx, 1);
             
             renderManageOverlaysList();
@@ -540,7 +678,7 @@ function renderManageOverlaysList() {
             
             // After render, get all delete buttons currently in the DOM
             const newDeleteBtns = document.querySelectorAll('#sm-manage-overlays-list .btn-manage-delete');
-            if (newDeleteBtns.length > 0) {
+            if (newDeleteBtns.length >0) {
                 // Focus the item that slid into the current index, or the last item
                 const targetIdx = Math.min(idx, newDeleteBtns.length - 1);
                 newDeleteBtns[targetIdx].focus();
@@ -675,114 +813,168 @@ class WebAudioPlayer {
  }
 }
 
+function getAssetByteSize(asset) {
+  if (!asset) return 1000000;
+  if (asset.file && asset.file.size) return asset.file.size;
+  if (asset.size) return asset.size;
+  return 1000000;
+}
+
 async function startSuperModeLive() {
  if (!smBaseAsset) return;
 
- if (smRecordedClips.length >0) {
- const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording' button.\n\nPress OK to delete old work and start fresh.");
+ if (smRecordedClips.length > 0) {
+ const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording'button.\n\nPress OK to delete old work and start fresh.");
  if (!proceed) {
      const goBtn = document.getElementById('btn-sm-go');
      if (goBtn) goBtn.focus();
      return;
  }
- }
-
- // Pre-decode base and overlays
- let totalSize = 0;
- if (smBaseAsset && smBaseAsset.file) totalSize += smBaseAsset.file.size;
- smOverlays.forEach(o => {
-     const asset = getAsset(o.assetId);
-     if (asset && asset.file) totalSize += asset.file.size;
- });
- if (totalSize > 50 * 1024 * 1024) {
-     announce('Loading audio files for the session, please wait...');
- }
- try {
-   await getDecodedBuffer(smBaseAsset.id);
-   await Promise.all(smOverlays.map(o =>getDecodedBuffer(o.assetId)));
- } catch (err) {
-   console.error(err);
-   alert("Error pre-decoding audio files: "+ err.message);
-   return;
- }
-
- document.getElementById('sm-setup-view').hidden = true;
- document.getElementById('sm-live-view').hidden = false;
-
- // Show header control buttons when live mixer is active
- document.getElementById('btn-sm-export').style.display = 'inline-block';
- document.getElementById('btn-sm-save').style.display = 'inline-block';
- document.getElementById('btn-sm-reset-mix').style.display = 'inline-block';
-
- renderSmActiveKeysList();
-
- // Reset stats
- document.getElementById('sm-current-time').textContent = '0.0';
- document.getElementById('sm-total-duration').textContent = '0.0';
- const progressEl = document.getElementById('sm-progress-bar');
- progressEl.style.width = '0%';
- progressEl.parentElement.setAttribute('aria-valuenow', '0');
-
+ // User confirmed fresh start — wipe old session data
  smRecordedClips.length = 0;
- renderSmMixLog();
-
- // Clear active overlays and review playback state
- Object.keys(activeOverlayAudios).forEach(k =>delete activeOverlayAudios[k]);
- reviewOverlayPlaybacks = [];
-
- // Reset virtual timeline and segments
- smVirtualTime = 0;
+ smBaseSegments.length = 0;
+ smBaseSegmentStartTimeline = null;
+ smBaseSegmentStartSource = null;
  smSoftPaused = false;
- smTotalRecordedDuration = 0;
- smBaseSegments = [];
- smBaseSegmentStartTimeline = 0;
- smBaseSegmentStartSource = 0;
- smLastUpdateTime = getAudioCtx().currentTime;
-
- // Create base audio player using Web Audio API
- const baseBuf = decodedAudioBuffers[smBaseAsset.id];
- smBaseAudio = new WebAudioPlayer(baseBuf);
-  smBaseAudio.endedTriggered = false;
- smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
- 
- document.getElementById('sm-total-duration').textContent = smBaseAudio.duration.toFixed(3);
- 
- // Start playing
- smBaseAudio.play().then(() =>{
- smBaseSegmentStartTimeline = 0;
- smBaseSegmentStartSource = 0;
- smLastUpdateTime = getAudioCtx().currentTime;
- updatePlaybackStateUI('playing');
- syncRecordActiveOverlays();
- }).catch(err =>{
- console.error(err);
- updatePlaybackStateUI('paused');
- });
-
- smTimelineTimer = setInterval(updateSmTimeline, 100);
-
- // Shift focus to container immediately for direct NVDA focus jump when live mixer starts
- setTimeout(() =>{
- const container = document.querySelector('.sm-container');
- if (container) {
- container.setAttribute('tabindex', '-1');
- container.focus();
+ if (smTimelineTimer) { clearInterval(smTimelineTimer); smTimelineTimer = null; }
+ if (smBaseAudio) { try { smBaseAudio.pause(); } catch(_) {} smBaseAudio = null; }
+ const _logEl = document.getElementById('sm-mix-log');
+ if (_logEl) _logEl.innerHTML = '<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>';
  }
- }, 100);
 
- // announce("Live Mixer Active.");
+  const goBtn = document.getElementById('btn-sm-go');
+  const originalGoBtnText = goBtn ? goBtn.textContent : 'Go Now';
+  if (goBtn) {
+      goBtn.disabled = true;
+      goBtn.textContent = 'Loading... Please wait';
+      const manageBtn = document.getElementById('btn-sm-manage-overlays');
+      if (manageBtn) manageBtn.focus();
+  }
+
+  const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
+  const totalBytes = allAssetObjects.reduce((acc, a) => acc + getAssetByteSize(a), 0) || 1;
+
+  // Announce IMMEDIATELY on click, and repeat every 5 seconds ONLY if total size > 30MB
+  let loadingAnnounceTimer = null;
+  if (totalBytes > 30 * 1024 * 1024) {
+      announce(`Loading session audio... Please wait.`);
+      loadingAnnounceTimer = setInterval(() => {
+          announce(`Loading... Please wait.`);
+      }, 5000);
+  }
+
+  try {
+    await Promise.all(allAssetObjects.map(asset => getDecodedBuffer(asset.id)));
+  } catch (err) {
+    if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+    console.error(err);
+    alert("Error pre-decoding audio files: " + err.message);
+    if (goBtn) {
+        goBtn.disabled = false;
+        goBtn.textContent = originalGoBtnText;
+    }
+    return;
+  }
+  
+  if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+  
+  if (goBtn) {
+      goBtn.disabled = false;
+      goBtn.textContent = originalGoBtnText;
+  }
+
+  document.getElementById('sm-setup-view').hidden = true;
+  document.getElementById('sm-live-view').hidden = false;
+
+  // Show header control buttons when live mixer is active
+  document.getElementById('btn-sm-export').style.display = 'inline-block';
+  document.getElementById('btn-sm-save').style.display = 'inline-block';
+  document.getElementById('btn-sm-reset-mix').style.display = 'inline-block';
+
+  renderSmActiveKeysList();
+
+  // Reset stats
+  document.getElementById('sm-current-time').textContent = '0.0';
+  document.getElementById('sm-total-duration').textContent = '0.0';
+  const progressEl = document.getElementById('sm-progress-bar');
+  progressEl.style.width = '0%';
+  progressEl.parentElement.setAttribute('aria-valuenow', '0');
+
+  // Create base audio player using Web Audio API
+  const baseBuf = decodedAudioBuffers[smBaseAsset.id];
+  smBaseAudio = new WebAudioPlayer(baseBuf);
+   smBaseAudio.endedTriggered = false;
+  smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
+  
+  document.getElementById('sm-total-duration').textContent = smBaseAudio.duration.toFixed(3);
+  
+  // Start playing
+  smBaseAudio.play().then(() => {
+  smBaseSegmentStartTimeline = 0;
+  smBaseSegmentStartSource = 0;
+  smLastUpdateTime = getAudioCtx().currentTime;
+  updatePlaybackStateUI('playing');
+  syncRecordActiveOverlays();
+  }).catch(err => {
+  console.error(err);
+  updatePlaybackStateUI('paused');
+  });
+
+  smTimelineTimer = setInterval(updateSmTimeline, 100);
+
+  // Shift focus to container immediately for direct NVDA focus jump when live mixer starts
+  setTimeout(() => {
+  const container = document.querySelector('.sm-container');
+  if (container) {
+  container.setAttribute('tabindex', '-1');
+  container.focus();
+  }
+  }, 100);
+
+  // announce("Live Mixer Active.");
 }
 
 async function continueSuperModeLive() {
   if (!smBaseAsset) return;
 
+  const continueBtn = document.getElementById('btn-sm-continue');
+  const originalContinueText = continueBtn ? continueBtn.textContent : 'Continue Recording';
+  if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.textContent = 'Loading... Please wait';
+      const manageBtn = document.getElementById('btn-sm-manage-overlays');
+      if (manageBtn) manageBtn.focus();
+  }
+
+  const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
+  const totalBytes = allAssetObjects.reduce((acc, a) => acc + getAssetByteSize(a), 0) || 1;
+
+  let loadingAnnounceTimer = null;
+  if (totalBytes > 30 * 1024 * 1024) {
+      announce(`Loading session audio... Please wait.`);
+      loadingAnnounceTimer = setInterval(() => {
+          announce(`Loading... Please wait.`);
+      }, 5000);
+  }
+
   try {
-    await getDecodedBuffer(smBaseAsset.id);
-    await Promise.all(smOverlays.map(o => getDecodedBuffer(o.assetId)));
+    await Promise.all(allAssetObjects.map(asset => getDecodedBuffer(asset.id)));
   } catch (err) {
+    if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
     console.error(err);
     alert("Error pre-decoding audio files: " + err.message);
+    if (continueBtn) {
+        continueBtn.disabled = false;
+        continueBtn.textContent = originalContinueText;
+    }
     return;
+  }
+
+  if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+
+  if (continueBtn) {
+      continueBtn.disabled = false;
+      continueBtn.textContent = originalContinueText;
   }
 
   document.getElementById('sm-setup-view').hidden = true;
@@ -859,13 +1051,13 @@ function updateSmTimeline() {
   if (smBaseAudio.paused) {
     smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
     if (smBaseAudio.currentTime < smBaseAudio.duration) {
-      smBaseAudio.play().catch(e => console.error(e));
+      smBaseAudio.play().catch(e =>console.error(e));
     }
   } else {
     // Drift correction ONLY if base audio is actually playing (not stuck at end)
     if (smBaseAudio.currentTime < smBaseAudio.duration) {
       const expected = activeSeg.timelineStart + (smBaseAudio.currentTime - activeSeg.sourceStart);
-      if (Math.abs(smVirtualTime - expected) > 0.3) smVirtualTime = expected;
+      if (Math.abs(smVirtualTime - expected) >0.3) smVirtualTime = expected;
     }
   }
  } else {
@@ -894,11 +1086,11 @@ function updateSmTimeline() {
  // Base is ended. Check behavior
  const endBehavior = document.getElementById('sm-base-end-behavior').value;
  const baseDur = smBaseAudio.duration || 0;
- const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => {
+ const hasActiveRecording = Object.keys(activeOverlayAudios).some(id =>{
      const a = activeOverlayAudios[id];
-     return a.state === 'playing' && a.startTimeInBase !== null;
+     return a.state === 'playing'&& a.startTimeInBase !== null;
  });
-          if (endBehavior === 'continue' || smTotalRecordedDuration > baseDur + 0.05 || hasActiveRecording) {
+          if (endBehavior === 'continue'|| smTotalRecordedDuration >baseDur + 0.05 || hasActiveRecording) {
               smSoftPaused = true;
               smSoftPauseStartVirtual = smVirtualTime;
               smSoftPauseStartWall = now;
@@ -945,11 +1137,11 @@ function updateSmTimeline() {
  }
 
  const endBehavior = document.getElementById('sm-base-end-behavior').value;
- const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => {
+ const hasActiveRecording = Object.keys(activeOverlayAudios).some(id =>{
      const a = activeOverlayAudios[id];
-     return a.state === 'playing' && a.startTimeInBase !== null;
+     return a.state === 'playing'&& a.startTimeInBase !== null;
  });
-          if (endBehavior === 'continue' || hasActiveRecording) {
+          if (endBehavior === 'continue'|| hasActiveRecording) {
               smSoftPaused = true;
               smSoftPauseStartVirtual = smVirtualTime;
               smSoftPauseStartWall = now;
@@ -1021,9 +1213,9 @@ function smResumeBase(isPunchIn = false) {
   } else {
     smBaseSegmentStartTimeline = smVirtualTime;
     smBaseSegmentStartSource   = smBaseAudio.currentTime;
-    smBaseAudio.play().then(() => {
+    smBaseAudio.play().then(() =>{
       updatePlaybackStateUI('playing');
-    }).catch(err => console.error(err));
+    }).catch(err =>console.error(err));
   }
  } else {
  // Normal resume (Space) - Just resume the clock and UI state
@@ -1044,7 +1236,7 @@ function smResumeBase(isPunchIn = false) {
  smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
  }
  
-  if (smBaseAudio.currentTime < smBaseAudio.duration) smBaseAudio.play().catch(e => console.error(e));
+  if (smBaseAudio.currentTime < smBaseAudio.duration) smBaseAudio.play().catch(e =>console.error(e));
  
  // If we were paused outside of any recorded boundary, start recording again
  if (smVirtualTime >= smTotalRecordedDuration && smBaseSegmentStartSource === null) {
@@ -1148,29 +1340,29 @@ function handleCancelGap() {
     for (const seg of smBaseSegments) {
       const segEnd = seg.timelineStart + seg.duration;
       if (segEnd <= smVirtualTime) gapStart = Math.max(gapStart, segEnd);
-      if (seg.timelineStart > smVirtualTime) gapEnd = Math.min(gapEnd, seg.timelineStart);
+      if (seg.timelineStart >smVirtualTime) gapEnd = Math.min(gapEnd, seg.timelineStart);
     }
   }
 
   const setting = document.getElementById('sm-cancel-gap-behavior').value;
-  const clipsInGap  = smRecordedClips.filter(c => c.timelineStart >= gapStart && c.timelineStart < gapEnd);
+  const clipsInGap  = smRecordedClips.filter(c =>c.timelineStart >= gapStart && c.timelineStart < gapEnd);
   const activeInGap = Object.values(activeOverlayAudios).filter(
-    a => a.startTimeInBase !== null && a.startTimeInBase >= gapStart
+    a =>a.startTimeInBase !== null && a.startTimeInBase >= gapStart
   );
-  const hasOverlaysInGap = clipsInGap.length > 0 || activeInGap.length > 0;
+  const hasOverlaysInGap = clipsInGap.length >0 || activeInGap.length >0;
 
-  if (setting === 'empty_only' && hasOverlaysInGap) {
+  if (setting === 'empty_only'&& hasOverlaysInGap) {
     announce('Gap not cancelled: overlays exist in the silent period.', true);
     return;
   }
 
   // Remove overlays in the gap
   if (hasOverlaysInGap) {
-    activeInGap.forEach(active => {
+    activeInGap.forEach(active =>{
       try { active.sourceNode.stop(); } catch(_) {}
       delete activeOverlayAudios[active.clipEntry.id];
     });
-    clipsInGap.forEach(c => {
+    clipsInGap.forEach(c =>{
       const idx = smRecordedClips.indexOf(c);
       if (idx !== -1) smRecordedClips.splice(idx, 1);
       playedClipIds.delete(c.id);
@@ -1181,10 +1373,10 @@ function handleCancelGap() {
 
   // â”€â”€ REPLAY GAP: compress timeline (shift everything after the gap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isReplayGap) {
-    smBaseSegments.forEach(seg => {
+    smBaseSegments.forEach(seg =>{
       if (seg.timelineStart >= gapEnd) seg.timelineStart -= gapDuration;
     });
-    smRecordedClips.forEach(c => {
+    smRecordedClips.forEach(c =>{
       if (c.timelineStart >= gapEnd) c.timelineStart -= gapDuration;
     });
     smTotalRecordedDuration -= gapDuration;
@@ -1207,9 +1399,9 @@ function handleCancelGap() {
   smBaseSegmentStartTimeline = gapStart;
   smBaseSegmentStartSource   = sourcePos;
 
-  smBaseAudio.play().then(() => {
+  smBaseAudio.play().then(() =>{
     updatePlaybackStateUI('playing');
-  }).catch(err => console.error(err));
+  }).catch(err =>console.error(err));
 
   renderSmActiveKeysList();
   renderSmMixLog();
@@ -1235,9 +1427,9 @@ function updatePlaybackStateUI(state) {
 
  if (btn) {
  if (state === 'playing') {
- btn.textContent = ' Pause';
+ btn.textContent = 'Pause';
  } else {
- btn.textContent = ' Play';
+ btn.textContent = 'Play';
  }
  }
 }
@@ -1299,7 +1491,7 @@ function getSmTotalVirtualDuration() {
   );
 
   // Also check end times of all recorded overlay clips
-  smRecordedClips.forEach(c => {
+  smRecordedClips.forEach(c =>{
     const buf = decodedAudioBuffers[c.assetId];
     if (buf) {
       const cs = c.cropStart || 0;
@@ -1318,9 +1510,8 @@ function seekSmTimeline(seconds) {
   const oldVirtualTime = smVirtualTime;
   const maxDur = getSmTotalVirtualDuration();
   
-  // If seeking forward but already at/past the end â†’ do nothing
+  // Prevent seeking past boundaries
   if (seconds > 0 && smVirtualTime >= maxDur) return;
-  // If seeking backward but already at the start â†’ do nothing
   if (seconds < 0 && smVirtualTime <= 0) return;
 
   let newVirtualTime = oldVirtualTime + seconds;
@@ -1330,10 +1521,10 @@ function seekSmTimeline(seconds) {
   const actualSeekAmount = newVirtualTime - oldVirtualTime;
   if (actualSeekAmount === 0) return;
 
-  // 1. Cap active recordings cleanly since we are jumping in time
+  // 1. Cap active overlay recordings cleanly before jumping time
   capActiveOverlayRecordings(true);
 
-  // 2. Stop any actively playing overlays so they don't continue playing out of sync
+  // 2. Stop any active overlay instances
   Object.keys(activeOverlayAudios).forEach(id => {
     if (activeOverlayAudios[id] && activeOverlayAudios[id].sourceNode) {
       try { activeOverlayAudios[id].sourceNode.stop(); } catch(_) {}
@@ -1342,7 +1533,7 @@ function seekSmTimeline(seconds) {
   });
   renderSmActiveKeysList();
 
-  // 3. Stop review overlays
+  // 3. Stop review overlays and clear trigger state
   if (typeof stopReviewPlaybackEntry === 'function') {
     reviewOverlayPlaybacks.forEach(p => stopReviewPlaybackEntry(p));
   } else {
@@ -1357,34 +1548,77 @@ function seekSmTimeline(seconds) {
   reviewOverlayPlaybacks = [];
   playedClipIds.clear();
 
-  const wasEnded = smBaseAudio.ended || smBaseAudio.endedTriggered || smSoftPaused;
-
-  // 4. Update the actual playhead time
-  smVirtualTime = newVirtualTime;
-  smBaseAudio.currentTime = newVirtualTime;
-
-  // 5. If we seeked backward from an ended/paused state, auto-resume playback
-  if (wasEnded && smVirtualTime < getSmTotalVirtualDuration() && !smBaseAudio.isPlaying) {
-      smSoftPaused = false;
-      smWasSoftPaused = false;
-      smResumeBase(false);
+  // 4. Safely finalize any active base segment being recorded live
+  if (smBaseSegmentStartSource !== null) {
+    const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
+    if (duration > 0) {
+      smBaseSegments.push({
+        timelineStart: smBaseSegmentStartTimeline,
+        sourceStart: smBaseSegmentStartSource,
+        duration: duration
+      });
+    }
+    smBaseSegmentStartTimeline = null;
+    smBaseSegmentStartSource = null;
   }
 
-  // 5. Cancel soft-pause only if we rewound BACK into the base audio
-  const baseDur = smBaseAudio.duration || 0;
-  if (smSoftPaused && newVirtualTime < baseDur) {
+  // 4.5 AUTO-FILL: Preserve skipped base audio when fast-forwarding into unrecorded future
+  // This completely fixes the issue of the skipped recording being "deleted"
+  if (newVirtualTime > smTotalRecordedDuration) {
+      let lastSourceEnd = smTotalRecordedDuration; 
+      if (smBaseSegments.length > 0) {
+          const lastSeg = smBaseSegments[smBaseSegments.length - 1];
+          lastSourceEnd = lastSeg.sourceStart + (smTotalRecordedDuration - lastSeg.timelineStart);
+      }
+      const skippedDur = newVirtualTime - smTotalRecordedDuration;
+      
+      if (lastSourceEnd < (smBaseAudio.duration || 0)) {
+          let durToAdd = skippedDur;
+          if (lastSourceEnd + durToAdd > smBaseAudio.duration) {
+              durToAdd = smBaseAudio.duration - lastSourceEnd;
+          }
+          if (durToAdd > 0) {
+              smBaseSegments.push({
+                  timelineStart: smTotalRecordedDuration,
+                  sourceStart: lastSourceEnd,
+                  duration: durToAdd
+              });
+          }
+      }
+      smTotalRecordedDuration = newVirtualTime;
+  }
+
+  // 5. Update timeline position
+  smVirtualTime = newVirtualTime;
+
+  // 6. Map newVirtualTime to smBaseSegments correctly
+  const activeSeg = smBaseSegments.find(seg => 
+    newVirtualTime >= seg.timelineStart && newVirtualTime < seg.timelineStart + seg.duration
+  );
+
+  if (activeSeg) {
+    // Landed inside a recorded base audio segment
+    const offsetInSegment = newVirtualTime - activeSeg.timelineStart;
+    smBaseAudio.currentTime = activeSeg.sourceStart + offsetInSegment;
+    smSoftPaused = false;
+    smWasSoftPaused = false;
+  } else {
+    // Landed exactly on a boundary or in a gap
+    let lastSegEndSource = 0;
+    for (const seg of smBaseSegments) {
+      if (seg.timelineStart + seg.duration <= newVirtualTime) {
+        lastSegEndSource = Math.max(lastSegEndSource, seg.sourceStart + seg.duration);
+      }
+    }
+    smBaseAudio.currentTime = lastSegEndSource;
+    smBaseAudio.pause();
     smSoftPaused = false;
     smWasSoftPaused = false;
   }
 
-
-  if (smSoftPaused) {
-    smSoftPauseStartVirtual = smVirtualTime;
-    smSoftPauseStartWall = getAudioCtx().currentTime;
-  }
-
   smLastUpdateTime = getAudioCtx().currentTime;
 
+  // 7. Update UI counters and progress bar
   const totalVirtualDur = getSmTotalVirtualDuration();
   document.getElementById('sm-current-time').textContent = smVirtualTime.toFixed(3);
   document.getElementById('sm-total-duration').textContent = totalVirtualDur.toFixed(3);
@@ -1395,14 +1629,23 @@ function seekSmTimeline(seconds) {
     progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
   }
 
-  // If we landed at the end â†’ stop here, don't trigger any playback
   if (newVirtualTime >= maxDur) return;
 
-  // Auto-resume playing if the audio halted during seek
+  // 8. Auto-resume logic ensuring seamless transition without deleting data
   if (!smTimelineTimer) {
     smResumeBase(false);
-  } else if (smBaseAudio.paused && smBaseAudio.currentTime < smBaseAudio.duration && !smSoftPaused) {
+  } else if (smVirtualTime >= smTotalRecordedDuration && !smSoftPaused && smBaseAudio.currentTime < smBaseAudio.duration) {
+    // Reached the frontier: instantly resume live recording
+    smBaseSegmentStartTimeline = smVirtualTime;
+    smBaseSegmentStartSource = smBaseAudio.currentTime;
     smBaseAudio.play().catch(e => console.error(e));
+    updatePlaybackStateUI('playing');
+  } else if (activeSeg && smBaseAudio.paused && smBaseAudio.currentTime < smBaseAudio.duration) {
+    // Replaying a known segment
+    smBaseAudio.play().catch(e => console.error(e));
+    updatePlaybackStateUI('playing');
+  } else if (!activeSeg) {
+    // Navigating through a silent gap
     updatePlaybackStateUI('playing');
   }
 }
@@ -1430,8 +1673,7 @@ function triggerOverlayStart(overlay) {
  try { active.sourceNode.stop(); } catch(_) {}
  if (active.startTimeInBase !== null && active_timeline) {
  // Calculate precise elapsed time for crop
- const exactVirtualTime = smVirtualTime + (getAudioCtx().currentTime - smLastUpdateTime);
- const played = exactVirtualTime - active.startTimeInBase;
+ const played = getAudioCtx().currentTime - active.playStartTime;
  active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
  }
  delete activeOverlayAudios[active.clipEntry.id];
@@ -1446,11 +1688,19 @@ function triggerOverlayStart(overlay) {
  src.connect(gain);
  gain.connect(masterCompressor);
 
+ // Calculate actual timeline start applying the latency correction
+ let calculatedStart = active_timeline ? (smVirtualTime + (getAudioCtx().currentTime - smLastUpdateTime)) : 0;
+ 
+ // Apply latency deduction only if actively recording and delay exists
+ if (active_timeline && smHeadphoneLatencySec >0) {
+     calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+ }
+
  const clip = {
  id: `sm-clip-${++smRecordedClipIdCounter}`,
  assetId: overlay.assetId,
  name: asset.name,
- timelineStart: active_timeline ? (smVirtualTime + (getAudioCtx().currentTime - smLastUpdateTime)) : 0,
+ timelineStart: calculatedStart,
  cropStart: 0,
  cropEnd: null,
  volume: overlayVol,
@@ -1484,8 +1734,6 @@ function triggerOverlayStart(overlay) {
  if (curr && curr.sourceNode === src) {
  if (curr.state === 'playing') {
  if (curr.startTimeInBase !== null && smIsActive()) {
- const exactVirtualTime = smVirtualTime + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
- const played = exactVirtualTime - curr.startTimeInBase;
  curr.clipEntry.cropEnd = curr.buffer ? curr.buffer.duration : buffer.duration;
  }
  delete activeOverlayAudios[clip.id];
@@ -1533,7 +1781,11 @@ function toggleOverlayPauseResume(overlay) {
  const oldClipId = active.clipEntry.id;
 
  if (shouldRecord) {
- const timelineStart = (isPlayingBase || smSoftPaused) ? smVirtualTime : 0;
+ let calculatedStart = smVirtualTime;
+ if (smHeadphoneLatencySec >0) {
+     calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+ }
+ const timelineStart = calculatedStart;
  const newClip = {
  id: `sm-clip-${++smRecordedClipIdCounter}`,
  assetId: overlay.assetId,
@@ -1591,10 +1843,9 @@ function toggleOverlayPauseResume(overlay) {
  if (entry.timerId) clearTimeout(entry.timerId);
  entry.paused = true;
  
-  // Punch-out: permanently trim the clip's cropEnd to the current timeline position
-  const exactVirtualTime = smVirtualTime + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
-  const played = exactVirtualTime - entry.clip.timelineStart;
-  if (played > 0) {
+  // Punch-out: permanently trim the clip's cropEnd using exact physical time elapsed
+  const played = getAudioCtx().currentTime - entry.playStartTime;
+  if (played >0) {
       entry.clip.cropEnd = (entry.clip.cropStart || 0) + played;
   }
  });
@@ -1613,7 +1864,7 @@ function syncRecordActiveOverlays() {
 
  Object.keys(activeOverlayAudios).forEach(id =>{
  const active = activeOverlayAudios[id];
- if (active.state === 'playing' && active.startTimeInBase === null && !active.doNotSync) {
+ if (active.state === 'playing'&& active.startTimeInBase === null && !active.doNotSync) {
  const overlay = smOverlays.find(o =>o.id == active.overlayId);
  const clip = {
  id: `sm-clip-${++smRecordedClipIdCounter}`,
@@ -1735,10 +1986,9 @@ function capActiveOverlayRecordings(preserveTail = false) {
 
  Object.keys(activeOverlayAudios).forEach(id =>{
  const active = activeOverlayAudios[id];
- if (active.state === 'playing' && active.startTimeInBase !== null) {
+ if (active.state === 'playing'&& active.startTimeInBase !== null) {
   if (!preserveTail) {
-      const exactVirtualTime = tb + (smTimelineTimer ? (getAudioCtx().currentTime - smLastUpdateTime) : 0);
-      const played = exactVirtualTime - active.startTimeInBase;
+      const played = getAudioCtx().currentTime - active.playStartTime;
       active.clipEntry.cropEnd = active.clipEntry.cropStart + played;
   }
  active.startTimeInBase = null;
@@ -1899,10 +2149,10 @@ function renderSmActiveKeysList() {
  const isAnyPlaying = instances.some(a =>a.state === 'playing');
  if (isAnyPlaying) {
  badgeClass = 'kbd-badge-playing';
- statusSpan = `<span class="sm-badge-status-text sm-badge-status-playing">${instances.length >1 ? instances.length + 'x ' : ''}Playing</span>`;
+ statusSpan = `<span class="sm-badge-status-text sm-badge-status-playing">${instances.length >1 ? instances.length + 'x ': ''}Playing</span>`;
  } else {
  badgeClass = 'kbd-badge-paused';
- statusSpan = `<span class="sm-badge-status-text sm-badge-status-paused">${instances.length >1 ? instances.length + 'x ' : ''}Paused</span>`;
+ statusSpan = `<span class="sm-badge-status-text sm-badge-status-paused">${instances.length >1 ? instances.length + 'x ': ''}Paused</span>`;
  }
  }
 
@@ -1930,7 +2180,7 @@ function renderSmMixLog() {
  let cropText = '';
  if (c.cropStart >0 || c.cropEnd !== null) {
  const startSec = c.cropStart.toFixed(3);
- const endSec = c.cropEnd !== null ? c.cropEnd.toFixed(3) + 's' : 'end';
+ const endSec = c.cropEnd !== null ? c.cropEnd.toFixed(3) + 's': 'end';
  cropText = ` (crop: ${startSec}s â†’ ${endSec})`;
  }
  li.innerHTML = `<span class="log-time">[${c.timelineStart.toFixed(3)}s]</span>${escapeHTML(c.name)}${cropText}`;
@@ -1967,7 +2217,7 @@ function exitToSetupView() {
   // Close any active base segments safely
   if (smBaseSegmentStartSource !== null && smBaseAudio) {
       const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
-      if (duration > 0) {
+      if (duration >0) {
           smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
       }
       smBaseSegmentStartTimeline = null;

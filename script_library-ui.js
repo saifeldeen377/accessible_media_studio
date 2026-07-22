@@ -2,6 +2,26 @@
 // SHARED MEDIA LIBRARY
 // ─────────────────────────────────────────────────────────────
 
+function getUniqueAssetName(requestedName) {
+  let name = (requestedName || '').trim();
+  if (!name) name = "Untitled";
+
+  const exists = (n) => assetLibrary.some(a => a.name.toLowerCase() === n.toLowerCase());
+
+  if (!exists(name)) {
+    return name;
+  }
+
+  let counter = 1;
+  let candidate = `${name} ${counter}`;
+  while (exists(candidate)) {
+    counter++;
+    candidate = `${name} ${counter}`;
+  }
+
+  return candidate;
+}
+
 function initLibrary() {
  const fileInput = document.getElementById('lib-file-input');
  const nameInput = document.getElementById('lib-file-name');
@@ -10,16 +30,19 @@ function initLibrary() {
  // Auto-fill name from filename
  fileInput.addEventListener('change', () =>{
  if (fileInput.files[0] && !nameInput.value.trim()) {
- nameInput.value = fileInput.files[0].name.replace(/\.[^.]+$/, '');
+ const rawName = fileInput.files[0].name.replace(/\.[^.]+$/, '');
+ nameInput.value = getUniqueAssetName(rawName);
  }
  });
 
  btnAdd.addEventListener('click', () =>{
  const file = fileInput.files[0];
- const name = nameInput.value.trim();
+ const rawName = nameInput.value.trim();
 
  if (!file) { alert('Please choose a file.'); return; }
- if (!name) { alert('Please give the file a name.'); return; }
+ if (!rawName) { alert('Please give the file a name.'); return; }
+
+ const name = getUniqueAssetName(rawName);
 
  let type = null;
  if (file.type) {
@@ -39,7 +62,7 @@ function initLibrary() {
 
  if (!type) { alert('Unsupported file type. Please upload audio, video, or image files.'); return; }
 
-  if (file.size > 100 * 1024 * 1024) {
+  if (file.size >100 * 1024 * 1024) {
   if (!confirm(`The file "${file.name}" is over 100MB. Processing very large files might cause the browser to slow down or crash. Are you sure you want to continue?`)) {
   nameInput.value = '';
   fileInput.value = '';
@@ -80,28 +103,29 @@ function renderLibrary() {
  let btnText = '';
  let btnAria = '';
  if (asset.type === 'image') {
- btnText = '👁️ Show Image';
+ btnText = 'Show Image';
  btnAria = `Show image preview for ${escapeHTML(asset.name)}`;
  } else if (asset.type === 'audio') {
- btnText = '▶️ Play';
+ btnText = 'Play';
  btnAria = `Play preview for ${escapeHTML(asset.name)}`;
  } else if (asset.type === 'video') {
- btnText = '▶️ Play Video';
+ btnText = 'Play Video';
  btnAria = `Play video preview for ${escapeHTML(asset.name)}`;
  }
  
  item.innerHTML = `
 <div class="library-item-main">
-<span class="asset-icon">${asset.type === 'audio' ? '🎵' : asset.type === 'video' ? '🎬' : '🖼️'}</span>
+<span class="asset-icon">${asset.type === 'audio'? '': asset.type === 'video'? '': ''}</span>
 <span class="asset-name">${escapeHTML(asset.name)}</span>
 <span class="asset-type">${asset.type}</span>
 <div class="library-item-actions">
-<button class="btn btn-sm btn-secondary" onclick="downloadAsset('${asset.id}')" aria-label="Download ${escapeHTML(asset.name)}">⬇️ Download</button>
-<button id="btn-prev-${asset.id}"class="btn btn-sm btn-preview"onclick="toggleLibraryPreview('${asset.id}')"aria-label="${btnAria}">${btnText}</button>
-<button id="btn-replay-${asset.id}"class="btn btn-sm btn-secondary"onclick="replayLibraryPreview('${asset.id}')"aria-label="Replay preview for ${escapeHTML(asset.name)}" style="display: none;">🔄 Replay</button>
+<button class="btn btn-sm btn-secondary" onclick="downloadAsset('${asset.id}')" aria-label="Download ${escapeHTML(asset.name)}">Download</button>
+<button id="btn-prev-${asset.id}" class="btn btn-sm btn-preview" onclick="toggleLibraryPreview('${asset.id}')" aria-label="${btnAria}">${btnText}</button>
+<button id="btn-replay-${asset.id}" class="btn btn-sm btn-secondary" onclick="replayLibraryPreview('${asset.id}')" aria-label="Replay preview for ${escapeHTML(asset.name)}" style="display: none;">Replay</button>
+<button id="btn-stop-${asset.id}" class="btn btn-sm btn-danger" onclick="stopLibraryPreview('${asset.id}')" aria-label="Stop preview for ${escapeHTML(asset.name)}" style="display: none;">Stop</button>
 <button class="btn btn-sm btn-danger"
  onclick="removeAsset('${asset.id}')"
- aria-label="Remove ${escapeHTML(asset.name)} from library">✖</button>
+ aria-label="Remove ${escapeHTML(asset.name)} from library"></button>
 </div>
 </div>
 <div id="preview-container-${asset.id}"class="library-item-preview"hidden></div>
@@ -149,17 +173,25 @@ function stopAllLibraryPreviews() {
  activeLibraryAudios[key].pause();
  const otherBtn = document.getElementById(`btn-prev-${key}`);
  const replayBtn = document.getElementById(`btn-replay-${key}`);
+ const stopBtn = document.getElementById(`btn-stop-${key}`);
  const otherAsset = getAsset(key);
  if (otherBtn && otherAsset) {
- otherBtn.textContent = otherAsset.type === 'audio' ? '▶️ Play' : '▶️ Play Video';
+ otherBtn.textContent = otherAsset.type === 'audio'? 'Play': 'Play Video';
  otherBtn.setAttribute('aria-label', `Play preview for ${otherAsset.name}`);
  }
  if (replayBtn) {
   if (document.activeElement === replayBtn) {
-    if (typeof btn !== 'undefined' && btn) btn.focus();
-    else if (typeof otherBtn !== 'undefined' && otherBtn) otherBtn.focus();
+    if (typeof btn !== 'undefined'&& btn) btn.focus();
+    else if (typeof otherBtn !== 'undefined'&& otherBtn) otherBtn.focus();
   }
   replayBtn.style.display = 'none';
+ }
+ if (stopBtn) {
+  if (document.activeElement === stopBtn) {
+    if (typeof btn !== 'undefined'&& btn) btn.focus();
+    else if (typeof otherBtn !== 'undefined'&& otherBtn) otherBtn.focus();
+  }
+  stopBtn.style.display = 'none';
  }
  const otherContainer = document.getElementById(`preview-container-${key}`);
  if (otherContainer) {
@@ -180,16 +212,24 @@ function stopAllLibraryPreviews() {
  otherContainer.hidden = true;
  const otherBtn = document.getElementById(`btn-prev-${asset.id}`);
  const replayBtn = document.getElementById(`btn-replay-${asset.id}`);
+ const stopBtn = document.getElementById(`btn-stop-${asset.id}`);
  if (otherBtn) {
- otherBtn.textContent = '▶️ Play Video';
+ otherBtn.textContent = 'Play Video';
  otherBtn.setAttribute('aria-label', `Play video preview for ${asset.name}`);
  }
  if (replayBtn) {
   if (document.activeElement === replayBtn) {
-    if (typeof btn !== 'undefined' && btn) btn.focus();
-    else if (typeof otherBtn !== 'undefined' && otherBtn) otherBtn.focus();
+    if (typeof btn !== 'undefined'&& btn) btn.focus();
+    else if (typeof otherBtn !== 'undefined'&& otherBtn) otherBtn.focus();
   }
   replayBtn.style.display = 'none';
+ }
+ if (stopBtn) {
+  if (document.activeElement === stopBtn) {
+    if (typeof btn !== 'undefined'&& btn) btn.focus();
+    else if (typeof otherBtn !== 'undefined'&& otherBtn) otherBtn.focus();
+  }
+  stopBtn.style.display = 'none';
  }
  }
  }
@@ -202,6 +242,7 @@ window.toggleLibraryPreview = function(id) {
 
  const btn = document.getElementById(`btn-prev-${id}`);
  const replayBtn = document.getElementById(`btn-replay-${id}`);
+ const stopBtn = document.getElementById(`btn-stop-${id}`);
  const container = document.getElementById(`preview-container-${id}`);
  if (!btn || !container) return;
 
@@ -211,11 +252,11 @@ window.toggleLibraryPreview = function(id) {
  if (isPlaying) {
    if (!isPlaying.paused) {
      isPlaying.pause();
-     btn.textContent = '▶️ Resume';
+     btn.textContent = 'Resume';
      btn.setAttribute('aria-label', `Resume preview for ${asset.name}`);
    } else {
      isPlaying.play();
-     btn.textContent = '⏸️ Pause';
+     btn.textContent = 'Pause';
      btn.setAttribute('aria-label', `Pause preview for ${asset.name}`);
    }
  } else {
@@ -224,20 +265,22 @@ window.toggleLibraryPreview = function(id) {
  const aud = new Audio(asset.objectURL);
  aud.play().catch(err =>console.error("Preview play failed:", err));
  activeLibraryAudios[id] = aud;
- btn.textContent = '⏸️ Pause';
+ btn.textContent = 'Pause';
  btn.setAttribute('aria-label', `Pause preview for ${asset.name}`);
  if (replayBtn) replayBtn.style.display = 'inline-block';
+ if (stopBtn) stopBtn.style.display = 'inline-block';
 
  aud.onended = () =>{
  delete activeLibraryAudios[id];
- btn.textContent = '▶️ Play';
+ btn.textContent = 'Play';
  btn.setAttribute('aria-label', `Play preview for ${asset.name}`);
  if (replayBtn) {
-  if (document.activeElement === replayBtn) {
-    if (typeof btn !== 'undefined' && btn) btn.focus();
-    else if (typeof otherBtn !== 'undefined' && otherBtn) otherBtn.focus();
-  }
+  if (document.activeElement === replayBtn) btn.focus();
   replayBtn.style.display = 'none';
+ }
+ if (stopBtn) {
+  if (document.activeElement === stopBtn) btn.focus();
+  stopBtn.style.display = 'none';
  }
  container.innerHTML = '';
  container.hidden = true;
@@ -250,11 +293,11 @@ window.toggleLibraryPreview = function(id) {
  if (isVisible && vid) {
    if (!vid.paused) {
      vid.pause();
-     btn.textContent = '▶️ Resume Video';
+     btn.textContent = 'Resume Video';
      btn.setAttribute('aria-label', `Resume video preview for ${asset.name}`);
    } else {
      vid.play();
-     btn.textContent = '⏸️ Pause Video';
+     btn.textContent = 'Pause Video';
      btn.setAttribute('aria-label', `Pause video preview for ${asset.name}`);
    }
  } else {
@@ -264,21 +307,23 @@ window.toggleLibraryPreview = function(id) {
  container.innerHTML = `
 <video id="vid-prev-${id}"src="${asset.objectURL}"autoplay controls playsinline></video>
  `;
- btn.textContent = '⏸️ Pause Video';
+ btn.textContent = 'Pause Video';
  btn.setAttribute('aria-label', `Pause video preview for ${asset.name}`);
  if (replayBtn) replayBtn.style.display = 'inline-block';
+ if (stopBtn) stopBtn.style.display = 'inline-block';
  
  const newVid = document.getElementById(`vid-prev-${id}`);
  if (newVid) {
  newVid.onended = () =>{
- btn.textContent = '▶️ Play Video';
+ btn.textContent = 'Play Video';
  btn.setAttribute('aria-label', `Play video preview for ${asset.name}`);
  if (replayBtn) {
-  if (document.activeElement === replayBtn) {
-    if (typeof btn !== 'undefined' && btn) btn.focus();
-    else if (typeof otherBtn !== 'undefined' && otherBtn) otherBtn.focus();
-  }
+  if (document.activeElement === replayBtn) btn.focus();
   replayBtn.style.display = 'none';
+ }
+ if (stopBtn) {
+  if (document.activeElement === stopBtn) btn.focus();
+  stopBtn.style.display = 'none';
  }
  container.innerHTML = '';
  container.hidden = true;
@@ -290,14 +335,14 @@ window.toggleLibraryPreview = function(id) {
  if (isVisible) {
  container.innerHTML = '';
  container.hidden = true;
- btn.textContent = '👁️ Show Image';
+ btn.textContent = 'Show Image';
  btn.setAttribute('aria-label', `Show image preview for ${asset.name}`);
  } else {
  container.hidden = false;
  container.innerHTML = `
 <img src="${asset.objectURL}"alt="Preview of ${escapeHTML(asset.name)}">
  `;
- btn.textContent = '👁️ Hide Image';
+ btn.textContent = 'Hide Image';
  btn.setAttribute('aria-label', `Hide image preview for ${asset.name}`);
  }
  }
@@ -314,7 +359,7 @@ window.replayLibraryPreview = function(id) {
     if (isPlaying) {
       isPlaying.currentTime = 0;
       isPlaying.play();
-      if (btn) btn.textContent = '⏸️ Pause';
+      if (btn) btn.textContent = 'Pause';
       if (btn) btn.setAttribute('aria-label', `Pause preview for ${asset.name}`);
     }
   } else if (asset.type === 'video') {
@@ -322,68 +367,107 @@ window.replayLibraryPreview = function(id) {
     if (vid) {
       vid.currentTime = 0;
       vid.play();
-      if (btn) btn.textContent = '⏸️ Pause Video';
+      if (btn) btn.textContent = 'Pause Video';
       if (btn) btn.setAttribute('aria-label', `Pause video preview for ${asset.name}`);
-      announce('Preview replayed.');
     }
   }
 };
 
-window.removeAsset = function(id) {
-  // Stop preview if this specific asset is currently playing
+window.stopLibraryPreview = function(id) {
+  const btn = document.getElementById(`btn-prev-${id}`);
+  const replayBtn = document.getElementById(`btn-replay-${id}`);
+  const stopBtn = document.getElementById(`btn-stop-${id}`);
+  
+  // Stop everything
   if (activeLibraryAudios[id]) {
-  activeLibraryAudios[id].pause();
-  delete activeLibraryAudios[id];
+    activeLibraryAudios[id].pause();
+    delete activeLibraryAudios[id];
   }
+  
   const videoContainer = document.getElementById(`preview-container-${id}`);
   if (videoContainer && !videoContainer.hidden) {
-  const vid = videoContainer.querySelector('video');
-  if (vid) { try { vid.pause(); } catch (_) {} }
-  videoContainer.innerHTML = '';
-  videoContainer.hidden = true;
+    const vid = videoContainer.querySelector('video');
+    if (vid) { try { vid.pause(); } catch (_) {} }
+    videoContainer.innerHTML = '';
+    videoContainer.hidden = true;
   }
-
-  const idx = assetLibrary.findIndex(a =>a.id === id);
-  if (idx !== -1) { 
-  URL.revokeObjectURL(assetLibrary[idx].objectURL); 
-  assetLibrary.splice(idx, 1); 
+  
+  if (btn) {
+    const asset = getAsset(id);
+    if (asset) {
+      btn.textContent = asset.type === 'audio'? 'Play': (asset.type === 'video'? 'Play Video': 'Show Image');
+      btn.setAttribute('aria-label', `Play preview for ${asset.name}`);
+    }
+    btn.focus(); // Force focus explicitly
   }
+  
+  if (replayBtn) replayBtn.style.display = 'none';
+  if (stopBtn) stopBtn.style.display = 'none';
+};
 
- // Clean up orphaned data from other tools' timelines
+window.removeAsset = function(id) {
+  setTimeout(() => {
+    const asset = getAsset(id);
+    if (!asset) return;
+    
+    if (!confirm(`Are you sure you want to remove "${asset.name}" from the library?`)) {
+      return; // User cancelled
+    }
+
+    // Stop preview if this specific asset is currently playing
+    if (activeLibraryAudios[id]) {
+      activeLibraryAudios[id].pause();
+      delete activeLibraryAudios[id];
+    }
+    const videoContainer = document.getElementById(`preview-container-${id}`);
+    if (videoContainer && !videoContainer.hidden) {
+      const vid = videoContainer.querySelector('video');
+      if (vid) { try { vid.pause(); } catch (_) {} }
+      videoContainer.innerHTML = '';
+      videoContainer.hidden = true;
+    }
+  
+    const idx = assetLibrary.findIndex(a =>a.id === id);
+    if (idx !== -1) { 
+      URL.revokeObjectURL(assetLibrary[idx].objectURL); 
+      assetLibrary.splice(idx, 1); 
+    }
+
+ // Clean up orphaned data from other tools'timelines
  if (typeof maClips !== 'undefined') {
  const initialMa = maClips.length;
- const remainingMa = maClips.filter(c => c.assetId !== id);
+ const remainingMa = maClips.filter(c =>c.assetId !== id);
  maClips.length = 0;
  maClips.push(...remainingMa);
  if (initialMa !== maClips.length && typeof renderMaTable === 'function') renderMaTable();
  }
  if (typeof mvClips !== 'undefined') {
  const initialMv = mvClips.length;
- const remainingMv = mvClips.filter(c => c.assetId !== id);
+ const remainingMv = mvClips.filter(c =>c.assetId !== id);
  mvClips.length = 0;
  mvClips.push(...remainingMv);
  if (initialMv !== mvClips.length && typeof renderMvTable === 'function') renderMvTable();
  }
  if (typeof avSlides !== 'undefined') {
  const initialAv = avSlides.length;
- const remainingAv = avSlides.filter(c => c.assetId !== id);
+ const remainingAv = avSlides.filter(c =>c.assetId !== id);
  avSlides.length = 0;
  avSlides.push(...remainingAv);
  if (initialAv !== avSlides.length && typeof renderAvTable === 'function') renderAvTable();
  }
   if (typeof smRecordedClips !== 'undefined') {
-  const remainingSm = smRecordedClips.filter(c => c.assetId !== id);
+  const remainingSm = smRecordedClips.filter(c =>c.assetId !== id);
   smRecordedClips.length = 0;
   smRecordedClips.push(...remainingSm);
   }
   if (typeof smOverlays !== 'undefined') {
   const initialSmO = smOverlays.length;
-  const remainingSmO = smOverlays.filter(c => c.assetId !== id);
+  const remainingSmO = smOverlays.filter(c =>c.assetId !== id);
   smOverlays.length = 0;
   smOverlays.push(...remainingSmO);
   if (initialSmO !== smOverlays.length && typeof renderSmShortcutsTable === 'function') renderSmShortcutsTable();
   }
-  if (typeof smBaseAsset !== 'undefined' && smBaseAsset && smBaseAsset.id === id) {
+  if (typeof smBaseAsset !== 'undefined'&& smBaseAsset && smBaseAsset.id === id) {
     smBaseAsset = null;
     const goBtn = document.getElementById('btn-sm-go');
     if (goBtn) goBtn.disabled = true;
@@ -397,25 +481,26 @@ window.removeAsset = function(id) {
   }
   
   // Clear tool-specific memory caches to prevent leaks
-  if (typeof trimAudioCacheId !== 'undefined' && trimAudioCacheId === id) {
+  if (typeof trimAudioCacheId !== 'undefined'&& trimAudioCacheId === id) {
   trimAudioCacheId = null;
   trimAudioCacheBuffer = null;
   }
-  if (typeof currentStaAssetId !== 'undefined' && currentStaAssetId === id) {
+  if (typeof currentStaAssetId !== 'undefined'&& currentStaAssetId === id) {
   currentStaAssetId = null;
   trimBuffer = null;
   }
-  if (typeof currentsctAssetId !== 'undefined' && currentsctAssetId === id) {
+  if (typeof currentsctAssetId !== 'undefined'&& currentsctAssetId === id) {
   currentsctAssetId = null;
   if (typeof sctBuffer !== 'undefined') sctBuffer = null;
   if (typeof sctCutRegions !== 'undefined') sctCutRegions = [];
   if (typeof sctActiveCut !== 'undefined') sctActiveCut = { start: null, end: null, id: null };
   }
  // Remove from IndexedDB as well
- dbDeleteAsset(id);
- renderLibrary();
- populateAllSelects();
- announce('Asset removed from library.');
+   dbDeleteAsset(id);
+   renderLibrary();
+   populateAllSelects();
+   announce('Asset removed from library.');
+  }, 50);
 };
 
 function populateAllSelects() {
@@ -452,17 +537,18 @@ function populateAllSelects() {
 }
 
 window.saveBlobToLibrary = function(blob, name, type) {
-  const file = new File([blob], name, { type: blob.type });
+  const finalName = getUniqueAssetName(name);
+  const file = new File([blob], finalName, { type: blob.type });
   const id = `asset-${++assetIdCounter}`;
   const objectURL = URL.createObjectURL(file);
-  assetLibrary.push({ id, name, type, objectURL, file });
+  assetLibrary.push({ id, name: finalName, type, objectURL, file });
   
   // Persist to IndexedDB so the file survives page refresh
   if (typeof dbSaveAsset === 'function') {
-    dbSaveAsset(id, name, type, file);
+    dbSaveAsset(id, finalName, type, file);
   }
   
   renderLibrary();
   populateAllSelects();
-  announce(`"${name}" saved directly to the library.`);
+  announce(`"${finalName}" saved directly to the library.`);
 };
