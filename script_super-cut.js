@@ -57,7 +57,6 @@ function initSuperCut() {
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
     container.focus();
-    announce('Entered Super Cut Audio. Application mode active.');
   });
 
   btnManageCuts.addEventListener('click', () =>{
@@ -113,7 +112,6 @@ function initSuperCut() {
     overlay.style.display = 'none';
     setAppBackgroundInert(false);
     btnEnter.focus();
-    announce('Exited Super Cut Audio.');
   });
 
   select.addEventListener('change', () =>{

@@ -465,11 +465,12 @@ function enterSuperMode() {
 }
 
 function exitSuperMode() {
- smActive = false;
- document.getElementById('super-mode-overlay').hidden = true;
- document.getElementById('btn-sm-export').style.display = 'none';
- document.getElementById('btn-sm-save').style.display = 'none';
- document.getElementById('btn-sm-reset-mix').style.display = 'none';
+  smActive = false;
+  document.getElementById('super-mode-overlay').hidden = true;
+  document.getElementById('btn-sm-export').style.display = 'none';
+  document.getElementById('btn-sm-save').style.display = 'none';
+  document.getElementById('btn-sm-reset-mix').style.display = 'none';
+
   // Preserve the exact exit point so they can "Continue" later
   if (smBaseAudio) {
       smLastBaseTime = smBaseAudio.currentTime;
@@ -478,7 +479,7 @@ function exitSuperMode() {
   // Close any active base segments safely
   if (smBaseSegmentStartSource !== null && smBaseAudio) {
       const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
-      if (duration >0) {
+      if (duration > 0) {
           smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
       }
       smBaseSegmentStartTimeline = null;
@@ -492,8 +493,8 @@ function exitSuperMode() {
 
   setAppBackgroundInert(false);
   stopSmAudio();
- const trigger = document.getElementById('btn-enter-super-mode');
- if (trigger) trigger.focus();
+  const trigger = document.getElementById('btn-enter-super-mode');
+  if (trigger) trigger.focus();
 }
 
 function updateSmGoButton() {
@@ -741,76 +742,74 @@ class WebAudioPlayer {
  return this._ended;
  }
 
- playNode() {
- if (!this.buffer) return;
- const ctx = getAudioCtx();
- const src = ctx.createBufferSource();
- src.buffer = this.buffer;
+  playNode() {
+  if (!this.buffer) return;
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = this.buffer;
 
- const gain = ctx.createGain();
- gain.gain.value = this.volume;
+  const gain = ctx.createGain();
+  gain.gain.value = this.volume;
 
- src.connect(gain);
- gain.connect(masterCompressor);
+  src.connect(gain);
+  gain.connect(masterCompressor);
 
- src.start(0, this.pausedOffset);
+  src.start(0, this.pausedOffset);
 
- this.sourceNode = src;
- this.gainNode = gain;
- this.playStartTime = ctx.currentTime;
- this.isPlaying = true;
- this._ended = false;
+  this.sourceNode = src;
+  this.gainNode = gain;
+  this.playStartTime = ctx.currentTime;
+  this.isPlaying = true;
+  this._ended = false;
 
- src.onended = () =>{
- if (this.sourceNode === src) {
- this.pausedOffset = this.duration;
- this.isPlaying = false;
- this._ended = true;
- this.sourceNode = null;
- }
- };
- }
+  src.onended = () =>{
+  if (this.sourceNode === src) {
+  this.pausedOffset = this.duration;
+  this.isPlaying = false;
+  this._ended = true;
+  this.sourceNode = null;
+  }
+  };
+  }
 
- stopNode() {
- if (this.sourceNode) {
- try { this.sourceNode.stop(); } catch(_) {}
- this.sourceNode = null;
- }
- }
+  stopNode() {
+  if (this.sourceNode) {
+  try { this.sourceNode.stop(); } catch(_) {}
+  this.sourceNode = null;
+  }
+  }
 
- play() {
- return new Promise((resolve) =>{
- if (this.isPlaying) {
- resolve();
- return;
- }
- if (this._ended) {
- // Base finished naturally â€” do NOT restart it, just resolve.
- // Callers that need to continue the timeline handle this themselves.
- resolve();
- return;
- }
- const ctx = getAudioCtx();
- if (ctx.state === 'suspended') {
- ctx.resume().then(() =>{
- this.playNode();
- resolve();
- });
- } else {
- this.playNode();
- resolve();
- }
- });
- }
+  play() {
+  return new Promise((resolve) =>{
+  if (this.isPlaying) {
+  resolve();
+  return;
+  }
+  if (this._ended) {
+  resolve();
+  return;
+  }
+  const ctx = getAudioCtx();
+  if (ctx.state === 'suspended') {
+  ctx.resume().then(() =>{
+  this.playNode();
+  resolve();
+  });
+  } else {
+  this.playNode();
+  resolve();
+  }
+  });
+  }
 
- pause() {
- if (!this.isPlaying) return;
- this.stopNode();
- const ctx = getAudioCtx();
- const elapsed = ctx.currentTime - this.playStartTime;
- this.pausedOffset += elapsed;
- this.isPlaying = false;
- }
+  pause() {
+  if (!this.isPlaying) return;
+  this.stopNode();
+  const ctx = getAudioCtx();
+  const elapsed = ctx.currentTime - this.playStartTime;
+  this.pausedOffset += elapsed;
+  this.isPlaying = false;
+  }
 }
 
 function getAssetByteSize(asset) {
@@ -820,39 +819,44 @@ function getAssetByteSize(asset) {
   return 1000000;
 }
 
+let smIsSessionLoading = false;
+
 async function startSuperModeLive() {
  if (!smBaseAsset) return;
-
- if (smRecordedClips.length > 0) {
- const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording'button.\n\nPress OK to delete old work and start fresh.");
- if (!proceed) {
-     const goBtn = document.getElementById('btn-sm-go');
-     if (goBtn) goBtn.focus();
+ if (smIsSessionLoading) {
+     announce("Please wait, the session audio is currently loading...", true);
      return;
  }
- // User confirmed fresh start — wipe old session data
- smRecordedClips.length = 0;
- smBaseSegments.length = 0;
- smBaseSegmentStartTimeline = null;
- smBaseSegmentStartSource = null;
- smSoftPaused = false;
- if (smTimelineTimer) { clearInterval(smTimelineTimer); smTimelineTimer = null; }
- if (smBaseAudio) { try { smBaseAudio.pause(); } catch(_) {} smBaseAudio = null; }
- const _logEl = document.getElementById('sm-mix-log');
- if (_logEl) _logEl.innerHTML = '<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>';
+
+ if (smRecordedClips.length > 0) {
+  const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording'button.\n\nPress OK to delete old work and start fresh.");
+  if (!proceed) {
+      const goBtn = document.getElementById('btn-sm-go');
+      if (goBtn) goBtn.focus();
+      return;
+  }
+  // User confirmed fresh start — wipe old session data
+  smRecordedClips.length = 0;
+  smBaseSegments.length = 0;
+  smBaseSegmentStartTimeline = null;
+  smBaseSegmentStartSource = null;
+  smSoftPaused = false;
+  if (smTimelineTimer) { clearInterval(smTimelineTimer); smTimelineTimer = null; }
+  if (smBaseAudio) { try { smBaseAudio.pause(); } catch(_) {} smBaseAudio = null; }
+  const _logEl = document.getElementById('sm-mix-log');
+  if (_logEl) _logEl.innerHTML = '<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>';
  }
 
+  smIsSessionLoading = true;
   const goBtn = document.getElementById('btn-sm-go');
   const originalGoBtnText = goBtn ? goBtn.textContent : 'Go Now';
-  if (goBtn) {
-      goBtn.disabled = true;
-      goBtn.textContent = 'Loading... Please wait';
-      const manageBtn = document.getElementById('btn-sm-manage-overlays');
-      if (manageBtn) manageBtn.focus();
-  }
-
+  
   const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
   const totalBytes = allAssetObjects.reduce((acc, a) => acc + getAssetByteSize(a), 0) || 1;
+  
+  if (goBtn && totalBytes > 30 * 1024 * 1024) {
+      goBtn.textContent = 'Loading... Please wait';
+  }
 
   // Announce IMMEDIATELY on click, and repeat every 5 seconds ONLY if total size > 30MB
   let loadingAnnounceTimer = null;
@@ -866,20 +870,20 @@ async function startSuperModeLive() {
   try {
     await Promise.all(allAssetObjects.map(asset => getDecodedBuffer(asset.id)));
   } catch (err) {
+    smIsSessionLoading = false;
     if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
     console.error(err);
     alert("Error pre-decoding audio files: " + err.message);
     if (goBtn) {
-        goBtn.disabled = false;
         goBtn.textContent = originalGoBtnText;
     }
     return;
   }
   
+  smIsSessionLoading = false;
   if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
   
   if (goBtn) {
-      goBtn.disabled = false;
       goBtn.textContent = originalGoBtnText;
   }
 
@@ -936,18 +940,21 @@ async function startSuperModeLive() {
 
 async function continueSuperModeLive() {
   if (!smBaseAsset) return;
+  if (smIsSessionLoading) {
+      announce("Please wait, the session audio is currently loading...", true);
+      return;
+  }
 
+  smIsSessionLoading = true;
   const continueBtn = document.getElementById('btn-sm-continue');
   const originalContinueText = continueBtn ? continueBtn.textContent : 'Continue Recording';
-  if (continueBtn) {
-      continueBtn.disabled = true;
-      continueBtn.textContent = 'Loading... Please wait';
-      const manageBtn = document.getElementById('btn-sm-manage-overlays');
-      if (manageBtn) manageBtn.focus();
-  }
 
   const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
   const totalBytes = allAssetObjects.reduce((acc, a) => acc + getAssetByteSize(a), 0) || 1;
+
+  if (continueBtn && totalBytes > 30 * 1024 * 1024) {
+      continueBtn.textContent = 'Loading... Please wait';
+  }
 
   let loadingAnnounceTimer = null;
   if (totalBytes > 30 * 1024 * 1024) {
@@ -960,20 +967,20 @@ async function continueSuperModeLive() {
   try {
     await Promise.all(allAssetObjects.map(asset => getDecodedBuffer(asset.id)));
   } catch (err) {
+    smIsSessionLoading = false;
     if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
     console.error(err);
     alert("Error pre-decoding audio files: " + err.message);
     if (continueBtn) {
-        continueBtn.disabled = false;
         continueBtn.textContent = originalContinueText;
     }
     return;
   }
 
+  smIsSessionLoading = false;
   if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
 
   if (continueBtn) {
-      continueBtn.disabled = false;
       continueBtn.textContent = originalContinueText;
   }
 

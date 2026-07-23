@@ -911,6 +911,7 @@ python -m http.server 3000
 <h2 id="screen-reader-compatibility">Screen Reader Compatibility</h2>
 <p>We designed this app to feel completely natural for screen reader users (like NVDA, JAWS, or VoiceOver). You don't need to learn any complex rules to use it:</p>
 <ul>
+  <li><strong>Recommended Mode (Focus / Application Mode):</strong> For the smoothest experience, use <strong>Focus Mode</strong> (NVDA: <code>NVDA + Space</code>, JAWS: <code>Forms Mode</code>). Because the app relies heavily on live single-key shortcuts (Space for Play/Pause, shortcut keys for live mixing and trimming), Focus Mode allows key presses to pass directly to the app without Virtual Buffer latency, avoiding screen reader virtual cursor misalignment when closing dialogs or switching tools.</li>
   <li><strong>Quiet and Clean:</strong> We removed unnecessary notifications and emojis. The app only speaks when it's important.</li>
   <li><strong>Smart Focus:</strong> When you click buttons that disappear (like stopping a preview), we automatically move your cursor to the next logical place (like the Play button) so you never get lost.</li>
   <li><strong>Accident-Proof:</strong> Destructive actions, like removing a file, will always ask you to confirm first, protecting you from accidental clicks.</li>

@@ -40,7 +40,6 @@ function initSuperTrimAudio() {
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
     container.focus();
-    announce('Entered Super Trim Audio. Application mode active.');
   });
 
  // Global key listener for t
@@ -62,7 +61,6 @@ function initSuperTrimAudio() {
     overlay.style.display = 'none';
     setAppBackgroundInert(false);
     btnEnter.focus();
-    announce('Exited Super Trim Audio.');
   });
 
  function formatTime(secs) {

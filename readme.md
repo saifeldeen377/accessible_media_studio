@@ -393,6 +393,7 @@ The exporter replays all clips through an `OfflineAudioContext` — faster than 
 ## Screen Reader Compatibility
 We designed this app to feel completely natural for screen reader users (like NVDA, JAWS, or VoiceOver). You don't need to learn any complex rules to use it:
 
+- **Recommended Mode (Focus / Application Mode):** For the smoothest experience, use **Focus Mode** (NVDA: `NVDA + Space`, JAWS: `Forms Mode`). Because the app relies heavily on live single-key shortcuts (Space for Play/Pause, shortcut keys for live mixing and trimming), Focus Mode allows key presses to pass directly to the app without Virtual Buffer latency, avoiding screen reader virtual cursor misalignment when closing dialogs or switching tools.
 - **Quiet and Clean:** We removed unnecessary notifications and emojis. The app only speaks when it's important.
 - **Smart Focus:** When you click buttons that disappear (like stopping a preview), we automatically move your cursor to the next logical place (like the Play button) so you never get lost.
 - **Accident-Proof:** Destructive actions, like removing a file, will always ask you to confirm first, protecting you from accidental clicks.
