@@ -323,6 +323,14 @@ All tools and the media library use smart, accessible preview buttons:
 | `T` | Open Super Trim from anywhere |
 | `C` | Open Super Cut from anywhere |
 
+### Super Merger Overlay Shortcuts
+| Shortcut | Action |
+| :--- | :--- |
+| `[Key]` | Trigger / record overlay track |
+| `Shift + [Key]` | Pause / stop active overlay track |
+| `Alt + Shift + [Key]` | Cancel / delete active overlay clip |
+| `Ctrl + Shift + Space` | Cancel silent gap / soft pause |
+
 ### Comparison
 
 | Feature | Accessible Media Studio | Traditional Editors |

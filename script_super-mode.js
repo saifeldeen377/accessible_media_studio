@@ -820,6 +820,7 @@ function getAssetByteSize(asset) {
 }
 
 let smIsSessionLoading = false;
+let smUserOverrideEndStop = false;
 
 async function startSuperModeLive() {
  if (!smBaseAsset) return;
@@ -828,6 +829,7 @@ async function startSuperModeLive() {
      return;
  }
 
+ smUserOverrideEndStop = false;
  if (smRecordedClips.length > 0) {
   const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording'button.\n\nPress OK to delete old work and start fresh.");
   if (!proceed) {
@@ -1144,19 +1146,33 @@ function updateSmTimeline() {
  }
 
  const endBehavior = document.getElementById('sm-base-end-behavior').value;
- const hasActiveRecording = Object.keys(activeOverlayAudios).some(id =>{
-     const a = activeOverlayAudios[id];
-     return a.state === 'playing'&& a.startTimeInBase !== null;
- });
-          if (endBehavior === 'continue'|| hasActiveRecording) {
-              smSoftPaused = true;
-              smSoftPauseStartVirtual = smVirtualTime;
-              smSoftPauseStartWall = now;
-              // updatePlaybackStateUI('soft-paused');
-          } else {
-              // STOP
-              smRegularPauseBase();
-          }
+ const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => activeOverlayAudios[id].state === 'playing');
+
+ if (endBehavior === 'continue') {
+     smSoftPaused = true;
+     smSoftPauseStartVirtual = smVirtualTime;
+     smSoftPauseStartWall = now;
+ } else if (endBehavior === 'stop_last_overlay') {
+     if (hasActiveRecording) {
+         smSoftPaused = true;
+         smSoftPauseStartVirtual = smVirtualTime;
+         smSoftPauseStartWall = now;
+     } else {
+         smRegularPauseBase();
+     }
+ } else {
+     smRegularPauseBase();
+ }
+ }
+
+ if (smBaseAudio && smBaseAudio.endedTriggered && smSoftPaused && !smUserOverrideEndStop) {
+   const endBehavior = document.getElementById('sm-base-end-behavior').value;
+   if (endBehavior === 'stop_last_overlay') {
+     const hasActiveRecording = Object.keys(activeOverlayAudios).some(id => activeOverlayAudios[id].state === 'playing');
+     if (!hasActiveRecording) {
+       smRegularPauseBase();
+     }
+   }
  }
  }
 
@@ -1207,9 +1223,10 @@ function smResumeBase(isPunchIn = false) {
  punchInTimeline();
  smSoftPaused = false;
  
-  if (smBaseAudio.ended || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05) {
-  smBaseAudio.endedTriggered = true;
-  smSoftPaused = true;
+   if (smBaseAudio.ended || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05) {
+   smBaseAudio.endedTriggered = true;
+   smUserOverrideEndStop = true;
+   smSoftPaused = true;
   smSoftPauseStartVirtual = smVirtualTime;
   smSoftPauseStartWall = getAudioCtx().currentTime;
   updatePlaybackStateUI('soft-paused');
@@ -1225,8 +1242,15 @@ function smResumeBase(isPunchIn = false) {
     }).catch(err =>console.error(err));
   }
  } else {
- // Normal resume (Space) - Just resume the clock and UI state
- if (smWasSoftPaused) {
+  // Normal resume (Space) - Just resume the clock and UI state
+  if (smBaseAudio && (smBaseAudio.ended || smBaseAudio.endedTriggered || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.05)) {
+  smUserOverrideEndStop = true;
+  smSoftPaused = true;
+  smWasSoftPaused = false;
+  smSoftPauseStartVirtual = smVirtualTime;
+  smSoftPauseStartWall = getAudioCtx().currentTime;
+  updatePlaybackStateUI('soft-paused');
+  } else if (smWasSoftPaused) {
  smSoftPaused = true;
  smWasSoftPaused = false;
  smSoftPauseStartVirtual = smVirtualTime;
@@ -1264,10 +1288,11 @@ function smResumeBase(isPunchIn = false) {
 }
 
 function smRegularPauseBase() {
- if (!smBaseAudio) return;
- smBaseAudio.pause();
- smWasSoftPaused = smSoftPaused;
- smSoftPaused = false;
+  if (!smBaseAudio) return;
+  smBaseAudio.pause();
+  smWasSoftPaused = smSoftPaused;
+  smSoftPaused = false;
+  smUserOverrideEndStop = false;
  
  // Close current segment
  if (smBaseSegmentStartSource !== null) {
@@ -1314,13 +1339,39 @@ function smSoftPauseBase() {
  }
 }
 
+function cleanAndMergeBaseSegments() {
+  if (!smBaseSegments || smBaseSegments.length === 0) return;
+
+  smBaseSegments.sort((a, b) => a.timelineStart - b.timelineStart);
+
+  const merged = [];
+  for (let seg of smBaseSegments) {
+    if (seg.duration <= 0.001) continue;
+
+    if (merged.length === 0) {
+      merged.push({ timelineStart: seg.timelineStart, sourceStart: seg.sourceStart, duration: seg.duration });
+    } else {
+      const prev = merged[merged.length - 1];
+      const prevTimelineEnd = prev.timelineStart + prev.duration;
+      const prevSourceEnd = prev.sourceStart + prev.duration;
+
+      if (Math.abs(seg.timelineStart - prevTimelineEnd) < 0.05 && Math.abs(seg.sourceStart - prevSourceEnd) < 0.05) {
+        prev.duration += seg.duration;
+      } else {
+        merged.push({ timelineStart: seg.timelineStart, sourceStart: seg.sourceStart, duration: seg.duration });
+      }
+    }
+  }
+  smBaseSegments = merged;
+}
+
 function handleCancelGap() {
   if (!smBaseAudio) return;
 
-  // Case 3: Recording stopped â†’ do nothing
+  // Case 3: Recording stopped → do nothing
   if (!smTimelineTimer) return;
 
-  // Base has ended or is extremely close to the end â†’ do nothing
+  // Base has ended or is extremely close to the end → do nothing
   if (smBaseAudio.ended || smBaseAudio.endedTriggered || smBaseAudio.currentTime >= (smBaseAudio.duration || 0) - 0.1) {
     return;
   }
@@ -1332,10 +1383,10 @@ function handleCancelGap() {
                       smBaseAudio.paused &&
                       smVirtualTime < smTotalRecordedDuration;
 
-  // Case 1: base playing normally or base ended â†’ do nothing
+  // Case 1: base playing normally or base ended → do nothing
   if (!isManualSoftPause && !isReplayGap) return;
 
-  // â”€â”€ Determine gap boundaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Determine gap boundaries ───────────────────────────────────────────────
   let gapStart, gapEnd;
   if (isManualSoftPause) {
     gapStart = smSoftPauseStartVirtual;
@@ -1347,29 +1398,29 @@ function handleCancelGap() {
     for (const seg of smBaseSegments) {
       const segEnd = seg.timelineStart + seg.duration;
       if (segEnd <= smVirtualTime) gapStart = Math.max(gapStart, segEnd);
-      if (seg.timelineStart >smVirtualTime) gapEnd = Math.min(gapEnd, seg.timelineStart);
+      if (seg.timelineStart > smVirtualTime) gapEnd = Math.min(gapEnd, seg.timelineStart);
     }
   }
 
   const setting = document.getElementById('sm-cancel-gap-behavior').value;
-  const clipsInGap  = smRecordedClips.filter(c =>c.timelineStart >= gapStart && c.timelineStart < gapEnd);
+  const clipsInGap  = smRecordedClips.filter(c => c.timelineStart >= gapStart && c.timelineStart < gapEnd);
   const activeInGap = Object.values(activeOverlayAudios).filter(
-    a =>a.startTimeInBase !== null && a.startTimeInBase >= gapStart
+    a => a.startTimeInBase !== null && a.startTimeInBase >= gapStart
   );
-  const hasOverlaysInGap = clipsInGap.length >0 || activeInGap.length >0;
+  const hasOverlaysInGap = clipsInGap.length > 0 || activeInGap.length > 0;
 
-  if (setting === 'empty_only'&& hasOverlaysInGap) {
+  if (setting === 'empty_only' && hasOverlaysInGap) {
     announce('Gap not cancelled: overlays exist in the silent period.', true);
     return;
   }
 
   // Remove overlays in the gap
   if (hasOverlaysInGap) {
-    activeInGap.forEach(active =>{
+    activeInGap.forEach(active => {
       try { active.sourceNode.stop(); } catch(_) {}
       delete activeOverlayAudios[active.clipEntry.id];
     });
-    clipsInGap.forEach(c =>{
+    clipsInGap.forEach(c => {
       const idx = smRecordedClips.indexOf(c);
       if (idx !== -1) smRecordedClips.splice(idx, 1);
       playedClipIds.delete(c.id);
@@ -1378,37 +1429,51 @@ function handleCancelGap() {
 
   const gapDuration = gapEnd - gapStart;
 
-  // â”€â”€ REPLAY GAP: compress timeline (shift everything after the gap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  if (isReplayGap) {
-    smBaseSegments.forEach(seg =>{
-      if (seg.timelineStart >= gapEnd) seg.timelineStart -= gapDuration;
-    });
-    smRecordedClips.forEach(c =>{
-      if (c.timelineStart >= gapEnd) c.timelineStart -= gapDuration;
-    });
-    smTotalRecordedDuration -= gapDuration;
-    smVirtualTime            = gapStart;
-    playedClipIds.clear();
-    smLastUpdateTime = getAudioCtx().currentTime;
-    smResumeBase(false); // will find the now-shifted segment at gapStart and resume replay
-    renderSmMixLog();
-    announce('Replay gap removed. Continuing from before the gap.');
-    return;
+  // Shift all future segments and recorded clips back by gapDuration
+  smBaseSegments.forEach(seg => {
+    if (seg.timelineStart >= gapEnd) seg.timelineStart -= gapDuration;
+  });
+  smRecordedClips.forEach(c => {
+    if (c.timelineStart >= gapEnd) c.timelineStart -= gapDuration;
+  });
+
+  smTotalRecordedDuration = Math.max(0, smTotalRecordedDuration - gapDuration);
+  cleanAndMergeBaseSegments();
+
+  smSoftPaused = false;
+  smWasSoftPaused = false;
+  smVirtualTime = gapStart;
+  playedClipIds.clear();
+  smLastUpdateTime = getAudioCtx().currentTime;
+
+  // Resume playback from gapStart
+  if (gapStart < smTotalRecordedDuration) {
+    smBaseSegmentStartTimeline = null;
+    smBaseSegmentStartSource = null;
+    const activeSeg = smBaseSegments.find(seg => gapStart >= seg.timelineStart && gapStart < seg.timelineStart + seg.duration);
+    if (activeSeg) {
+      smBaseAudio.currentTime = activeSeg.sourceStart + (gapStart - activeSeg.timelineStart);
+      smBaseAudio.play().then(() => {
+        updatePlaybackStateUI('playing');
+      }).catch(err => console.error(err));
+    } else {
+      if (!smBaseAudio.paused) smBaseAudio.pause();
+      smSoftPaused = true;
+      smSoftPauseStartVirtual = gapStart;
+      smSoftPauseStartWall = getAudioCtx().currentTime;
+      updatePlaybackStateUI('soft-paused');
+    }
+  } else {
+    if (smBaseAudio.currentTime < (smBaseAudio.duration || 0)) {
+      smBaseSegmentStartTimeline = gapStart;
+      smBaseSegmentStartSource = smBaseAudio.currentTime;
+      smBaseAudio.play().then(() => {
+        updatePlaybackStateUI('playing');
+      }).catch(err => console.error(err));
+    } else {
+      updatePlaybackStateUI('playing');
+    }
   }
-
-  // â”€â”€ MANUAL SOFT-PAUSE: cancel gap, rewind timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const sourcePos = smBaseAudio.currentTime; // pausedOffset while not playing
-  smSoftPaused            = false;
-  smVirtualTime           = gapStart;
-  smTotalRecordedDuration = gapStart;
-  smLastUpdateTime        = getAudioCtx().currentTime;
-
-  smBaseSegmentStartTimeline = gapStart;
-  smBaseSegmentStartSource   = sourcePos;
-
-  smBaseAudio.play().then(() =>{
-    updatePlaybackStateUI('playing');
-  }).catch(err =>console.error(err));
 
   renderSmActiveKeysList();
   renderSmMixLog();
@@ -1528,6 +1593,7 @@ function seekSmTimeline(seconds) {
   const actualSeekAmount = newVirtualTime - oldVirtualTime;
   if (actualSeekAmount === 0) return;
 
+  smUserOverrideEndStop = false;
   // 1. Cap active overlay recordings cleanly before jumping time
   capActiveOverlayRecordings(true);
 
@@ -1569,30 +1635,8 @@ function seekSmTimeline(seconds) {
     smBaseSegmentStartSource = null;
   }
 
-  // 4.5 AUTO-FILL: Preserve skipped base audio when fast-forwarding into unrecorded future
-  // This completely fixes the issue of the skipped recording being "deleted"
   if (newVirtualTime > smTotalRecordedDuration) {
-      let lastSourceEnd = smTotalRecordedDuration; 
-      if (smBaseSegments.length > 0) {
-          const lastSeg = smBaseSegments[smBaseSegments.length - 1];
-          lastSourceEnd = lastSeg.sourceStart + (smTotalRecordedDuration - lastSeg.timelineStart);
-      }
-      const skippedDur = newVirtualTime - smTotalRecordedDuration;
-      
-      if (lastSourceEnd < (smBaseAudio.duration || 0)) {
-          let durToAdd = skippedDur;
-          if (lastSourceEnd + durToAdd > smBaseAudio.duration) {
-              durToAdd = smBaseAudio.duration - lastSourceEnd;
-          }
-          if (durToAdd > 0) {
-              smBaseSegments.push({
-                  timelineStart: smTotalRecordedDuration,
-                  sourceStart: lastSourceEnd,
-                  duration: durToAdd
-              });
-          }
-      }
-      smTotalRecordedDuration = newVirtualTime;
+    smTotalRecordedDuration = newVirtualTime;
   }
 
   // 5. Update timeline position
@@ -2329,6 +2373,8 @@ async function exportSuperModeWav(isSaveToLib = false) {
   return;
   }
 
+  cleanAndMergeBaseSegments();
+
   // Calculate total duration correctly with crops and segments
   const exportSegments = [...smBaseSegments];
   if (smBaseAudio && !smBaseAudio.paused && smBaseSegmentStartSource !== null) {
@@ -2342,7 +2388,7 @@ async function exportSuperModeWav(isSaveToLib = false) {
   }
   }
 
-  let totalDuration = baseBuffer.duration || 0;
+  let totalDuration = smTotalRecordedDuration || 0;
   exportSegments.forEach(seg =>{
   totalDuration = Math.max(totalDuration, seg.timelineStart + seg.duration);
   });

@@ -427,10 +427,12 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 <div class="control-group" style="margin-top: 15px;">
 <label for="sm-base-end-behavior">When Base Audio Ends:</label>
-<select id="sm-base-end-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="stop"selected>Stop Timeline (Press Ctrl+Space to continue)</option>
-<option value="continue">Auto-Continue Timeline (Keep recording overlays)</option>
+<select id="sm-base-end-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);" aria-describedby="sm-base-end-hint">
+<option value="stop">Stop immediately when base ends</option>
+<option value="stop_last_overlay" selected>Stop after base audio &amp; last active overlay finish</option>
+<option value="continue">Auto-Continue Timeline (Keep recording overlays indefinitely)</option>
 </select>
+<p id="sm-base-end-hint" class="field-hint" style="margin-top: 6px;">Choose how Super Merger behaves when base audio ends. Use <strong>Shift + Key</strong> to pause an overlay, or <strong>Alt + Shift + Key</strong> to cancel/delete an active overlay.</p>
 </div>
 <div class="control-group" style="margin-top: 15px;">
 <label for="sm-undo-behavior">Undo Behavior (Ctrl + Left/Right):</label>
