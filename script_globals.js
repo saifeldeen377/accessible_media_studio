@@ -134,7 +134,7 @@ function triggerReviewPlaybacksAtCurrentTime() {
 
  // Schedule playback (sub-millisecond accuracy)
  src.start(hardwareStartTime, offsetInClip, remainingSec);
- const entry = { sourceNode: src, gainNode: gain, clip, timerId: null };
+ const entry = { sourceNode: src, gainNode: gain, clip, timerId: null, playStartTime: actx.currentTime };
 
  if (clip.behavior === 'cutoff') {
  // Choke any existing playbacks of the SAME asset
@@ -172,9 +172,9 @@ window.addEventListener('keydown', (e) =>{
   if (e.key !== 'ArrowRight'&& e.key !== 'ArrowLeft') return;
 
   // Ignore Super Tools as they have their own handlers
-  if (document.getElementById('panel-super-merger') && !document.getElementById('panel-super-merger').hidden) return;
-  if (document.getElementById('panel-super-trim') && !document.getElementById('panel-super-trim').hidden) return;
-  if (document.getElementById('panel-super-cut') && !document.getElementById('panel-super-cut').hidden) return;
+  if (document.getElementById('super-mode-overlay') && !document.getElementById('super-mode-overlay').hidden) return;
+  if (document.getElementById('super-trim-overlay') && !document.getElementById('super-trim-overlay').hidden) return;
+  if (document.getElementById('super-cut-overlay') && !document.getElementById('super-cut-overlay').hidden) return;
 
   const seconds = e.key === 'ArrowRight'? 5 : -5;
   
