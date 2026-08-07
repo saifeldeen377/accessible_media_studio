@@ -117,21 +117,13 @@ async function decodeAudio(fileOrURL) {
       const contentLength = response.headers.get('content-length');
       if (contentLength && parseInt(contentLength) >50 * 1024 * 1024) {
         const confirmDecode = confirm("Warning: This audio file is larger than 50MB. Decoding it into memory may cause the browser tab to slow down or restart on systems with limited RAM (e.g. 4GB). Do you want to proceed?");
-        if (!confirmDecode) {
-          const cancelErr = new Error("Cancelled");
-          cancelErr.isCanceled = true;
-          throw cancelErr;
-        }
+        if (!confirmDecode) throw new Error("Decoding canceled by user due to file size safety.");
       }
       buffer = await response.arrayBuffer();
     } else {
       if (fileOrURL.size >50 * 1024 * 1024) {
         const confirmDecode = confirm("Warning: This audio file is larger than 50MB. Decoding it into memory may cause the browser tab to slow down or restart on systems with limited RAM (e.g. 4GB). Do you want to proceed?");
-        if (!confirmDecode) {
-          const cancelErr = new Error("Cancelled");
-          cancelErr.isCanceled = true;
-          throw cancelErr;
-        }
+        if (!confirmDecode) throw new Error("Decoding canceled by user due to file size safety.");
       }
       buffer = await fileOrURL.arrayBuffer();
     }
@@ -139,11 +131,7 @@ async function decodeAudio(fileOrURL) {
     // Second-line check on raw arrayBuffer size (decompressed size warning)
     if (buffer.byteLength >150 * 1024 * 1024) {
       const confirmDecode = confirm("Warning: The raw data buffer is larger than 150MB. Decoding this might consume substantial RAM. Do you want to proceed?");
-      if (!confirmDecode) {
-        const cancelErr = new Error("Cancelled");
-        cancelErr.isCanceled = true;
-        throw cancelErr;
-      }
+      if (!confirmDecode) throw new Error("Decoding canceled by user due to memory size safety.");
     }
 
     try {
@@ -153,9 +141,6 @@ async function decodeAudio(fileOrURL) {
         throw err;
     }
   } catch (err) {
-    if (err && err.isCanceled) {
-      throw err;
-    }
     console.error("Audio Decode Error:", err);
     alert("Decode Error: " + err.message);
     throw err;

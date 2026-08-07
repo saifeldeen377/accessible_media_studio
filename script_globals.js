@@ -96,7 +96,8 @@ function triggerReviewPlaybacksAtCurrentTime() {
  const actx = getAudioCtx();
 
  smRecordedClips.forEach(clip =>{
- if (playedClipIds.has(clip.id)) return;
+  if (playedClipIds.has(clip.id)) return;
+  if (smSoftPaused && !clip.isGapClip) return;
 
  // Check if the clip is supposed to start within our current lookahead window
  if (smVirtualTime + lookahead >= clip.timelineStart) {
@@ -172,9 +173,9 @@ window.addEventListener('keydown', (e) =>{
   if (e.key !== 'ArrowRight'&& e.key !== 'ArrowLeft') return;
 
   // Ignore Super Tools as they have their own handlers
-  if (document.getElementById('super-mode-overlay') && !document.getElementById('super-mode-overlay').hidden) return;
-  if (document.getElementById('super-trim-overlay') && !document.getElementById('super-trim-overlay').hidden) return;
-  if (document.getElementById('super-cut-overlay') && !document.getElementById('super-cut-overlay').hidden) return;
+  if (document.getElementById('panel-super-merger') && !document.getElementById('panel-super-merger').hidden) return;
+  if (document.getElementById('panel-super-trim') && !document.getElementById('panel-super-trim').hidden) return;
+  if (document.getElementById('panel-super-cut') && !document.getElementById('panel-super-cut').hidden) return;
 
   const seconds = e.key === 'ArrowRight'? 5 : -5;
   
