@@ -1,5 +1,5 @@
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TOOL 7 — Super Merger (سوبر مود)
+// TOOL 7 — Super Merger
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Headphone calibration variables
@@ -444,7 +444,7 @@ function enterSuperMode() {
          smBaseAsset = null;
          smOverlays.length = 0;
          smRecordedClips.length = 0;
-         baseSelect.value = '';
+         document.getElementById('sm-base-select').value = '';
      }
  } else {
      document.getElementById('sm-base-select').value = '';
@@ -1053,7 +1053,7 @@ function updateSmTimeline() {
  const isReplaying = smVirtualTime < smTotalRecordedDuration && !smSoftPaused && smBaseSegmentStartSource === null;
   if (isReplaying) {
  // â”€â”€ REPLAY MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
+ const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart - 0.005 && smVirtualTime< seg.timelineStart + seg.duration);
  
  if (activeSeg) {
   // We are inside a recorded segment ->Base audio should play
@@ -1234,7 +1234,11 @@ function smResumeBase(isPunchIn = false) {
           });
           smBaseSegments.forEach(seg =>{
               if (seg.timelineStart >= smSoftPauseStartVirtual - 0.001) {
-                  seg.timelineStart += gapDuration;
+                  if (Math.abs(seg.timelineStart - smSoftPauseStartVirtual) < 0.001) {
+                      seg.timelineStart = smVirtualTime;
+                  } else {
+                      seg.timelineStart += gapDuration;
+                  }
               }
           });
           smTotalRecordedDuration += gapDuration;
@@ -1305,7 +1309,7 @@ function smResumeBase(isPunchIn = false) {
  smSoftPauseStartWall = getAudioCtx().currentTime;
  updatePlaybackStateUI('soft-paused');
  } else {
- const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart && smVirtualTime< seg.timelineStart + seg.duration);
+ const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart - 0.005 && smVirtualTime< seg.timelineStart + seg.duration);
  if (smVirtualTime >= smTotalRecordedDuration || activeSeg) {
  if (activeSeg) {
  smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
@@ -1364,15 +1368,17 @@ function smSoftPauseBase() {
  smSoftPauseStartVirtual = smVirtualTime;
  smSoftPauseStartWall = getAudioCtx().currentTime;
  
+ let newlyPushedSeg = null;
  // Close current segment
  if (smBaseSegmentStartSource !== null) {
  const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
  if (duration >0) {
- smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
+ newlyPushedSeg = { timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration };
+ smBaseSegments.push(newlyPushedSeg);
+ }
  }
  smBaseSegmentStartTimeline = null;
  smBaseSegmentStartSource = null;
- }
 
  // Split any existing segment that spans the pause point.
  // Without this, a segment covering e.g. timeline 0-30 would still cover
@@ -1380,10 +1386,14 @@ function smSoftPauseBase() {
  // so the "after" part can be shifted forward when the gap closes.
  const splitPoint = smVirtualTime;
  const newSegs = [];
- smBaseSegments.forEach(seg => {
-   const segEnd = seg.timelineStart + seg.duration;
-   if (seg.timelineStart < splitPoint && segEnd > splitPoint + 0.001) {
-     const beforeDur = splitPoint - seg.timelineStart;
+  smBaseSegments.forEach(seg => {
+    if (seg === newlyPushedSeg) {
+      newSegs.push(seg);
+      return;
+    }
+    const segEnd = seg.timelineStart + seg.duration;
+     if (seg.timelineStart < splitPoint - 0.05 && segEnd > splitPoint + 0.05) {
+      const beforeDur = splitPoint - seg.timelineStart;
      const afterDur = segEnd - splitPoint;
      const afterSourceStart = seg.sourceStart + beforeDur;
      newSegs.push({ timelineStart: seg.timelineStart, sourceStart: seg.sourceStart, duration: beforeDur });
@@ -1740,7 +1750,7 @@ function seekSmTimeline(seconds) {
 
   // 6. Map newVirtualTime to smBaseSegments correctly
   const activeSeg = smBaseSegments.find(seg => 
-    newVirtualTime >= seg.timelineStart && newVirtualTime < seg.timelineStart + seg.duration
+    newVirtualTime >= seg.timelineStart - 0.005 && newVirtualTime < seg.timelineStart + seg.duration
   );
 
   if (activeSeg) {
