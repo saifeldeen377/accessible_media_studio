@@ -1241,7 +1241,18 @@ function smResumeBase(isPunchIn = false) {
                   }
               }
           });
-          smTotalRecordedDuration += gapDuration;
+          
+          let maxEnd = smVirtualTime;
+          smBaseSegments.forEach(s => maxEnd = Math.max(maxEnd, s.timelineStart + s.duration));
+          smRecordedClips.forEach(c => {
+              const buf = decodedAudioBuffers[c.assetId];
+              if (buf) {
+                  const cs = c.cropStart || 0;
+                  const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
+                  maxEnd = Math.max(maxEnd, c.timelineStart + (ce - cs));
+              }
+          });
+          smTotalRecordedDuration = maxEnd;
       }
       // Clear playedClipIds for clips now in the future so they
       // can be triggered at their new shifted positions
@@ -1686,18 +1697,19 @@ function seekSmTimeline(seconds) {
   if (!smBaseAudio) return;
   smBaseAudio.endedTriggered = false;
   const oldVirtualTime = smVirtualTime;
-  const maxDur = getSmTotalVirtualDuration();
-  
+  const baseDuration = smBaseAudio.duration || 0;
+
+  // ── Determine the true ceiling for seeking ──────────────────────────
+  // For BACKWARD: use getSmTotalVirtualDuration() (timeline extent).
+  // For FORWARD:  use baseDuration so we can skip ahead in the source
+  //               audio even when we haven't "recorded" that far yet.
+  const maxDur = (seconds > 0)
+    ? Math.max(baseDuration, getSmTotalVirtualDuration())
+    : getSmTotalVirtualDuration();
+
   // Prevent seeking past boundaries
-  if (seconds > 0 && smVirtualTime >= maxDur) return;
+  if (seconds > 0 && smBaseAudio.currentTime >= baseDuration - 0.05) return;
   if (seconds < 0 && smVirtualTime <= 0) return;
-
-  let newVirtualTime = oldVirtualTime + seconds;
-  if (newVirtualTime < 0) newVirtualTime = 0;
-  if (maxDur > 0 && newVirtualTime > maxDur) newVirtualTime = maxDur;
-
-  const actualSeekAmount = newVirtualTime - oldVirtualTime;
-  if (actualSeekAmount === 0) return;
 
   smUserOverrideEndStop = false;
   // 1. Cap active overlay recordings cleanly before jumping time
@@ -1741,9 +1753,13 @@ function seekSmTimeline(seconds) {
     smBaseSegmentStartSource = null;
   }
 
-  if (newVirtualTime > smTotalRecordedDuration) {
-    smTotalRecordedDuration = newVirtualTime;
-  }
+  // ── Compute new virtual time ─────────────────────────────────────────
+  let newVirtualTime = oldVirtualTime + seconds;
+  if (newVirtualTime < 0) newVirtualTime = 0;
+  if (maxDur > 0 && newVirtualTime > maxDur) newVirtualTime = maxDur;
+
+  const actualSeekAmount = newVirtualTime - oldVirtualTime;
+  if (actualSeekAmount === 0) return;
 
   // 5. Update timeline position
   smVirtualTime = newVirtualTime;
@@ -1753,14 +1769,38 @@ function seekSmTimeline(seconds) {
     newVirtualTime >= seg.timelineStart - 0.005 && newVirtualTime < seg.timelineStart + seg.duration
   );
 
+  // ── Determine whether we are seeking forward past all recorded content ──
+  const isFwdPastRecorded = (seconds > 0) && (newVirtualTime >= (smTotalRecordedDuration || 0) - 0.01) && !activeSeg;
+
   if (activeSeg) {
     // Landed inside a recorded base audio segment
     const offsetInSegment = newVirtualTime - activeSeg.timelineStart;
     smBaseAudio.currentTime = activeSeg.sourceStart + offsetInSegment;
     smSoftPaused = false;
     smWasSoftPaused = false;
+  } else if (isFwdPastRecorded) {
+    // ── Forward seek past the recording frontier ───────────────────────
+    // Advance the base audio source by the seek amount so playback
+    // continues from the right position (no phantom gap).
+    let newSourceTime = smBaseAudio.currentTime + Math.abs(actualSeekAmount);
+    if (newSourceTime > baseDuration) newSourceTime = baseDuration;
+    smBaseAudio.currentTime = newSourceTime;
+
+    // Create a base segment covering the skipped region so it replays
+    // correctly later (the audio was "heard" even though we skipped).
+    const skippedSourceStart = newSourceTime - Math.abs(actualSeekAmount);
+    if (skippedSourceStart >= 0 && Math.abs(actualSeekAmount) > 0.01) {
+      smBaseSegments.push({
+        timelineStart: oldVirtualTime,
+        sourceStart: Math.max(0, skippedSourceStart),
+        duration: newSourceTime - Math.max(0, skippedSourceStart)
+      });
+    }
+
+    smSoftPaused = false;
+    smWasSoftPaused = false;
   } else {
-    // Landed exactly on a boundary or in a gap
+    // Landed in a recorded gap (backward seek into a gap, etc.)
     let lastSegEndSource = 0;
     for (const seg of smBaseSegments) {
       if (seg.timelineStart + seg.duration <= newVirtualTime) {
@@ -1771,6 +1811,11 @@ function seekSmTimeline(seconds) {
     smBaseAudio.pause();
     smSoftPaused = false;
     smWasSoftPaused = false;
+  }
+
+  // Expand recorded duration to cover the new position
+  if (newVirtualTime > (smTotalRecordedDuration || 0)) {
+    smTotalRecordedDuration = newVirtualTime;
   }
 
   smLastUpdateTime = getAudioCtx().currentTime;
@@ -1786,23 +1831,38 @@ function seekSmTimeline(seconds) {
     progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
   }
 
-  if (newVirtualTime >= maxDur) return;
+  // ── 8. Auto-resume playback after seeking ────────────────────────────
+  // Check if base audio has reached the end after seeking
+  const baseEnded = smBaseAudio.currentTime >= baseDuration - 0.05;
 
-  // 8. Auto-resume logic ensuring seamless transition without deleting data
+  if (baseEnded) {
+    // Base audio exhausted — stop gracefully
+    smBaseAudio.endedTriggered = true;
+    smRegularPauseBase();
+    return;
+  }
+
   if (!smTimelineTimer) {
+    // Timeline was fully paused; resume normally
     smResumeBase(false);
-  } else if (smVirtualTime >= smTotalRecordedDuration && !smSoftPaused && smBaseAudio.currentTime < smBaseAudio.duration) {
+  } else if (isFwdPastRecorded) {
+    // Forward seek past frontier: start a new live recording segment
+    smBaseSegmentStartTimeline = smVirtualTime;
+    smBaseSegmentStartSource = smBaseAudio.currentTime;
+    smBaseAudio.play().catch(e => console.error(e));
+    updatePlaybackStateUI('playing');
+  } else if (smVirtualTime >= (smTotalRecordedDuration || 0) && !smSoftPaused && smBaseAudio.currentTime < baseDuration) {
     // Reached the frontier: instantly resume live recording
     smBaseSegmentStartTimeline = smVirtualTime;
     smBaseSegmentStartSource = smBaseAudio.currentTime;
     smBaseAudio.play().catch(e => console.error(e));
     updatePlaybackStateUI('playing');
-  } else if (activeSeg && smBaseAudio.paused && smBaseAudio.currentTime < smBaseAudio.duration) {
+  } else if (activeSeg && smBaseAudio.paused && smBaseAudio.currentTime < baseDuration) {
     // Replaying a known segment
     smBaseAudio.play().catch(e => console.error(e));
     updatePlaybackStateUI('playing');
   } else if (!activeSeg) {
-    // Navigating through a silent gap
+    // Navigating through a silent gap during replay
     updatePlaybackStateUI('playing');
   }
 }
@@ -1914,10 +1974,13 @@ function toggleOverlayPauseResume(overlay) {
  const instances = Object.values(activeOverlayAudios).filter(a =>a.overlayId === overlay.id);
  if (instances.length >0) {
  handled = true;
- instances.forEach(active =>{
+ const playingInstances = instances.filter(a => a.state === 'playing');
+ const targets = playingInstances.length > 0 ? playingInstances : instances;
+ targets.forEach(active =>{
  if (active.state === 'playing') {
  if (active.sourceNode) active.sourceNode.onended = null;
  active.state = 'paused';
+ active.userPaused = true; // Mark as manually paused by user
  try { active.sourceNode.stop(); } catch(_) {}
  
  const elapsedWall = getAudioCtx().currentTime - active.playStartTime;
@@ -1931,6 +1994,7 @@ function toggleOverlayPauseResume(overlay) {
   renderSmMixLog();
  } else if (active.state === 'paused') {
  active.state = 'playing';
+ active.userPaused = false; // Clear manual pause flag on user resume
 
  const ctx = getAudioCtx();
  const src = ctx.createBufferSource();
@@ -2083,6 +2147,9 @@ function resumeSmAllOverlays() {
 
  Object.values(activeOverlayAudios).forEach(active =>{
  if (active.state === 'paused') {
+ if (active.userPaused) {
+ delete activeOverlayAudios[active.clipEntry.id];
+ } else {
  active.state = 'playing';
  const src = ctx.createBufferSource();
  src.buffer = active.buffer;
@@ -2105,6 +2172,7 @@ function resumeSmAllOverlays() {
  }
  }
  };
+ }
  }
  });
 
