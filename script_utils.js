@@ -73,8 +73,18 @@ function setupFocusTrap(container) {
   container.addEventListener('keydown', function(e) {
     if (e.key === 'Tab') {
       const focusableElements = Array.from(container.querySelectorAll(
-        'button:not([disabled]):not([hidden]):not([style*="display: none"]):not([style*="display:none"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )).filter(el =>el.offsetParent !== null);
+        'button, [href], input, select, textarea, [tabindex]'
+      )).filter(el => {
+        if (el.disabled) return false;
+        if (el.getAttribute('tabindex') === '-1') return false;
+        if (el.getAttribute('aria-hidden') === 'true') return false;
+        if (el.closest('[hidden]') || el.closest('[inert]') || el.closest('[aria-hidden="true"]')) return false;
+        if (el.closest('#sm-setup-view') && container.classList.contains('sm-live-active')) return false;
+        if (el.offsetParent === null) return false;
+        const style = window.getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        return true;
+      });
       
       if (focusableElements.length === 0) return;
       
@@ -82,12 +92,12 @@ function setupFocusTrap(container) {
       const lastElement = focusableElements[focusableElements.length - 1];
 
       if (e.shiftKey) { 
-        if (document.activeElement === firstElement || document.activeElement === container) {
+        if (document.activeElement === firstElement || !focusableElements.includes(document.activeElement)) {
           lastElement.focus();
           e.preventDefault();
         }
       } else { 
-        if (document.activeElement === lastElement) {
+        if (document.activeElement === lastElement || !focusableElements.includes(document.activeElement)) {
           firstElement.focus();
           e.preventDefault();
         }

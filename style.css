@@ -1020,6 +1020,31 @@ tbody tr:hover { background: var(--bg-main); }
   color: var(--warning);
 }
 
-
-
 [hidden] { display: none !important; }
+
+/* Strict isolation for Super Merger Setup View when hidden or in live mode */
+#sm-setup-view[hidden],
+#sm-setup-view[aria-hidden="true"],
+#sm-setup-view[inert] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#sm-setup-view[hidden] *,
+#sm-setup-view[aria-hidden="true"] *,
+#sm-setup-view[inert] * {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ensure .sm-live-active unconditionally hides setup actions and buttons */
+.sm-live-active #sm-setup-view,
+.sm-live-active .sm-setup-actions,
+.sm-live-active #btn-sm-go,
+.sm-live-active #btn-sm-continue {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

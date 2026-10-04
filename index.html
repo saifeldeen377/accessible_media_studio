@@ -519,8 +519,6 @@ window.onerror = function(msg, url, line, col, error) {
 </form>
 </div>
 
-</div>
-
 <!-- Step 3: Audio Effects Configuration -->
 <div class="sm-card">
 <h3>3. Audio Effects &amp; Shortcuts</h3>
@@ -565,9 +563,9 @@ window.onerror = function(msg, url, line, col, error) {
 <p id="sm-shortcuts-summary" style="margin-bottom: 15px; color: var(--text-muted);">0 overlays configured. 0 effects configured.</p>
 </div>
 
-<div class="sm-setup-actions" style="display: flex; gap: 10px;">
-<button id="btn-sm-go" class="btn btn-success btn-lg"disabled>Go Now — Start Live Mixer </button>
-<button id="btn-sm-continue" class="btn btn-warning btn-lg" style="display: none;">Continue Recording </button>
+<div id="sm-setup-actions" class="sm-setup-actions" style="display: flex; gap: 10px;">
+<button type="button" id="btn-sm-go" class="btn btn-success btn-lg" disabled>Go Now — Start Live Mixer </button>
+<button type="button" id="btn-sm-continue" class="btn btn-warning btn-lg" style="display: none;">Continue Recording </button>
 </div>
 </div>
 

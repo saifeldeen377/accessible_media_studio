@@ -246,6 +246,12 @@ function initSuperMode() {
  // Global key listener
  window.addEventListener('keydown', e =>{
  if (e.key === 'Escape'&& smActive) {
+    if (manageEffectsDialog.open) {
+        e.preventDefault();
+        manageEffectsDialog.close();
+        btnManageEffects.focus();
+        return;
+    }
     if (manageDialog.open) {
         e.preventDefault();
         if (smManageEditId !== null) {
@@ -554,10 +560,41 @@ function enterSuperMode() {
  if (trimPreviewSource) { try { trimPreviewSource.stop(); } catch(_) {} trimPreviewSource = null; }
 
  smActive = true;
- document.getElementById('super-mode-overlay').hidden = false;
- document.getElementById('sm-setup-view').hidden = false;
- document.getElementById('sm-live-view').hidden = true;
+ const overlay = document.getElementById('super-mode-overlay');
+ const container = document.querySelector('.sm-container');
+ if (container) container.classList.remove('sm-live-active');
+ if (overlay) {
+     overlay.classList.remove('sm-live-active');
+     overlay.hidden = false;
+ }
+
+ const setupView = document.getElementById('sm-setup-view');
+ const liveView = document.getElementById('sm-live-view');
+ if (setupView) {
+     setupView.hidden = false;
+     setupView.style.display = 'block';
+     setupView.removeAttribute('aria-hidden');
+     setupView.removeAttribute('inert');
+ }
+ if (liveView) {
+     liveView.hidden = true;
+     liveView.style.display = 'none';
+     liveView.setAttribute('aria-hidden', 'true');
+     liveView.setAttribute('inert', '');
+ }
  setAppBackgroundInert(true);
+
+ const goBtn = document.getElementById('btn-sm-go');
+ const continueBtn = document.getElementById('btn-sm-continue');
+ if (goBtn) {
+     goBtn.style.display = '';
+     goBtn.removeAttribute('tabindex');
+     goBtn.removeAttribute('aria-hidden');
+ }
+ if (continueBtn) {
+     continueBtn.removeAttribute('tabindex');
+     continueBtn.removeAttribute('aria-hidden');
+ }
 
  // Hide header control buttons initially
  document.getElementById('btn-sm-export').style.display = 'none';
@@ -598,16 +635,23 @@ function enterSuperMode() {
  updateSmGoButton();
 
  // Shift focus to container immediately for direct NVDA focus jump
- const container = document.querySelector('.sm-container');
- container.setAttribute('tabindex', '-1');
- container.focus();
+ if (container) {
+   container.setAttribute('tabindex', '-1');
+   container.focus();
+ }
 
  // announce("Super Merger Setup Opened. Choose a base audio to start.");
 }
 
 function exitSuperMode() {
   smActive = false;
-  document.getElementById('super-mode-overlay').hidden = true;
+  const overlay = document.getElementById('super-mode-overlay');
+  const container = document.querySelector('.sm-container');
+  if (container) container.classList.remove('sm-live-active');
+  if (overlay) {
+      overlay.classList.remove('sm-live-active');
+      overlay.hidden = true;
+  }
   document.getElementById('btn-sm-export').style.display = 'none';
   document.getElementById('btn-sm-save').style.display = 'none';
   document.getElementById('btn-sm-reset-mix').style.display = 'none';
@@ -632,8 +676,25 @@ function exitSuperMode() {
       capActiveOverlayRecordings(true);
   }
 
+  deactivateAllSmEffects(true, false);
   setAppBackgroundInert(false);
   stopSmAudio();
+
+  const setupView = document.getElementById('sm-setup-view');
+  const liveView = document.getElementById('sm-live-view');
+  if (setupView) {
+      setupView.hidden = true;
+      setupView.style.display = 'none';
+      setupView.setAttribute('aria-hidden', 'true');
+      setupView.setAttribute('inert', '');
+  }
+  if (liveView) {
+      liveView.hidden = true;
+      liveView.style.display = 'none';
+      liveView.setAttribute('aria-hidden', 'true');
+      liveView.setAttribute('inert', '');
+  }
+
   const trigger = document.getElementById('btn-enter-super-mode');
   if (trigger) trigger.focus();
 }
@@ -641,11 +702,38 @@ function exitSuperMode() {
 function updateSmGoButton() {
   const goBtn = document.getElementById('btn-sm-go');
   const continueBtn = document.getElementById('btn-sm-continue');
-  goBtn.disabled = !smBaseAsset;
+  const liveView = document.getElementById('sm-live-view');
+  const isLive = liveView && (!liveView.hidden || liveView.style.display !== 'none');
+
+  if (isLive) {
+      if (goBtn) {
+          goBtn.disabled = true;
+          goBtn.style.display = 'none';
+          goBtn.setAttribute('tabindex', '-1');
+          goBtn.setAttribute('aria-hidden', 'true');
+      }
+      if (continueBtn) {
+          continueBtn.disabled = true;
+          continueBtn.style.display = 'none';
+          continueBtn.setAttribute('tabindex', '-1');
+          continueBtn.setAttribute('aria-hidden', 'true');
+      }
+      return;
+  }
+
+  if (goBtn) {
+      goBtn.disabled = !smBaseAsset;
+      goBtn.style.display = '';
+      goBtn.removeAttribute('tabindex');
+      goBtn.removeAttribute('aria-hidden');
+  }
   
   if (continueBtn) {
-      if (smBaseAsset && (smRecordedClips.length >0 || smVirtualTime >0)) {
+      if (smBaseAsset && (smRecordedClips.length > 0 || smVirtualTime > 0)) {
           continueBtn.style.display = 'inline-block';
+          continueBtn.disabled = false;
+          continueBtn.removeAttribute('tabindex');
+          continueBtn.removeAttribute('aria-hidden');
       } else {
           continueBtn.style.display = 'none';
       }
@@ -1755,6 +1843,10 @@ function renderManageEffectsList() {
 }
 
 
+// Every base player ever created is tracked here so stopSmAudio can silence all of them,
+// even ones that were orphaned by a double start.
+const SM_ALL_PLAYERS = new Set();
+
 class WebAudioPlayer {
  constructor(buffer) {
  this.buffer = buffer;
@@ -1767,6 +1859,7 @@ class WebAudioPlayer {
  this.outputNode = null; // Custom output node (e.g. bus node); falls back to masterCompressor
  this.endedTriggered = false; // used by updateSmTimeline to fire once
  this._ended = false; // true only after natural playback completion
+ SM_ALL_PLAYERS.add(this);
  }
 
  get duration() {
@@ -1870,6 +1963,13 @@ class WebAudioPlayer {
   this.pausedOffset += elapsed;
   this.isPlaying = false;
   }
+
+  stop() {
+    this.stopNode();
+    this.pausedOffset = 0;
+    this.isPlaying = false;
+    this._ended = true;
+  }
 }
 
 function getAssetByteSize(asset) {
@@ -1884,35 +1984,72 @@ let smUserOverrideEndStop = false;
 
 async function startSuperModeLive() {
  if (!smBaseAsset) return;
+ const liveView = document.getElementById('sm-live-view');
+ if (liveView && (!liveView.hidden || liveView.style.display !== 'none')) return;
  if (smIsSessionLoading) {
      announce("Please wait, the session audio is currently loading...", true);
      return;
  }
 
+ const goBtn = document.getElementById('btn-sm-go');
+ const continueBtn = document.getElementById('btn-sm-continue');
+ const container = document.querySelector('.sm-container');
+ const overlay = document.getElementById('super-mode-overlay');
+
  smUserOverrideEndStop = false;
  if (smRecordedClips.length > 0) {
   const proceed = confirm("Your previous work will be deleted if you start a new session.\n\nIf you want to resume it instead, press Cancel and use the 'Continue Recording'button.\n\nPress OK to delete old work and start fresh.");
   if (!proceed) {
-      const goBtn = document.getElementById('btn-sm-go');
-      if (goBtn) goBtn.focus();
+      if (goBtn) {
+          goBtn.disabled = false;
+          goBtn.style.display = '';
+          goBtn.removeAttribute('tabindex');
+          goBtn.removeAttribute('aria-hidden');
+          goBtn.focus();
+      }
+      if (continueBtn) {
+          continueBtn.removeAttribute('tabindex');
+          continueBtn.removeAttribute('aria-hidden');
+          continueBtn.disabled = false;
+          continueBtn.style.display = 'inline-block';
+      }
       return;
   }
-  // User confirmed fresh start — wipe old session data
+ }
+
+  // Immediately hide and disable buttons and blur
+  if (goBtn) {
+      goBtn.disabled = true;
+      goBtn.style.display = 'none';
+      goBtn.setAttribute('tabindex', '-1');
+      goBtn.setAttribute('aria-hidden', 'true');
+      if (document.activeElement === goBtn) goBtn.blur();
+  }
+  if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.style.display = 'none';
+      continueBtn.setAttribute('tabindex', '-1');
+      continueBtn.setAttribute('aria-hidden', 'true');
+      if (document.activeElement === continueBtn) continueBtn.blur();
+  }
+
+  if (container) container.classList.add('sm-live-active');
+  if (overlay) overlay.classList.add('sm-live-active');
+
+  // Cleanly wipe any lingering session audio and effects
+  stopSmAudio();
+  deactivateAllSmEffects();
   smRecordedClips.length = 0;
   smRecordedEffects.length = 0;
-  deactivateAllSmEffects();
   smBaseSegments.length = 0;
   smBaseSegmentStartTimeline = null;
   smBaseSegmentStartSource = null;
   smSoftPaused = false;
   if (smTimelineTimer) { clearInterval(smTimelineTimer); smTimelineTimer = null; }
-  if (smBaseAudio) { try { smBaseAudio.pause(); } catch(_) {} smBaseAudio = null; }
   const _logEl = document.getElementById('sm-mix-log');
   if (_logEl) _logEl.innerHTML = '<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>';
- }
 
   smIsSessionLoading = true;
-  const goBtn = document.getElementById('btn-sm-go');
   const originalGoBtnText = goBtn ? goBtn.textContent : 'Go Now';
   
   const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
@@ -1936,10 +2073,17 @@ async function startSuperModeLive() {
   } catch (err) {
     smIsSessionLoading = false;
     if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+    if (container) container.classList.remove('sm-live-active');
+    if (overlay) overlay.classList.remove('sm-live-active');
     console.error(err);
     alert("Error pre-decoding audio files: " + err.message);
     if (goBtn) {
         goBtn.textContent = originalGoBtnText;
+        goBtn.disabled = false;
+        goBtn.style.display = '';
+        goBtn.removeAttribute('tabindex');
+        goBtn.removeAttribute('aria-hidden');
+        goBtn.focus();
     }
     return;
   }
@@ -1951,8 +2095,19 @@ async function startSuperModeLive() {
       goBtn.textContent = originalGoBtnText;
   }
 
-  document.getElementById('sm-setup-view').hidden = true;
-  document.getElementById('sm-live-view').hidden = false;
+  const setupView = document.getElementById('sm-setup-view');
+  if (setupView) {
+      setupView.hidden = true;
+      setupView.style.display = 'none';
+      setupView.setAttribute('aria-hidden', 'true');
+      setupView.setAttribute('inert', '');
+  }
+  if (liveView) {
+      liveView.hidden = false;
+      liveView.style.display = 'block';
+      liveView.removeAttribute('aria-hidden');
+      liveView.removeAttribute('inert');
+  }
 
   // Show header control buttons when live mixer is active
   document.getElementById('btn-sm-export').style.display = 'inline-block';
@@ -2002,26 +2157,58 @@ async function startSuperModeLive() {
   smTimelineTimer = setInterval(updateSmTimeline, 20);
 
   // Shift focus to container immediately for direct NVDA focus jump when live mixer starts
-  setTimeout(() => {
-  const container = document.querySelector('.sm-container');
   if (container) {
-  container.setAttribute('tabindex', '-1');
-  container.focus();
+    container.setAttribute('tabindex', '-1');
+    container.focus();
   }
-  }, 100);
+  setTimeout(() => {
+    const liveExitBtn = document.getElementById('btn-sm-exit-to-setup');
+    if (document.activeElement === goBtn || document.activeElement === continueBtn || !document.activeElement || document.activeElement === document.body) {
+      if (liveExitBtn) {
+        liveExitBtn.focus();
+      } else if (container) {
+        container.setAttribute('tabindex', '-1');
+        container.focus();
+      }
+    }
+  }, 50);
 
   // announce("Live Mixer Active.");
 }
 
 async function continueSuperModeLive() {
   if (!smBaseAsset) return;
+  const liveView = document.getElementById('sm-live-view');
+  if (liveView && (!liveView.hidden || liveView.style.display !== 'none')) return;
   if (smIsSessionLoading) {
       announce("Please wait, the session audio is currently loading...", true);
       return;
   }
 
-  smIsSessionLoading = true;
+  const goBtn = document.getElementById('btn-sm-go');
   const continueBtn = document.getElementById('btn-sm-continue');
+  const container = document.querySelector('.sm-container');
+  const overlay = document.getElementById('super-mode-overlay');
+
+  if (goBtn) {
+      goBtn.disabled = true;
+      goBtn.style.display = 'none';
+      goBtn.setAttribute('tabindex', '-1');
+      goBtn.setAttribute('aria-hidden', 'true');
+      if (document.activeElement === goBtn) goBtn.blur();
+  }
+  if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.style.display = 'none';
+      continueBtn.setAttribute('tabindex', '-1');
+      continueBtn.setAttribute('aria-hidden', 'true');
+      if (document.activeElement === continueBtn) continueBtn.blur();
+  }
+
+  if (container) container.classList.add('sm-live-active');
+  if (overlay) overlay.classList.add('sm-live-active');
+
+  smIsSessionLoading = true;
   const originalContinueText = continueBtn ? continueBtn.textContent : 'Continue Recording';
 
   const allAssetObjects = [smBaseAsset, ...smOverlays.map(o => getAsset(o.assetId))].filter(Boolean);
@@ -2044,10 +2231,17 @@ async function continueSuperModeLive() {
   } catch (err) {
     smIsSessionLoading = false;
     if (loadingAnnounceTimer) clearInterval(loadingAnnounceTimer);
+    if (container) container.classList.remove('sm-live-active');
+    if (overlay) overlay.classList.remove('sm-live-active');
     console.error(err);
     alert("Error pre-decoding audio files: " + err.message);
     if (continueBtn) {
         continueBtn.textContent = originalContinueText;
+        continueBtn.disabled = false;
+        continueBtn.style.display = 'inline-block';
+        continueBtn.removeAttribute('tabindex');
+        continueBtn.removeAttribute('aria-hidden');
+        continueBtn.focus();
     }
     return;
   }
@@ -2059,8 +2253,19 @@ async function continueSuperModeLive() {
       continueBtn.textContent = originalContinueText;
   }
 
-  document.getElementById('sm-setup-view').hidden = true;
-  document.getElementById('sm-live-view').hidden = false;
+  const setupView = document.getElementById('sm-setup-view');
+  if (setupView) {
+      setupView.hidden = true;
+      setupView.style.display = 'none';
+      setupView.setAttribute('aria-hidden', 'true');
+      setupView.setAttribute('inert', '');
+  }
+  if (liveView) {
+      liveView.hidden = false;
+      liveView.style.display = 'block';
+      liveView.removeAttribute('aria-hidden');
+      liveView.removeAttribute('inert');
+  }
 
   document.getElementById('btn-sm-export').style.display = 'inline-block';
   document.getElementById('btn-sm-save').style.display = 'inline-block';
@@ -2108,11 +2313,19 @@ async function continueSuperModeLive() {
      smTimelineTimer = setInterval(updateSmTimeline, 20);
   }
 
+  if (container) {
+    container.setAttribute('tabindex', '-1');
+    container.focus();
+  }
   setTimeout(() => {
-    const container = document.querySelector('.sm-container');
-    if (container) {
-      container.setAttribute('tabindex', '-1');
-      container.focus();
+    const liveExitBtn = document.getElementById('btn-sm-exit-to-setup');
+    if (document.activeElement === goBtn || document.activeElement === continueBtn || !document.activeElement || document.activeElement === document.body) {
+      if (liveExitBtn) {
+        liveExitBtn.focus();
+      } else if (container) {
+        container.setAttribute('tabindex', '-1');
+        container.focus();
+      }
     }
     announce("Session resumed.");
     
@@ -3884,23 +4097,39 @@ function renderSmMixLog() {
 }
 
 function stopSmAudio() {
- if (smBaseAudio) {
- try { smBaseAudio.pause(); } catch(_) {}
+ // Silence EVERY player ever created (not just the current one)
+ SM_ALL_PLAYERS.forEach(p => {
+   try { p.stop(); } catch(_) {}
+   try { if (p.gainNode) p.gainNode.disconnect(); } catch(_) {}
+ });
+ SM_ALL_PLAYERS.clear();
  smBaseAudio = null;
- }
+
+ // Cut the old buses so anything still routed through them goes silent
+ try { if (smBaseBusNode) smBaseBusNode.disconnect(); } catch(_) {}
+ try { if (smOverlayBusNode) smOverlayBusNode.disconnect(); } catch(_) {}
  if (smTimelineTimer) {
- clearInterval(smTimelineTimer);
- smTimelineTimer = null;
+  clearInterval(smTimelineTimer);
+  smTimelineTimer = null;
  }
  Object.keys(activeOverlayAudios).forEach(id =>{
- if (activeOverlayAudios[id] && activeOverlayAudios[id].sourceNode) {
- try { activeOverlayAudios[id].sourceNode.stop(); } catch(_) {}
- }
+  if (activeOverlayAudios[id] && activeOverlayAudios[id].sourceNode) {
+   try { activeOverlayAudios[id].sourceNode.stop(); } catch(_) {}
+  }
  });
- Object.keys(activeOverlayAudios).forEach(k =>delete activeOverlayAudios[k]);
+ Object.keys(activeOverlayAudios).forEach(k => delete activeOverlayAudios[k]);
+ if (typeof stopReviewPlaybackEntry === 'function' && Array.isArray(reviewOverlayPlaybacks)) {
+  reviewOverlayPlaybacks.forEach(p => stopReviewPlaybackEntry(p));
+ }
+ reviewOverlayPlaybacks = [];
 }
 
 function exitToSetupView() {
+  const container = document.querySelector('.sm-container');
+  if (container) container.classList.remove('sm-live-active');
+  const overlay = document.getElementById('super-mode-overlay');
+  if (overlay) overlay.classList.remove('sm-live-active');
+
   // Preserve the exact exit point so they can "Continue" later
   if (smBaseAudio) {
       smLastBaseTime = smBaseAudio.currentTime;
@@ -3909,7 +4138,7 @@ function exitToSetupView() {
   // Close any active base segments safely
   if (smBaseSegmentStartSource !== null && smBaseAudio) {
       const duration = smBaseAudio.currentTime - smBaseSegmentStartSource;
-      if (duration >0) {
+      if (duration > 0) {
           smBaseSegments.push({ timelineStart: smBaseSegmentStartTimeline, sourceStart: smBaseSegmentStartSource, duration });
       }
       smBaseSegmentStartTimeline = null;
@@ -3925,21 +4154,51 @@ function exitToSetupView() {
   deactivateAllSmEffects(true, true);
 
   stopSmAudio();
- document.getElementById('sm-setup-view').hidden = false;
- document.getElementById('sm-live-view').hidden = true;
 
- // Hide header control buttons
- document.getElementById('btn-sm-export').style.display = 'none';
- document.getElementById('btn-sm-save').style.display = 'none';
- document.getElementById('btn-sm-reset-mix').style.display = 'none';
-
-  // Focus setup view to enable smooth NVDA transition
   const setupView = document.getElementById('sm-setup-view');
-  if (setupView) {
-  setupView.focus();
+  const liveView = document.getElementById('sm-live-view');
+
+  if (liveView) {
+      liveView.hidden = true;
+      liveView.style.display = 'none';
+      liveView.setAttribute('aria-hidden', 'true');
+      liveView.setAttribute('inert', '');
   }
-  
+
+  if (setupView) {
+      setupView.hidden = false;
+      setupView.style.display = 'block';
+      setupView.removeAttribute('aria-hidden');
+      setupView.removeAttribute('inert');
+  }
+
+  const goBtn = document.getElementById('btn-sm-go');
+  const continueBtn = document.getElementById('btn-sm-continue');
+  if (goBtn) {
+      goBtn.style.display = '';
+      goBtn.removeAttribute('tabindex');
+      goBtn.removeAttribute('aria-hidden');
+  }
+  if (continueBtn) {
+      continueBtn.removeAttribute('tabindex');
+      continueBtn.removeAttribute('aria-hidden');
+  }
+
+  // Hide header control buttons
+  document.getElementById('btn-sm-export').style.display = 'none';
+  document.getElementById('btn-sm-save').style.display = 'none';
+  document.getElementById('btn-sm-reset-mix').style.display = 'none';
+
   updateSmGoButton();
+
+  // Focus setup view or continue button to enable smooth NVDA transition
+  if (continueBtn && continueBtn.style.display !== 'none' && !continueBtn.disabled) {
+      continueBtn.focus();
+  } else if (goBtn && !goBtn.disabled) {
+      goBtn.focus();
+  } else if (setupView) {
+      setupView.focus();
+  }
 }
 
 function resetAndRecordFromScratch() {
