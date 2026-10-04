@@ -55,6 +55,33 @@ const activeOverlayAudios = {}; // id ->{ sourceNode, gainNode, buffer, state, c
 let reviewOverlayPlaybacks = []; // Array of active review playback entries
 const decodedAudioBuffers = {};
 
+// ── Audio Effects System ──────────────────────────────────────────────
+const SM_EFFECT_TYPES = {
+  phone:      { name: 'Phone',              hasParams: false },
+  echo:       { name: 'Echo / Reverb',         hasParams: false },
+  doubling:   { name: 'Doubling',            hasParams: true, paramLabel: 'Repeat Count', paramMin: 2, paramMax: 10, paramDefault: 3 },
+  lowpass:    { name: 'Low Pass / Muffled',  hasParams: false },
+  highpass:   { name: 'High Pass / Tinny',     hasParams: false },
+  distortion: { name: 'Distortion',          hasParams: false },
+  robot:      { name: 'Robot / Alien',       hasParams: false },
+  tremolo:    { name: 'Tremolo / Vibrato',   hasParams: true, paramLabel: 'Speed', paramMin: 1, paramMax: 10, paramDefault: 5 },
+  pitch:      { name: 'Pitch Shift',         hasParams: true, paramLabel: 'Pitch (1 Deep -> 10 High)', paramMin: 1, paramMax: 10, paramDefault: 5 },
+  autopan:    { name: 'Auto-Pan (8D Audio)', hasParams: true, paramLabel: 'Speed (1 Slow -> 10 Fast)', paramMin: 1, paramMax: 10, paramDefault: 5 },
+  reverb:     { name: 'True Reverb (Cave)',  hasParams: true, paramLabel: 'Room Size', paramMin: 1, paramMax: 10, paramDefault: 5 },
+  radio:      { name: 'Radio Announcer (Bass Boost)', hasParams: false },
+  walkietalkie: { name: 'Walkie-Talkie', hasParams: false },
+  flanger:    { name: 'Flanger / Underwater', hasParams: true, paramLabel: 'Intensity', paramMin: 1, paramMax: 10, paramDefault: 5 }
+};
+
+const smEffects = [];           // Configured effects: { id, effectType, key, target, params }
+let smEffectIdCounter = 0;
+const smRecordedEffects = [];   // Recorded regions: { id, effectId, effectType, timelineStart, timelineEnd, target, params }
+let smRecordedEffectIdCounter = 0;
+const activeSmEffects = {};     // Live active effects: id -> { effectId, effectType, target, params, state, baseNodes, overlayNodes, recordEntryId }
+let smBaseBusNode = null;       // GainNode bus for base audio routing
+let smOverlayBusNode = null;    // GainNode bus for overlay audio routing
+let smPendingLiveEffects = [];  // Effects preserved across pauses for seamless resume
+
 async function getDecodedBuffer(assetId) {
  if (decodedAudioBuffers[assetId]) return decodedAudioBuffers[assetId];
  const asset = getAsset(assetId);
@@ -131,7 +158,7 @@ function triggerReviewPlaybacksAtCurrentTime() {
  const gain = actx.createGain();
  gain.gain.value = (clip.volume !== undefined) ? clip.volume : 1.0;
  src.connect(gain);
- gain.connect(masterCompressor);
+ gain.connect(smOverlayBusNode || masterCompressor);
 
  // Schedule playback (sub-millisecond accuracy)
  src.start(hardwareStartTime, offsetInClip, remainingSec);

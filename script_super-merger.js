@@ -136,6 +136,113 @@ function initSuperMode() {
     announce('All overlays reset.');
  });
 
+ // ── Effects Setup ──────────────────────────────────────────────
+ const effectTypeSelect = document.getElementById('sm-effect-type');
+ const effectParamGroup = document.getElementById('sm-effect-param-group');
+ const effectParamInput = document.getElementById('sm-effect-param');
+ const effectParamLabel = document.getElementById('sm-effect-param-label');
+ const effectForm = document.getElementById('form-sm-effect');
+ const effectKeyInput = document.getElementById('sm-effect-key');
+ const manageEffectsDialog = document.getElementById('sm-manage-effects-dialog');
+ const btnManageEffects = document.getElementById('btn-sm-manage-effects');
+ const btnManageEffectsClose = document.getElementById('btn-sm-manage-effects-close');
+ const btnManageEffectsReset = document.getElementById('btn-sm-manage-effects-reset');
+
+ setupFocusTrap(manageEffectsDialog);
+
+ // Populate effect type dropdown
+ Object.entries(SM_EFFECT_TYPES).forEach(([key, def]) => {
+  const opt = document.createElement('option');
+  opt.value = key;
+  opt.textContent = def.name;
+  effectTypeSelect.appendChild(opt);
+ });
+
+ // Show/hide param input based on effect type
+ effectTypeSelect.addEventListener('change', () => {
+  const def = SM_EFFECT_TYPES[effectTypeSelect.value];
+  if (def && def.hasParams) {
+   effectParamGroup.hidden = false;
+   effectParamLabel.textContent = def.paramLabel + ':';
+   effectParamInput.min = def.paramMin;
+   effectParamInput.max = def.paramMax;
+   effectParamInput.value = def.paramDefault;
+  } else {
+   effectParamGroup.hidden = true;
+  }
+ });
+
+ effectKeyInput.addEventListener('input', (e) => {
+  e.target.setCustomValidity('');
+ });
+
+ // Effect form submit
+ effectForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const effectType = effectTypeSelect.value;
+  const rawKey = effectKeyInput.value.trim().toLowerCase();
+  const target = document.getElementById('sm-effect-target').value;
+
+  if (!effectType) { announce('Please select an effect type.', true); return; }
+  if (!rawKey) { announce('Please type a shortcut key.', true); return; }
+
+  // Check for duplicate keys across overlays AND effects
+  const overlayConflict = smOverlays.find(o => o.key.toLowerCase() === rawKey);
+  const effectConflict = smEffects.find(ef => ef.key.toLowerCase() === rawKey);
+  if (overlayConflict || effectConflict) {
+   effectKeyInput.setCustomValidity(`The key "${rawKey.toUpperCase()}" is already assigned. Choose a different key.`);
+   effectKeyInput.reportValidity();
+   return;
+  }
+
+  const def = SM_EFFECT_TYPES[effectType];
+  const params = {};
+  if (def && def.hasParams) {
+   params.repeatCount = parseInt(effectParamInput.value) || def.paramDefault;
+   params.value = parseFloat(effectParamInput.value) || def.paramDefault;
+  }
+
+  smEffects.push({
+   id: `sm-effect-${++smEffectIdCounter}`,
+   effectType,
+   key: rawKey,
+   target,
+   params
+  });
+
+  const targetNames = { all: 'Everything', base_only: 'Base Only', overlays_only: 'Overlays Only' };
+  let paramAnnounce = '';
+  if (params.value !== undefined) paramAnnounce = ` with level ${params.value}`;
+  announce(`Added effect "${def.name}" on key "${rawKey.toUpperCase()}", applied to ${targetNames[target]}${paramAnnounce}.`, true);
+
+  renderSmShortcutsTable();
+  effectTypeSelect.value = '';
+  effectKeyInput.value = '';
+  effectParamGroup.hidden = true;
+ });
+
+ // Manage Effects dialog
+ btnManageEffects.addEventListener('click', () => {
+  renderManageEffectsList();
+  manageEffectsDialog.showModal();
+  if (smEffects.length === 0) {
+   announce('There are no effects added yet.', true);
+  }
+ });
+
+ btnManageEffectsClose.addEventListener('click', () => {
+  manageEffectsDialog.close();
+  btnManageEffects.focus();
+ });
+
+ btnManageEffectsReset.addEventListener('click', () => {
+  smEffects.length = 0;
+  renderManageEffectsList();
+  renderSmShortcutsTable();
+  btnManageEffectsClose.focus();
+  announce('All effects reset.');
+ });
+
  // Global key listener
  window.addEventListener('keydown', e =>{
  if (e.key === 'Escape'&& smActive) {
@@ -274,8 +381,38 @@ function initSuperMode() {
  } else if (!isAlt) {
  triggerOverlayStart(overlay);
  }
+ return; // prevent falling through
+ }
+
+ // Effect shortcuts
+ const effect = smEffects.find(ef => ef.key.toLowerCase() === pressedKey);
+ if (effect && smIsActive()) {
+  if (isAlt && isShift) {
+   e.preventDefault();
+   clearEffectRecordings(effect);
+   return;
+  } else if (!isAlt && !isShift) {
+   e.preventDefault();
+   toggleSmEffect(effect);
+   return;
+  }
  }
  });
+
+  // --- Additional Settings Collapsible Toggle (Accessible Button, not a list) ---
+  const toggleAdvBtn = document.getElementById('btn-toggle-sm-advanced');
+  const advPanel = document.getElementById('sm-advanced-settings-panel');
+  const advIndicator = document.getElementById('sm-advanced-toggle-indicator');
+  if (toggleAdvBtn && advPanel) {
+    toggleAdvBtn.addEventListener('click', () => {
+      const isExpanded = toggleAdvBtn.getAttribute('aria-expanded') === 'true';
+      toggleAdvBtn.setAttribute('aria-expanded', String(!isExpanded));
+      advPanel.style.display = isExpanded ? 'none' : 'block';
+      if (advIndicator) {
+        advIndicator.innerHTML = isExpanded ? '&#9662;' : '&#9652;';
+      }
+    });
+  }
 
   // --- Headphone Latency Calibration ---
   const calibrateBtn = document.getElementById('btn-sm-calibrate-headphones');
@@ -518,8 +655,9 @@ function updateSmGoButton() {
 function renderSmShortcutsTable() {
     const summary = document.getElementById('sm-shortcuts-summary');
     if (summary) {
-        const count = smOverlays.length;
-        summary.textContent = `${count} overlay${count === 1 ? '': 's'} configured.`;
+        const overlayCount = smOverlays.length;
+        const effectCount = smEffects.length;
+        summary.textContent = `${overlayCount} overlay${overlayCount === 1 ? '' : 's'} configured. ${effectCount} effect${effectCount === 1 ? '' : 's'} configured.`;
     }
 }
 
@@ -698,6 +836,923 @@ function renderManageOverlaysList() {
 }
 
 
+// ── Audio Effects Engine ──────────────────────────────────────────────
+
+/**
+ * Create Web Audio effect nodes for a given effect type.
+ * Returns { input: AudioNode, output: AudioNode, allNodes: AudioNode[] }
+ */
+function createEffectNodes(ctx, effectType, params) {
+ const nodes = [];
+ let input, output;
+
+ switch (effectType) {
+  case 'phone': {
+   const filter = ctx.createBiquadFilter();
+   filter.type = 'bandpass';
+   filter.frequency.value = 1500;
+   filter.Q.value = 5.0;
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 3.5;
+   
+   filter.connect(makeup);
+   nodes.push(filter, makeup);
+   input = filter;
+   output = makeup;
+   break;
+  }
+  case 'echo': {
+   const dry = ctx.createGain();
+   dry.gain.value = 1.0;
+   const wet = ctx.createGain();
+   wet.gain.value = 0.5;
+   const delay = ctx.createDelay(2.0);
+   delay.delayTime.value = 0.3;
+   const feedback = ctx.createGain();
+   feedback.gain.value = 0.35;
+   const merger = ctx.createGain();
+   merger.gain.value = 1.0;
+
+   dry.connect(merger);
+   delay.connect(wet);
+   wet.connect(merger);
+   delay.connect(feedback);
+   feedback.connect(delay);
+
+   input = ctx.createGain();
+   input.gain.value = 1.0;
+   input.connect(dry);
+   input.connect(delay);
+
+   nodes.push(input, dry, wet, delay, feedback, merger);
+   output = merger;
+   break;
+  }
+  case 'doubling': {
+   const count = (params && params.repeatCount) ? params.repeatCount : 3;
+   const gapSec = 0.02;
+   const merger = ctx.createGain();
+   merger.gain.value = 0.8;
+
+   input = ctx.createGain();
+   input.gain.value = 1.0;
+
+   const origGain = ctx.createGain();
+   origGain.gain.value = 1.0;
+   input.connect(origGain);
+   origGain.connect(merger);
+   nodes.push(origGain);
+
+   for (let i = 1; i <= count; i++) {
+    const d = ctx.createDelay(2.0);
+    d.delayTime.value = gapSec * i;
+    const g = ctx.createGain();
+    g.gain.value = Math.max(0.3, 1.0 - (i * 0.15));
+    input.connect(d);
+    d.connect(g);
+    g.connect(merger);
+    nodes.push(d, g);
+   }
+
+   nodes.push(input, merger);
+   output = merger;
+   break;
+  }
+  case 'lowpass': {
+   const filter = ctx.createBiquadFilter();
+   filter.type = 'lowpass';
+   filter.frequency.value = 400;
+   filter.Q.value = 1.0;
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 1.5;
+   filter.connect(makeup);
+   
+   nodes.push(filter, makeup);
+   input = filter;
+   output = makeup;
+   break;
+  }
+  case 'highpass': {
+   const filter = ctx.createBiquadFilter();
+   filter.type = 'highpass';
+   filter.frequency.value = 3000;
+   filter.Q.value = 1.0;
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 1.5;
+   filter.connect(makeup);
+   
+   nodes.push(filter, makeup);
+   input = filter;
+   output = makeup;
+   break;
+  }
+  case 'distortion': {
+   const waveshaper = ctx.createWaveShaper();
+   const amount = 50;
+   const samples = 44100;
+   const curve = new Float32Array(samples);
+   const deg = Math.PI / 180;
+   for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+   }
+   waveshaper.curve = curve;
+   waveshaper.oversample = '4x';
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 1.2;
+   waveshaper.connect(makeup);
+   
+   nodes.push(waveshaper, makeup);
+   input = waveshaper;
+   output = makeup;
+   break;
+  }
+  case 'robot': {
+   const osc = ctx.createOscillator();
+   osc.type = 'sine';
+   osc.frequency.value = 50;
+   
+   const ringMod = ctx.createGain();
+   ringMod.gain.value = 0;
+   osc.connect(ringMod.gain);
+   osc.start();
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 2.0;
+   ringMod.connect(makeup);
+   
+   nodes.push(osc, ringMod, makeup);
+   input = ringMod;
+   output = makeup;
+   break;
+  }
+  case 'tremolo': {
+   const speed = (params && params.value !== undefined) ? params.value : 5;
+   const hz = 2 + ((speed - 1) / 9) * 13;
+   
+   const osc = ctx.createOscillator();
+   osc.type = 'sine';
+   osc.frequency.value = hz;
+   
+   const tremoloGain = ctx.createGain();
+   tremoloGain.gain.value = 0.5;
+   
+   const oscGain = ctx.createGain();
+   oscGain.gain.value = 0.5;
+   
+   osc.connect(oscGain);
+   oscGain.connect(tremoloGain.gain);
+   osc.start();
+   
+   const makeup = ctx.createGain();
+   makeup.gain.value = 1.8;
+   tremoloGain.connect(makeup);
+   
+   nodes.push(osc, oscGain, tremoloGain, makeup);
+   input = tremoloGain;
+   output = makeup;
+   break;
+  }
+  case 'pitch': {
+   const amount = (params && params.value !== undefined) ? params.value : 5;
+   const pitchMult = ((amount - 5) / 5.0) * 0.8;
+
+   const jungle = new Jungle(ctx);
+   jungle.setPitchOffset(pitchMult);
+
+   input = ctx.createGain();
+   output = ctx.createGain();
+   output.gain.value = 1.5;
+   
+   input.connect(jungle.input);
+   jungle.output.connect(output);
+
+   nodes.push(input, jungle.input, jungle.output, output, ...(jungle.allNodes || []));
+   break;
+  }
+  case 'autopan': {
+   const speed = (params && params.value !== undefined) ? params.value : 5;
+   const freq = 0.1 + ((speed - 1) / 9) * 4.9;
+   
+   const panner = ctx.createStereoPanner();
+   panner.pan.value = 0;
+
+   const lfo = ctx.createOscillator();
+   lfo.type = 'sine';
+   lfo.frequency.value = freq;
+   lfo.connect(panner.pan);
+   lfo.start();
+
+   const makeup = ctx.createGain();
+   makeup.gain.value = 1.2;
+   panner.connect(makeup);
+
+   nodes.push(panner, lfo, makeup);
+   input = panner;
+   output = makeup;
+   break;
+  }
+  case 'reverb': {
+   const size = (params && params.value !== undefined) ? params.value : 5;
+   const duration = 1.0 + ((size - 1) / 9) * 4.0;
+   const sr = ctx.sampleRate;
+   const length = sr * duration;
+   const impulse = ctx.createBuffer(2, length, sr);
+   const left = impulse.getChannelData(0);
+   const right = impulse.getChannelData(1);
+   for (let i = 0; i < length; i++) {
+    const decay = Math.exp(-i / (sr * (duration / 4)));
+    left[i] = (Math.random() * 2 - 1) * decay;
+    right[i] = (Math.random() * 2 - 1) * decay;
+   }
+
+   const convolver = ctx.createConvolver();
+   convolver.buffer = impulse;
+
+   const dry = ctx.createGain();
+   dry.gain.value = 1.0;
+   const wet = ctx.createGain();
+   wet.gain.value = 0.6;
+   const merger = ctx.createGain();
+
+   input = ctx.createGain();
+   input.connect(dry);
+   input.connect(convolver);
+   convolver.connect(wet);
+   dry.connect(merger);
+   wet.connect(merger);
+
+   nodes.push(input, dry, convolver, wet, merger);
+   output = merger;
+   break;
+  }
+  case 'radio': {
+   const bass = ctx.createBiquadFilter();
+   bass.type = 'lowshelf';
+   bass.frequency.value = 150;
+   bass.gain.value = 18;
+
+   const treble = ctx.createBiquadFilter();
+   treble.type = 'highshelf';
+   treble.frequency.value = 3500;
+   treble.gain.value = 10;
+
+   const compressor = ctx.createDynamicsCompressor();
+   compressor.threshold.value = -45;
+   compressor.knee.value = 0;
+   compressor.ratio.value = 20;
+   compressor.attack.value = 0.003;
+   compressor.release.value = 0.05;
+
+   const makeUp = ctx.createGain();
+   makeUp.gain.value = 3.5;
+
+   bass.connect(treble);
+   treble.connect(compressor);
+   compressor.connect(makeUp);
+
+   input = bass;
+   output = makeUp;
+   nodes.push(bass, treble, compressor, makeUp);
+   break;
+  }
+  case 'walkietalkie': {
+   const bandpass = ctx.createBiquadFilter();
+   bandpass.type = 'bandpass';
+   bandpass.frequency.value = 1200;
+   bandpass.Q.value = 2.0;
+
+   const shaper = ctx.createWaveShaper();
+   const amount = 80;
+   const samples = 44100;
+   const curve = new Float32Array(samples);
+   const deg = Math.PI / 180;
+   for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+   }
+   shaper.curve = curve;
+   shaper.oversample = '4x';
+
+   const highpass = ctx.createBiquadFilter();
+   highpass.type = 'highpass';
+   highpass.frequency.value = 2000;
+
+   const makeup = ctx.createGain();
+   makeup.gain.value = 3.0;
+
+   bandpass.connect(shaper);
+   shaper.connect(highpass);
+   highpass.connect(makeup);
+
+   input = bandpass;
+   output = makeup;
+   nodes.push(bandpass, shaper, highpass, makeup);
+   break;
+  }
+  case 'flanger': {
+   const intensity = (params && params.value !== undefined) ? params.value : 5;
+   const speed = 0.1 + ((intensity - 1) / 9) * 2.0;
+   
+   const dry = ctx.createGain();
+   dry.gain.value = 1.0;
+   const wet = ctx.createGain();
+   wet.gain.value = 0.7;
+
+   const delay = ctx.createDelay(0.02);
+   delay.delayTime.value = 0.005;
+
+   const lfo = ctx.createOscillator();
+   lfo.type = 'sine';
+   lfo.frequency.value = speed;
+   
+   const lfoGain = ctx.createGain();
+   lfoGain.gain.value = 0.004;
+   
+   lfo.connect(lfoGain);
+   lfoGain.connect(delay.delayTime);
+   lfo.start();
+
+   const feedback = ctx.createGain();
+   feedback.gain.value = 0.5;
+
+   input = ctx.createGain();
+   input.connect(dry);
+   input.connect(delay);
+   
+   delay.connect(wet);
+   delay.connect(feedback);
+   feedback.connect(delay);
+
+   const merger = ctx.createGain();
+   merger.gain.value = 1.0;
+   dry.connect(merger);
+   wet.connect(merger);
+
+   nodes.push(input, dry, wet, delay, lfo, lfoGain, feedback, merger);
+   output = merger;
+   break;
+  }
+ }
+
+ return { input, output, allNodes: nodes };
+}
+
+
+/**
+ * Rebuild the audio routing for base and overlay buses based on active effects.
+ * Called whenever an effect is toggled on or off.
+ */
+function rebuildEffectRouting() {
+ if (!smBaseBusNode || !smOverlayBusNode) return;
+
+ const activeArr = Object.values(activeSmEffects).filter(e => e.state === 'active');
+
+ const baseEffects = activeArr.filter(e => e.target === 'base_only' || e.target === 'all');
+ const overlayEffects = activeArr.filter(e => e.target === 'overlays_only' || e.target === 'all');
+
+ // Disconnect buses
+ try { smBaseBusNode.disconnect(); } catch(_) {}
+ try { smOverlayBusNode.disconnect(); } catch(_) {}
+
+ // Disconnect all effect outputs to prevent duplicating the signal path
+ activeArr.forEach(eff => {
+  if (eff.baseNodes && eff.baseNodes.output) {
+   try { eff.baseNodes.output.disconnect(); } catch(_) {}
+  }
+  if (eff.overlayNodes && eff.overlayNodes.output) {
+   try { eff.overlayNodes.output.disconnect(); } catch(_) {}
+  }
+ });
+
+ // Build base chain
+ if (baseEffects.length === 0) {
+  smBaseBusNode.connect(masterCompressor);
+ } else {
+  let prev = smBaseBusNode;
+    baseEffects.forEach(eff => {
+   if (eff.baseNodes) {
+    prev.connect(eff.baseNodes.input);
+    prev = eff.baseNodes.output;
+   }
+  });
+  prev.connect(masterCompressor);
+ }
+
+ // Build overlay chain
+ if (overlayEffects.length === 0) {
+  smOverlayBusNode.connect(masterCompressor);
+ } else {
+  let prev = smOverlayBusNode;
+    overlayEffects.forEach(eff => {
+   if (eff.overlayNodes) {
+    prev.connect(eff.overlayNodes.input);
+    prev = eff.overlayNodes.output;
+   }
+  });
+  prev.connect(masterCompressor);
+ }
+}
+
+/**
+ * Safely stop and disconnect all audio nodes associated with an effect.
+ */
+function disposeEffectNodes(effectNodes) {
+  if (!effectNodes || !effectNodes.allNodes) return;
+  effectNodes.allNodes.forEach(node => {
+    try {
+      if (typeof node.stop === 'function') {
+        node.stop();
+      }
+    } catch (_) {}
+    try {
+      if (typeof node.disconnect === 'function') {
+        node.disconnect();
+      }
+    } catch (_) {}
+  });
+}
+
+/**
+ * Find all segments connected (touching or contiguous) to targetEntry for the same effect.
+ */
+function getSmConnectedSegments(targetEntry, effectType, effectId, overlapBehavior) {
+  if (!targetEntry) return [];
+  const isMatch = (r) => {
+    if (overlapBehavior === 'auto_stop') {
+      return r.effectType === effectType;
+    }
+    return r.effectId === effectId;
+  };
+
+  const cluster = new Set([targetEntry]);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const r of smRecordedEffects) {
+      if (cluster.has(r) || !isMatch(r)) continue;
+      const rEnd = r.timelineEnd !== null ? r.timelineEnd : Infinity;
+      for (const item of cluster) {
+        const itemEnd = item.timelineEnd !== null ? item.timelineEnd : Infinity;
+        const touchesOrOverlaps = 
+          (r.timelineStart <= itemEnd + 0.08 && rEnd >= item.timelineStart - 0.08);
+        if (touchesOrOverlaps) {
+          cluster.add(r);
+          added = true;
+          break;
+        }
+      }
+    }
+  }
+  return Array.from(cluster);
+}
+
+/**
+ * Revert any overwrites (truncations, swallowed entries, splits) made by an effect recording.
+ */
+function restoreEffectOverwrites(recordEntry) {
+  if (!recordEntry || !recordEntry.overwrites || !recordEntry.overwrites.length) return false;
+  let restoredAny = false;
+  recordEntry.overwrites.forEach(ow => {
+    if (ow.action === 'truncated_left') {
+      const target = smRecordedEffects.find(r => r.id === ow.targetId);
+      if (target) {
+        target.timelineStart = ow.originalStart;
+        restoredAny = true;
+      }
+    } else if (ow.action === 'truncated_right') {
+      const target = smRecordedEffects.find(r => r.id === ow.targetId);
+      if (target) {
+        target.timelineEnd = ow.originalEnd;
+        restoredAny = true;
+      }
+    } else if (ow.action === 'swallowed') {
+      if (ow.savedEntry && !smRecordedEffects.some(r => r.id === ow.savedEntry.id)) {
+        smRecordedEffects.push(ow.savedEntry);
+        restoredAny = true;
+      }
+    } else if (ow.action === 'split') {
+      const target = smRecordedEffects.find(r => r.id === ow.targetId);
+      if (target) {
+        target.timelineEnd = ow.originalEnd;
+        restoredAny = true;
+      }
+      if (ow.splitClipId) {
+        const splitIdx = smRecordedEffects.findIndex(r => r.id === ow.splitClipId);
+        if (splitIdx !== -1) smRecordedEffects.splice(splitIdx, 1);
+      }
+    }
+  });
+  return restoredAny;
+}
+
+/**
+ * Finalize a recorded effect entry by setting its end time and subtracting
+ * any overlapping recorded intervals of the same shortcut or same type.
+ */
+function finalizeEffectRecording(recordEntry, effect) {
+  if (!recordEntry || recordEntry.timelineEnd === null) return;
+
+  // Discard corrupted or negligible recordings
+  if (recordEntry.timelineEnd <= recordEntry.timelineStart + 0.02) {
+    const idx = smRecordedEffects.findIndex(r => r.id === recordEntry.id);
+    if (idx !== -1) smRecordedEffects.splice(idx, 1);
+    return;
+  }
+
+  recordEntry.createdAt = recordEntry.createdAt || Date.now();
+  recordEntry.overwrites = recordEntry.overwrites || [];
+
+  const S = recordEntry.timelineStart;
+  const E = recordEntry.timelineEnd;
+  const idStr = effect.id;
+  const effectType = effect.effectType;
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+  const clearBehavior = document.getElementById('sm-effect-clear-behavior')?.value || 'unified';
+
+  const newClips = [];
+  for (let i = smRecordedEffects.length - 1; i >= 0; i--) {
+    const r = smRecordedEffects[i];
+    if (r.id === recordEntry.id) continue;
+
+    // In auto_stop mode, mutual exclusion applies to ALL effects of the same type!
+    // In allow mode, mutual exclusion only applies to the same effectId (preventing duplicate overlapping records of the same shortcut).
+    const shouldSubtract = (r.effectId === idStr) || 
+      (overlapBehavior === 'auto_stop' && r.effectType === effectType);
+
+    if (shouldSubtract) {
+      const O_start = r.timelineStart;
+      const O_end = r.timelineEnd !== null ? r.timelineEnd : Infinity;
+      const originalEnd = r.timelineEnd;
+
+      if (O_end <= S || (O_start >= E && Math.abs(O_start - E) > 0.05)) {
+        // No overlap and not touching end
+      } else if (O_start >= S && O_end <= E) {
+        // Fully swallowed
+        recordEntry.overwrites.push({
+          action: 'swallowed',
+          savedEntry: JSON.parse(JSON.stringify(r))
+        });
+        smRecordedEffects.splice(i, 1);
+      } else if (O_start < S && O_end > E) {
+        // Encompasses -> split into two
+        const splitId = `smfx-${++smRecordedEffectIdCounter}`;
+        recordEntry.overwrites.push({
+          action: 'split',
+          targetId: r.id,
+          originalEnd: originalEnd,
+          splitClipId: splitId
+        });
+        r.timelineEnd = S;
+        newClips.push({
+          ...r,
+          id: splitId,
+          timelineStart: E,
+          timelineEnd: originalEnd,
+          createdAt: r.createdAt || Date.now()
+        });
+      } else if (O_start < S && O_end > S) {
+        // Overlaps left -> truncate right
+        recordEntry.overwrites.push({
+          action: 'truncated_right',
+          targetId: r.id,
+          originalEnd: originalEnd,
+          newEnd: S
+        });
+        r.timelineEnd = S;
+      } else if ((O_start < E && O_end > E) || Math.abs(O_start - E) <= 0.05) {
+        // Overlaps right or touches right at the stop point E
+        if (clearBehavior === 'unified') {
+          // In Unified mode: the user stopped this effect at E!
+          // The touching downstream piece is swallowed so the effect cleanly stops at E.
+          recordEntry.overwrites.push({
+            action: 'swallowed',
+            savedEntry: JSON.parse(JSON.stringify(r))
+          });
+          smRecordedEffects.splice(i, 1);
+        } else {
+          // Sequential mode: keep remainder starting at E, but track overwrite for undo
+          recordEntry.overwrites.push({
+            action: 'truncated_left',
+            targetId: r.id,
+            originalStart: O_start,
+            newStart: E
+          });
+          r.timelineStart = E;
+        }
+      }
+    }
+  }
+  smRecordedEffects.push(...newClips);
+}
+
+/**
+ * Toggle an effect on or off during live mixing or review playback.
+ */
+function toggleSmEffect(effect) {
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+  const clearBehavior = document.getElementById('sm-effect-clear-behavior')?.value || 'unified';
+
+  // 1. Only search for LIVE active instances (exclude review instances!)
+  const liveId = Object.keys(activeSmEffects).find(k => 
+    !activeSmEffects[k].isReview && 
+    activeSmEffects[k].effectId === effect.id && 
+    activeSmEffects[k].state === 'active'
+  );
+
+  // 2. Search for REVIEW active instance of this effect (or same type in auto_stop mode)
+  const reviewId = Object.keys(activeSmEffects).find(k => 
+    activeSmEffects[k].isReview && 
+    (activeSmEffects[k].effectId === effect.id || 
+     (overlapBehavior === 'auto_stop' && activeSmEffects[k].effectType === effect.effectType))
+  );
+
+  // 3. Search for any recorded effect of this type currently active at smVirtualTime (including open-ended ongoing recordings)
+  const activeRecordEntry = (!liveId && !reviewId) ? smRecordedEffects.find(r => 
+    (r.effectId === effect.id || (overlapBehavior === 'auto_stop' && r.effectType === effect.effectType)) &&
+    r.timelineStart <= smVirtualTime && 
+    (r.timelineEnd === null || r.timelineEnd > smVirtualTime)
+  ) : null;
+
+  if (liveId) {
+    // ── Deactivate Live Recording ──
+    const active = activeSmEffects[liveId];
+    active.state = 'inactive';
+
+    // Record end time
+    const recordEntry = smRecordedEffects.find(r => r.id === active.recordEntryId);
+    if (recordEntry) {
+      const now = getAudioCtx().currentTime;
+      const elapsed = Math.max(0, now - smLastUpdateTime);
+      let calculatedEnd = smVirtualTime + elapsed;
+      if (smHeadphoneLatencySec > 0) {
+        calculatedEnd = Math.max(0, calculatedEnd - smHeadphoneLatencySec);
+      }
+      recordEntry.timelineEnd = Math.max(recordEntry.timelineStart + 0.02, calculatedEnd);
+      finalizeEffectRecording(recordEntry, effect);
+    }
+
+    // Disconnect and stop effect nodes
+    if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+    if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+
+    delete activeSmEffects[liveId];
+    rebuildEffectRouting();
+
+    const typeName = SM_EFFECT_TYPES[effect.effectType] ? SM_EFFECT_TYPES[effect.effectType].name : effect.effectType;
+    announce(`Effect ${typeName} off.`);
+    renderSmActiveKeysList();
+    renderSmMixLog();
+  } else if (reviewId || activeRecordEntry) {
+    // ── Turn off / Punch out Review Playback or Ongoing Recorded Effect ──
+    if (reviewId) {
+      const rev = activeSmEffects[reviewId];
+      if (rev.baseNodes) disposeEffectNodes(rev.baseNodes);
+      if (rev.overlayNodes) disposeEffectNodes(rev.overlayNodes);
+      delete activeSmEffects[reviewId];
+      rebuildEffectRouting();
+    }
+
+    // Stop / punch out the recorded effect at current virtual time
+    const activeRecs = smRecordedEffects.filter(r => 
+      (r.effectId === effect.id || (overlapBehavior === 'auto_stop' && r.effectType === effect.effectType)) &&
+      r.timelineStart <= smVirtualTime && 
+      (r.timelineEnd === null || r.timelineEnd > smVirtualTime)
+    );
+
+    let punchOutTime = smVirtualTime;
+    if (smHeadphoneLatencySec > 0) {
+      punchOutTime = Math.max(0, punchOutTime - smHeadphoneLatencySec);
+    }
+
+    if (clearBehavior === 'unified') {
+      activeRecs.forEach(r => {
+        const connected = getSmConnectedSegments(r, effect.effectType, effect.id, overlapBehavior);
+        r.timelineEnd = Math.max(r.timelineStart + 0.02, punchOutTime);
+        finalizeEffectRecording(r, effect);
+        // In Unified mode: remove any connected downstream segments starting at or after punchOutTime
+        connected.forEach(c => {
+          if (c !== r && c.timelineStart >= punchOutTime - 0.05) {
+            const idx = smRecordedEffects.indexOf(c);
+            if (idx !== -1) smRecordedEffects.splice(idx, 1);
+          }
+        });
+      });
+    } else {
+      activeRecs.forEach(r => {
+        r.timelineEnd = Math.max(r.timelineStart + 0.02, punchOutTime);
+        finalizeEffectRecording(r, effect);
+      });
+    }
+
+    const typeName = SM_EFFECT_TYPES[effect.effectType] ? SM_EFFECT_TYPES[effect.effectType].name : effect.effectType;
+    announce(`Effect ${typeName} off.`);
+    renderSmActiveKeysList();
+    renderSmMixLog();
+  } else {
+    // ── Activate ──
+    if (overlapBehavior === 'auto_stop') {
+      // 1. Mutual exclusion: stop any other live effect of the SAME TYPE
+      const activeSameType = Object.keys(activeSmEffects).filter(k => 
+        !activeSmEffects[k].isReview && 
+        activeSmEffects[k].effectType === effect.effectType && 
+        activeSmEffects[k].state === 'active' &&
+        activeSmEffects[k].effectId !== effect.id
+      );
+      activeSameType.forEach(k => {
+        const activeObj = activeSmEffects[k];
+        const ef = smEffects.find(e => e.id === activeObj.effectId) || { id: activeObj.effectId, effectType: activeObj.effectType };
+        toggleSmEffect(ef);
+      });
+
+      // 2. Kill any review playback of the SAME TYPE currently playing!
+      const reviewSameType = Object.keys(activeSmEffects).filter(k => 
+        activeSmEffects[k].isReview && 
+        activeSmEffects[k].effectType === effect.effectType
+      );
+      reviewSameType.forEach(revKey => {
+        const rev = activeSmEffects[revKey];
+        if (rev.baseNodes) disposeEffectNodes(rev.baseNodes);
+        if (rev.overlayNodes) disposeEffectNodes(rev.overlayNodes);
+        delete activeSmEffects[revKey];
+      });
+
+      // 3. Cap any open-ended prior recordings of the SAME TYPE starting before or at current time
+      const now = getAudioCtx().currentTime;
+      const elapsed = Math.max(0, now - smLastUpdateTime);
+      let calculatedStart = smVirtualTime + elapsed;
+      if (smHeadphoneLatencySec > 0) {
+        calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+      }
+      smRecordedEffects.forEach(r => {
+        if ((r.effectId === effect.id || r.effectType === effect.effectType) &&
+            r.timelineEnd === null && r.timelineStart <= calculatedStart) {
+          r.timelineEnd = Math.max(r.timelineStart + 0.02, calculatedStart);
+          finalizeEffectRecording(r, effect);
+        }
+      });
+    }
+
+    // Overwrite protection: Kill any review playback of this specific effect
+    const reviewIdToKill = Object.keys(activeSmEffects).find(k => 
+      activeSmEffects[k].isReview && 
+      activeSmEffects[k].effectId === effect.id
+    );
+    if (reviewIdToKill) {
+      const rev = activeSmEffects[reviewIdToKill];
+      if (rev.baseNodes) disposeEffectNodes(rev.baseNodes);
+      if (rev.overlayNodes) disposeEffectNodes(rev.overlayNodes);
+      delete activeSmEffects[reviewIdToKill];
+    }
+
+    const ctx = getAudioCtx();
+    const id = `smfx-${++smRecordedEffectIdCounter}`;
+    const now = ctx.currentTime;
+    const elapsed = Math.max(0, now - smLastUpdateTime);
+
+    const entry = {
+      effectId: effect.id,
+      effectType: effect.effectType,
+      target: effect.target,
+      params: effect.params || {},
+      state: 'active',
+      baseNodes: null,
+      overlayNodes: null,
+      recordEntryId: id,
+      isReview: false
+    };
+
+    // Create separate node chains for base and overlay paths as needed
+    if (effect.target === 'base_only' || effect.target === 'all') {
+      entry.baseNodes = createEffectNodes(ctx, effect.effectType, effect.params);
+    }
+    if (effect.target === 'overlays_only' || effect.target === 'all') {
+      entry.overlayNodes = createEffectNodes(ctx, effect.effectType, effect.params);
+    }
+
+    activeSmEffects[id] = entry;
+
+    // Record start time
+    let calculatedStart = smVirtualTime + elapsed;
+    if (smHeadphoneLatencySec > 0) {
+      calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+    }
+
+    smRecordedEffects.push({
+      id: id,
+      effectId: effect.id,
+      effectType: effect.effectType,
+      timelineStart: calculatedStart,
+      timelineEnd: null, // filled when deactivated
+      target: effect.target,
+      params: effect.params || {},
+      createdAt: Date.now(),
+      overwrites: []
+    });
+
+    rebuildEffectRouting();
+
+    const typeName = SM_EFFECT_TYPES[effect.effectType] ? SM_EFFECT_TYPES[effect.effectType].name : effect.effectType;
+    announce(`Effect ${typeName} on.`);
+    renderSmActiveKeysList();
+    renderSmMixLog();
+  }
+}
+
+/**
+ * Deactivate all currently active effects (called on stop/pause/exit).
+ * If rememberForResume is true, saves live effects into smPendingLiveEffects
+ * so they automatically resume when playback starts again.
+ */
+function deactivateAllSmEffects(includeReview = true, rememberForResume = false, capLiveRecordings = true) {
+  if (!rememberForResume) {
+    smPendingLiveEffects = [];
+  }
+  Object.keys(activeSmEffects).forEach(id => {
+    const active = activeSmEffects[id];
+    if (!includeReview && active.isReview) return;
+    if (active.state === 'active' && !active.isReview) {
+      if (capLiveRecordings) {
+        const recordEntry = smRecordedEffects.find(r => r.id === active.recordEntryId);
+        if (recordEntry && recordEntry.timelineEnd === null) {
+          recordEntry.timelineEnd = smVirtualTime;
+          const effectObj = smEffects.find(e => e.id === active.effectId) || { id: active.effectId, effectType: active.effectType };
+          finalizeEffectRecording(recordEntry, effectObj);
+        }
+      }
+      if (rememberForResume) {
+        smPendingLiveEffects.push({
+          effectId: active.effectId,
+          effectType: active.effectType,
+          target: active.target,
+          params: active.params
+        });
+      }
+    }
+    if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+    if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+    delete activeSmEffects[id];
+  });
+  rebuildEffectRouting();
+}
+
+/**
+ * Render the manage effects list inside the dialog.
+ */
+function renderManageEffectsList() {
+ const listContainer = document.getElementById('sm-manage-effects-list');
+ const resetBtn = document.getElementById('btn-sm-manage-effects-reset');
+
+ Array.from(listContainer.children).forEach(child => {
+  if (child.id !== 'sm-manage-effects-empty') child.remove();
+ });
+
+ if (smEffects.length === 0) {
+  document.getElementById('sm-manage-effects-empty').style.display = '';
+  resetBtn.style.display = 'none';
+  return;
+ }
+
+ document.getElementById('sm-manage-effects-empty').style.display = 'none';
+ resetBtn.style.display = 'inline-block';
+
+ smEffects.forEach((item, idx) => {
+  const card = document.createElement('div');
+  card.className = 'sm-card data-row';
+  card.style.border = '1px solid var(--border)';
+  card.style.padding = '10px 15px';
+  card.style.marginBottom = '10px';
+
+  const typeName = SM_EFFECT_TYPES[item.effectType] ? SM_EFFECT_TYPES[item.effectType].name : item.effectType;
+  const targetNames = { all: 'Everything', base_only: 'Base Only', overlays_only: 'Overlays Only' };
+  const targetText = targetNames[item.target] || item.target;
+  let paramText = '';
+  if (item.params && item.params.value !== undefined) {
+   paramText = `, Level: ${item.params.value}`;
+  }
+  const detailsText = `${typeName}, Key: ${item.key.toUpperCase()}, Target: ${targetText}${paramText}`;
+
+  card.innerHTML = `
+   <div style="display: flex; gap: 10px; align-items: center;">
+    <span style="flex: 1;">${detailsText}</span>
+    <button class="btn btn-danger btn-sm btn-effect-delete" aria-label="Remove ${typeName}">Remove</button>
+   </div>
+  `;
+
+  card.querySelector('.btn-effect-delete').addEventListener('click', () => {
+   smEffects.splice(idx, 1);
+   renderManageEffectsList();
+   renderSmShortcutsTable();
+   announce(`Deleted effect ${typeName}.`, true);
+  });
+
+  listContainer.appendChild(card);
+ });
+}
 
 
 class WebAudioPlayer {
@@ -709,6 +1764,7 @@ class WebAudioPlayer {
  this.playStartTime = 0;
  this.pausedOffset = 0;
  this.volume = 1.0;
+ this.outputNode = null; // Custom output node (e.g. bus node); falls back to masterCompressor
  this.endedTriggered = false; // used by updateSmTimeline to fire once
  this._ended = false; // true only after natural playback completion
  }
@@ -756,7 +1812,7 @@ class WebAudioPlayer {
   gain.gain.value = this.volume;
 
   src.connect(gain);
-  gain.connect(masterCompressor);
+  gain.connect(this.outputNode || masterCompressor);
 
   src.start(0, this.pausedOffset);
 
@@ -843,6 +1899,8 @@ async function startSuperModeLive() {
   }
   // User confirmed fresh start — wipe old session data
   smRecordedClips.length = 0;
+  smRecordedEffects.length = 0;
+  deactivateAllSmEffects();
   smBaseSegments.length = 0;
   smBaseSegmentStartTimeline = null;
   smBaseSegmentStartSource = null;
@@ -910,10 +1968,21 @@ async function startSuperModeLive() {
   progressEl.style.width = '0%';
   progressEl.parentElement.setAttribute('aria-valuenow', '0');
 
+  // Initialize Effects Buses
+  const ctx = getAudioCtx();
+  smBaseBusNode = ctx.createGain();
+  smBaseBusNode.gain.value = 1.0;
+  smBaseBusNode.connect(masterCompressor);
+
+  smOverlayBusNode = ctx.createGain();
+  smOverlayBusNode.gain.value = 1.0;
+  smOverlayBusNode.connect(masterCompressor);
+
   // Create base audio player using Web Audio API
   const baseBuf = decodedAudioBuffers[smBaseAsset.id];
   smBaseAudio = new WebAudioPlayer(baseBuf);
-   smBaseAudio.endedTriggered = false;
+  smBaseAudio.outputNode = smBaseBusNode; // Route base through bus
+  smBaseAudio.endedTriggered = false;
   smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
   
   document.getElementById('sm-total-duration').textContent = smBaseAudio.duration.toFixed(3);
@@ -930,7 +1999,7 @@ async function startSuperModeLive() {
   updatePlaybackStateUI('paused');
   });
 
-  smTimelineTimer = setInterval(updateSmTimeline, 100);
+  smTimelineTimer = setInterval(updateSmTimeline, 20);
 
   // Shift focus to container immediately for direct NVDA focus jump when live mixer starts
   setTimeout(() => {
@@ -1009,9 +2078,23 @@ async function continueSuperModeLive() {
   smWasSoftPaused = false;
   smLastUpdateTime = getAudioCtx().currentTime;
   
+  // Initialize Effects Buses
+  const ctx = getAudioCtx();
+  smBaseBusNode = ctx.createGain();
+  smBaseBusNode.gain.value = 1.0;
+  smBaseBusNode.connect(masterCompressor);
+
+  smOverlayBusNode = ctx.createGain();
+  smOverlayBusNode.gain.value = 1.0;
+  smOverlayBusNode.connect(masterCompressor);
+  
+  // Re-create active effects chains if there were any running when we paused
+  rebuildEffectRouting();
+
   // Re-create base audio player
   const baseBuf = decodedAudioBuffers[smBaseAsset.id];
   smBaseAudio = new WebAudioPlayer(baseBuf);
+  smBaseAudio.outputNode = smBaseBusNode; // Route base through bus
   smBaseAudio.endedTriggered = false;
   smBaseAudio.volume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
   
@@ -1022,7 +2105,7 @@ async function continueSuperModeLive() {
   updatePlaybackStateUI('paused');
   
   if (!smTimelineTimer) {
-     smTimelineTimer = setInterval(updateSmTimeline, 100);
+     smTimelineTimer = setInterval(updateSmTimeline, 20);
   }
 
   setTimeout(() => {
@@ -1194,8 +2277,88 @@ function updateSmTimeline() {
  progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
  }
 
- // Always trigger overlays that should be playing now
+ // Always trigger overlays and effects that should be playing now
  triggerReviewPlaybacksAtCurrentTime();
+ triggerReviewEffectsAtCurrentTime();
+}
+
+function triggerReviewEffectsAtCurrentTime() {
+  if (!smTimelineTimer) return;
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+  let stateChanged = false;
+
+  smRecordedEffects.forEach(eff => {
+    const effEnd = eff.timelineEnd !== null ? eff.timelineEnd : Infinity;
+    const isActiveNow = smVirtualTime >= eff.timelineStart && smVirtualTime <= effEnd;
+    const existingKey = `review-${eff.id}`;
+    
+    // Prevent review playback if the user is currently recording a live effect:
+    // In auto_stop mode: if ANY live effect of same effectType is active, suppress review.
+    // In allow mode: if live effect of same effectId is active, suppress review.
+    const isLiveActive = Object.values(activeSmEffects).some(a => {
+      if (a.isReview || a.state !== 'active') return false;
+      if (overlapBehavior === 'auto_stop') {
+        return a.effectType === eff.effectType;
+      }
+      return a.effectId === eff.effectId;
+    });
+
+    if (isLiveActive) {
+      if (activeSmEffects[existingKey]) {
+        const active = activeSmEffects[existingKey];
+        if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+        if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+        delete activeSmEffects[existingKey];
+        rebuildEffectRouting();
+        stateChanged = true;
+      }
+      return;
+    }
+
+    // In auto_stop mode: prevent two REVIEW effects of the SAME TYPE from playing simultaneously
+    if (isActiveNow && overlapBehavior === 'auto_stop') {
+      const otherActiveSameTypeReview = Object.keys(activeSmEffects).find(k => 
+        activeSmEffects[k].isReview && 
+        activeSmEffects[k].effectType === eff.effectType &&
+        k !== existingKey
+      );
+      if (otherActiveSameTypeReview) {
+        return; // Don't stack reviews of the same type
+      }
+    }
+    
+    if (isActiveNow && !activeSmEffects[existingKey]) {
+      const ctx = getAudioCtx();
+      const entry = {
+        effectId: eff.effectId,
+        effectType: eff.effectType,
+        target: eff.target,
+        params: eff.params,
+        state: 'active',
+        baseNodes: null,
+        overlayNodes: null,
+        isReview: true
+      };
+      
+      if (eff.target === 'base_only' || eff.target === 'all') entry.baseNodes = createEffectNodes(ctx, eff.effectType, eff.params);
+      if (eff.target === 'overlays_only' || eff.target === 'all') entry.overlayNodes = createEffectNodes(ctx, eff.effectType, eff.params);
+      
+      activeSmEffects[existingKey] = entry;
+      rebuildEffectRouting();
+      stateChanged = true;
+    } else if (!isActiveNow && activeSmEffects[existingKey]) {
+      const active = activeSmEffects[existingKey];
+      if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+      if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+      delete activeSmEffects[existingKey];
+      rebuildEffectRouting();
+      stateChanged = true;
+    }
+  });
+
+  if (stateChanged) {
+    renderSmActiveKeysList();
+  }
 }
 
 
@@ -1252,6 +2415,25 @@ function smResumeBase(isPunchIn = false) {
                   maxEnd = Math.max(maxEnd, c.timelineStart + (ce - cs));
               }
           });
+          // Shift smRecordedEffects across the gap so effects stay in sync with audio
+          const newSplitEffects = [];
+          smRecordedEffects.forEach(eff => {
+              if (eff.timelineStart > smSoftPauseStartVirtual + 0.001) {
+                  eff.timelineStart += gapDuration;
+                  if (eff.timelineEnd !== null) eff.timelineEnd += gapDuration;
+              } else if (eff.timelineStart <= smSoftPauseStartVirtual && eff.timelineEnd !== null && eff.timelineEnd > smSoftPauseStartVirtual) {
+                  const oldEnd = eff.timelineEnd;
+                  eff.timelineEnd = smSoftPauseStartVirtual;
+                  newSplitEffects.push({
+                      ...eff,
+                      id: `smfx-${++smRecordedEffectIdCounter}`,
+                      timelineStart: smVirtualTime,
+                      timelineEnd: oldEnd + gapDuration
+                  });
+              }
+          });
+          smRecordedEffects.push(...newSplitEffects);
+
           smTotalRecordedDuration = maxEnd;
       }
       // Clear playedClipIds for clips now in the future so they
@@ -1275,7 +2457,7 @@ function smResumeBase(isPunchIn = false) {
   updatePlaybackStateUI('soft-paused');
  if (!smTimelineTimer) {
      smLastUpdateTime = getAudioCtx().currentTime;
-     smTimelineTimer = setInterval(updateSmTimeline, 100);
+     smTimelineTimer = setInterval(updateSmTimeline, 20);
  }
   } else {
     // Check if there's an existing segment at the current position.
@@ -1288,7 +2470,10 @@ function smResumeBase(isPunchIn = false) {
       // Replay mode: let updateSmTimeline handle segment-based playback
       smBaseSegmentStartTimeline = null;
       smBaseSegmentStartSource = null;
-      smBaseAudio.currentTime = existingSeg.sourceStart + (smVirtualTime - existingSeg.timelineStart);
+      const targetTime = existingSeg.sourceStart + (smVirtualTime - existingSeg.timelineStart);
+      if (Math.abs(smBaseAudio.currentTime - targetTime) > 0.05) {
+        smBaseAudio.currentTime = targetTime;
+      }
       if (smBaseAudio.currentTime < smBaseAudio.duration) {
         smBaseAudio.play().catch(e =>console.error(e));
       }
@@ -1323,7 +2508,10 @@ function smResumeBase(isPunchIn = false) {
  const activeSeg = smBaseSegments.find(seg =>smVirtualTime >= seg.timelineStart - 0.005 && smVirtualTime< seg.timelineStart + seg.duration);
  if (smVirtualTime >= smTotalRecordedDuration || activeSeg) {
  if (activeSeg) {
- smBaseAudio.currentTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
+  const targetTime = activeSeg.sourceStart + (smVirtualTime - activeSeg.timelineStart);
+  if (Math.abs(smBaseAudio.currentTime - targetTime) > 0.05) {
+   smBaseAudio.currentTime = targetTime;
+  }
  }
  
   if (smBaseAudio.currentTime < smBaseAudio.duration) smBaseAudio.play().catch(e =>console.error(e));
@@ -1341,8 +2529,19 @@ function smResumeBase(isPunchIn = false) {
  smLastUpdateTime = getAudioCtx().currentTime;
  resumeSmAllOverlays();
  syncRecordActiveOverlays();
+
+ // Resume any live effects that were preserved across pause
+ if (smPendingLiveEffects && smPendingLiveEffects.length > 0) {
+  const toResume = [...smPendingLiveEffects];
+  smPendingLiveEffects = [];
+  toResume.forEach(p => {
+   const effectObj = smEffects.find(e => e.id === p.effectId) || p;
+   toggleSmEffect(effectObj);
+  });
+ }
+
  if (!smTimelineTimer) {
- smTimelineTimer = setInterval(updateSmTimeline, 100);
+ smTimelineTimer = setInterval(updateSmTimeline, 20);
  }
 }
 
@@ -1366,6 +2565,7 @@ function smRegularPauseBase() {
  clearInterval(smTimelineTimer);
  smTimelineTimer = null;
  pauseSmAllOverlays();
+ deactivateAllSmEffects(false, true); // preserve live active effects for seamless resume
  
  updatePlaybackStateUI('paused');
 }
@@ -1418,7 +2618,7 @@ function smSoftPauseBase() {
  updatePlaybackStateUI('soft-paused');
  if (!smTimelineTimer) {
  smLastUpdateTime = getAudioCtx().currentTime;
- smTimelineTimer = setInterval(updateSmTimeline, 100);
+ smTimelineTimer = setInterval(updateSmTimeline, 20);
  }
 }
 
@@ -1547,6 +2747,14 @@ function handleCancelGap() {
   // ── Shift/recalculate timeline ───────────────────────────────────────
   const gapDuration = gapEnd - gapStart;
 
+  // Remove any effects that were recorded inside the canceled gap
+  for (let i = smRecordedEffects.length - 1; i >= 0; i--) {
+    const e = smRecordedEffects[i];
+    if (e.timelineStart >= gapStart - 0.001 && e.timelineStart < gapEnd + 0.001) {
+      smRecordedEffects.splice(i, 1);
+    }
+  }
+
   if (isManualSoftPause) {
     // Manual soft pause: segments haven't been shifted yet.
     // Merge the split segments back together (undo the split from smSoftPauseBase).
@@ -1555,6 +2763,7 @@ function handleCancelGap() {
     let maxEnd = 0;
     smBaseSegments.forEach(s => maxEnd = Math.max(maxEnd, s.timelineStart + s.duration));
     smRecordedClips.forEach(c => maxEnd = Math.max(maxEnd, c.timelineStart));
+    smRecordedEffects.forEach(e => maxEnd = Math.max(maxEnd, e.timelineEnd || e.timelineStart));
     smTotalRecordedDuration = Math.max(maxEnd, gapStart);
   } else {
     // Replay gap: future segments WERE shifted forward, shift them back
@@ -1563,6 +2772,12 @@ function handleCancelGap() {
     });
     smRecordedClips.forEach(c => {
       if (c.timelineStart >= gapEnd) c.timelineStart -= gapDuration;
+    });
+    smRecordedEffects.forEach(e => {
+      if (e.timelineStart >= gapEnd) {
+        e.timelineStart -= gapDuration;
+        if (e.timelineEnd !== null) e.timelineEnd -= gapDuration;
+      }
     });
     smTotalRecordedDuration = Math.max(0, smTotalRecordedDuration - gapDuration);
     cleanAndMergeBaseSegments();
@@ -1655,6 +2870,9 @@ function restartSmPlayback() {
  smBaseSegmentStartSource = null;
  }
 
+ // Deactivate all live effects cleanly at current virtual time before rewinding to 0
+ deactivateAllSmEffects(true, false, false);
+
  // Reset virtual time and state
  smVirtualTime = 0;
  smSoftPaused = false;
@@ -1738,6 +2956,9 @@ function seekSmTimeline(seconds) {
   }
   reviewOverlayPlaybacks = [];
   playedClipIds.clear();
+
+  // Disconnect effect audio nodes so they don't linger across time jump, but do NOT cap ongoing live effect recordings
+  deactivateAllSmEffects(true, false, false);
 
   // 4. Safely finalize any active base segment being recorded live
   if (smBaseSegmentStartSource !== null) {
@@ -1831,6 +3052,9 @@ function seekSmTimeline(seconds) {
     progressEl.parentElement.setAttribute('aria-valuenow', Math.round(pct));
   }
 
+  // Trigger review/ongoing effects at the new virtual time immediately
+  triggerReviewEffectsAtCurrentTime();
+
   // ── 8. Auto-resume playback after seeking ────────────────────────────
   // Check if base audio has reached the end after seeking
   const baseEnded = smBaseAudio.currentTime >= baseDuration - 0.05;
@@ -1903,7 +3127,7 @@ function triggerOverlayStart(overlay) {
  const gain = ctx.createGain();
  gain.gain.value = overlayVol;
  src.connect(gain);
- gain.connect(masterCompressor);
+ gain.connect(smOverlayBusNode || masterCompressor);
 
  // Calculate actual timeline start applying the latency correction
  let calculatedStart = active_timeline ? (smVirtualTime + (getAudioCtx().currentTime - smLastUpdateTime)) : 0;
@@ -2258,42 +3482,103 @@ function deleteClip(clip) {
 }
 
 function handleDeletePrevious() {
- const activeClipIds = new Set(Object.values(activeOverlayAudios).map(a =>a.clipEntry.id));
+ const activeClipIds = new Set(Object.values(activeOverlayAudios).map(a => a.clipEntry.id));
+ const activeEffectIds = new Set(Object.keys(activeSmEffects).filter(k => activeSmEffects[k].state === 'active' && activeSmEffects[k].recordEntryId).map(k => activeSmEffects[k].recordEntryId));
  
- let prevClip = null;
- for (let c of smRecordedClips) {
- if (activeClipIds.has(c.id)) continue;
- if (c.timelineStart<= smVirtualTime) {
- if (!prevClip || c.timelineStart >prevClip.timelineStart) prevClip = c;
- }
+ const allItems = [];
+ smRecordedClips.forEach(c => {
+  if (!activeClipIds.has(c.id) && !c.isGapClip) allItems.push({ type: 'clip', data: c, time: c.timelineStart });
+ });
+ smRecordedEffects.forEach(e => {
+  if (!activeEffectIds.has(e.id)) allItems.push({ type: 'effect', data: e, time: e.timelineStart });
+ });
+
+ let prevItem = null;
+ for (let item of allItems) {
+  if (item.time <= smVirtualTime) {
+   if (!prevItem || item.time > prevItem.time) prevItem = item;
+  }
  }
 
- if (prevClip) {
- deleteClip(prevClip);
+ if (prevItem) {
+  deleteTimelineItem(prevItem);
  } else {
- announce("none");
+  announce("none");
  }
 }
 
 function handleDeleteNext() {
- const activeClipIds = new Set(Object.values(activeOverlayAudios).map(a =>a.clipEntry.id));
+ const activeClipIds = new Set(Object.values(activeOverlayAudios).map(a => a.clipEntry.id));
+ const activeEffectIds = new Set(Object.keys(activeSmEffects).filter(k => activeSmEffects[k].state === 'active' && activeSmEffects[k].recordEntryId).map(k => activeSmEffects[k].recordEntryId));
  
- let nextClip = null;
- for (let c of smRecordedClips) {
- if (activeClipIds.has(c.id)) continue;
- if (c.timelineStart >smVirtualTime) {
- if (!nextClip || c.timelineStart< nextClip.timelineStart) {
- nextClip = c;
- }
- }
+ const allItems = [];
+ smRecordedClips.forEach(c => {
+  if (!activeClipIds.has(c.id) && !c.isGapClip) allItems.push({ type: 'clip', data: c, time: c.timelineStart });
+ });
+ smRecordedEffects.forEach(e => {
+  if (!activeEffectIds.has(e.id)) allItems.push({ type: 'effect', data: e, time: e.timelineStart });
+ });
+
+ let nextItem = null;
+ for (let item of allItems) {
+  if (item.time > smVirtualTime) {
+   if (!nextItem || item.time < nextItem.time) nextItem = item;
+  }
  }
 
- if (nextClip) {
- deleteClip(nextClip);
+ if (nextItem) {
+  deleteTimelineItem(nextItem);
  } else {
- announce("none");
+  announce("none");
  }
 }
+
+function deleteTimelineItem(itemWrapper) {
+  if (itemWrapper.type === 'clip') {
+    deleteClip(itemWrapper.data);
+  } else if (itemWrapper.type === 'effect') {
+    deleteEffectRecording(itemWrapper.data);
+  }
+}
+
+function deleteEffectRecording(effectRec) {
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+  const clearBehavior = document.getElementById('sm-effect-clear-behavior')?.value || 'unified';
+
+  let restoredAny = false;
+  if (clearBehavior === 'unified') {
+    const connected = getSmConnectedSegments(effectRec, effectRec.effectType, effectRec.effectId, overlapBehavior);
+    connected.forEach(c => {
+      const idx = smRecordedEffects.indexOf(c);
+      if (idx !== -1) smRecordedEffects.splice(idx, 1);
+    });
+  } else {
+    const index = smRecordedEffects.indexOf(effectRec);
+    if (index > -1) {
+      smRecordedEffects.splice(index, 1);
+      restoredAny = restoreEffectOverwrites(effectRec);
+    }
+  }
+
+  const undoBehavior = document.getElementById('sm-undo-behavior')?.value || 'seek';
+  if (undoBehavior === 'seek') {
+    const seekAmount = effectRec.timelineStart - smVirtualTime;
+    seekSmTimeline(seekAmount); 
+  } else {
+    deactivateAllSmEffects();
+    triggerReviewEffectsAtCurrentTime();
+  }
+
+  const effectInfo = SM_EFFECT_TYPES[effectRec.effectType];
+  const name = effectInfo ? effectInfo.name : "effect";
+  if (restoredAny) {
+    announce("Deleted latest " + name + "; restored prior recording.");
+  } else {
+    announce("Deleted " + name);
+  }
+  renderSmMixLog();
+}
+
 
 function cancelActiveOverlay(overlay) {
  const instances = Object.values(activeOverlayAudios).filter(a =>a.overlayId === overlay.id);
@@ -2360,41 +3645,203 @@ function cancelActiveOverlay(overlay) {
  }
 }
 
+function clearEffectRecordings(effect) {
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+  const clearBehavior = document.getElementById('sm-effect-clear-behavior')?.value || 'unified';
+  const typeName = SM_EFFECT_TYPES[effect.effectType] ? SM_EFFECT_TYPES[effect.effectType].name : effect.effectType;
+  
+  let deletedSomething = false;
+  const alertEl = document.getElementById('sm-live-alert');
+
+  // 1. Check if it's currently actively being recorded (live)
+  const liveId = Object.keys(activeSmEffects).find(k => 
+    !activeSmEffects[k].isReview && 
+    activeSmEffects[k].effectId === effect.id && 
+    activeSmEffects[k].state === 'active'
+  );
+
+  if (liveId) {
+    const active = activeSmEffects[liveId];
+    if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+    if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+    
+    if (active.recordEntryId) {
+      const idx = smRecordedEffects.findIndex(r => r.id === active.recordEntryId);
+      if (idx !== -1) {
+        const rec = smRecordedEffects[idx];
+        if (clearBehavior === 'sequential') {
+          restoreEffectOverwrites(rec);
+        }
+        smRecordedEffects.splice(idx, 1);
+      }
+    }
+    
+    delete activeSmEffects[liveId];
+    rebuildEffectRouting();
+    deletedSomething = true;
+    announce(`Canceled live effect recording for ${typeName}.`);
+    
+    if (alertEl) {
+      alertEl.textContent = `Removed live effect "${typeName}" (${effect.key.toUpperCase()})`;
+      alertEl.style.color = 'var(--success)';
+      if (window.smAlertTimeout) clearTimeout(window.smAlertTimeout);
+      window.smAlertTimeout = setTimeout(() => { alertEl.textContent = ''; }, 3000);
+    }
+  } else {
+    // 2. Check if it's currently active in review mode or recorded at this time
+    const reviewId = Object.keys(activeSmEffects).find(k => 
+      activeSmEffects[k].isReview && 
+      (activeSmEffects[k].effectId === effect.id || (overlapBehavior === 'auto_stop' && activeSmEffects[k].effectType === effect.effectType))
+    );
+    if (reviewId) {
+      const active = activeSmEffects[reviewId];
+      if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+      if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+      delete activeSmEffects[reviewId];
+      rebuildEffectRouting();
+    }
+
+    // Find which recorded effects match this effect at current virtual time
+    let matchingRecs = smRecordedEffects.filter(r => 
+      (r.effectId === effect.id || (overlapBehavior === 'auto_stop' && r.effectType === effect.effectType)) &&
+      r.timelineStart <= smVirtualTime && 
+      (r.timelineEnd === null || r.timelineEnd >= smVirtualTime)
+    );
+
+    // If none directly at current virtual time, look across all recordings of this effect
+    if (matchingRecs.length === 0) {
+      matchingRecs = smRecordedEffects.filter(r => 
+        (r.effectId === effect.id || (overlapBehavior === 'auto_stop' && r.effectType === effect.effectType))
+      );
+    }
+
+    if (matchingRecs.length > 0) {
+      if (clearBehavior === 'unified') {
+        const allToDelete = new Set();
+        matchingRecs.forEach(r => {
+          const connected = getSmConnectedSegments(r, effect.effectType, effect.id, overlapBehavior);
+          connected.forEach(c => allToDelete.add(c));
+        });
+
+        allToDelete.forEach(c => {
+          const idx = smRecordedEffects.indexOf(c);
+          if (idx !== -1) smRecordedEffects.splice(idx, 1);
+        });
+
+        deletedSomething = true;
+        announce(`Deleted unified effect for ${typeName}.`);
+        if (alertEl) {
+          alertEl.textContent = `Deleted playback effect "${typeName}" (${effect.key.toUpperCase()})`;
+          alertEl.style.color = 'var(--success)';
+          if (window.smAlertTimeout) clearTimeout(window.smAlertTimeout);
+          window.smAlertTimeout = setTimeout(() => { alertEl.textContent = ''; }, 3000);
+        }
+      } else {
+        // Sequential mode: delete latest pass first, restore previous pass
+        matchingRecs.sort((a, b) => {
+          const timeA = a.createdAt || 0;
+          const timeB = b.createdAt || 0;
+          if (timeB !== timeA) return timeB - timeA;
+          const numA = parseInt((a.id || '').replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt((b.id || '').replace(/\D/g, ''), 10) || 0;
+          return numB - numA;
+        });
+
+        const latest = matchingRecs[0];
+        const idx = smRecordedEffects.indexOf(latest);
+        if (idx !== -1) smRecordedEffects.splice(idx, 1);
+
+        const restored = restoreEffectOverwrites(latest);
+        deletedSomething = true;
+        if (restored) {
+          announce(`Removed latest recording for ${typeName}; restored previous recording.`);
+        } else {
+          announce(`Deleted playback effect for ${typeName}.`);
+        }
+        if (alertEl) {
+          alertEl.textContent = `Deleted pass for "${typeName}" (${effect.key.toUpperCase()})`;
+          alertEl.style.color = 'var(--success)';
+          if (window.smAlertTimeout) clearTimeout(window.smAlertTimeout);
+          window.smAlertTimeout = setTimeout(() => { alertEl.textContent = ''; }, 3000);
+        }
+      }
+
+      triggerReviewEffectsAtCurrentTime();
+    } else if (reviewId) {
+      deletedSomething = true;
+      announce(`Stopped playback effect for ${typeName}.`);
+    } else {
+      announce(`No active playback for ${typeName} to remove.`, true);
+    }
+  }
+
+  if (deletedSomething) {
+    renderSmActiveKeysList();
+    renderSmMixLog();
+  }
+}
+
 
 function renderSmActiveKeysList() {
  const keysList = document.getElementById('sm-active-keys-list');
  keysList.innerHTML = '';
  
- if (smOverlays.length === 0) {
- keysList.innerHTML = '<p class="field-hint">No shortcuts configured.</p>';
- return;
+ if (smOverlays.length === 0 && smEffects.length === 0) {
+  keysList.innerHTML = '<p class="field-hint">No shortcuts configured.</p>';
+  return;
  }
 
- smOverlays.forEach(o =>{
- const div = document.createElement('div');
- div.className = 'sm-key-badge-item';
- 
- const instances = Object.values(activeOverlayAudios).filter(a =>a.overlayId === o.id);
- let badgeClass = '';
- let statusSpan = '';
- 
- if (instances.length >0) {
- const isAnyPlaying = instances.some(a =>a.state === 'playing');
- if (isAnyPlaying) {
- badgeClass = 'kbd-badge-playing';
- statusSpan = `<span class="sm-badge-status-text sm-badge-status-playing">${instances.length >1 ? instances.length + 'x ': ''}Playing</span>`;
- } else {
- badgeClass = 'kbd-badge-paused';
- statusSpan = `<span class="sm-badge-status-text sm-badge-status-paused">${instances.length >1 ? instances.length + 'x ': ''}Paused</span>`;
- }
- }
+ smOverlays.forEach(o => {
+  const div = document.createElement('div');
+  div.className = 'sm-key-badge-item';
+  
+  const instances = Object.values(activeOverlayAudios).filter(a => a.overlayId === o.id);
+  let badgeClass = '';
+  let statusSpan = '';
+  
+  if (instances.length > 0) {
+   const isAnyPlaying = instances.some(a => a.state === 'playing');
+   if (isAnyPlaying) {
+    badgeClass = 'kbd-badge-playing';
+    statusSpan = `<span class="sm-badge-status-text sm-badge-status-playing">${instances.length > 1 ? instances.length + 'x ' : ''}Playing</span>`;
+   } else {
+    badgeClass = 'kbd-badge-paused';
+    statusSpan = `<span class="sm-badge-status-text sm-badge-status-paused">${instances.length > 1 ? instances.length + 'x ' : ''}Paused</span>`;
+   }
+  }
 
- div.innerHTML = `
-<span class="kbd-badge ${badgeClass}">${o.key.toUpperCase()}</span>
-<span class="sm-key-name">${escapeHTML(o.name)}</span>
- ${statusSpan}
- `;
- keysList.appendChild(div);
+  div.innerHTML = `
+   <span class="kbd-badge ${badgeClass}">${o.key.toUpperCase()}</span>
+   <span class="sm-key-name">${escapeHTML(o.name)}</span>
+   ${statusSpan}
+  `;
+  keysList.appendChild(div);
+ });
+
+ smEffects.forEach(ef => {
+  const div = document.createElement('div');
+  div.className = 'sm-key-badge-item';
+  
+  const activeInstance = Object.values(activeSmEffects).find(a => a.effectId === ef.id && a.state === 'active');
+  const isPending = smPendingLiveEffects && smPendingLiveEffects.some(p => p.effectId === ef.id);
+  let badgeClass = '';
+  let statusSpan = '';
+  
+  if (activeInstance) {
+   badgeClass = 'kbd-badge-playing';
+   statusSpan = `<span class="sm-badge-status-text sm-badge-status-playing" style="color: #64ffda; border-color: #64ffda;">Active</span>`;
+  } else if (isPending) {
+   badgeClass = 'kbd-badge-paused';
+   statusSpan = `<span class="sm-badge-status-text sm-badge-status-paused" style="color: #facc15; border-color: #facc15;">Paused</span>`;
+  }
+
+  const typeName = SM_EFFECT_TYPES[ef.effectType] ? SM_EFFECT_TYPES[ef.effectType].name : ef.effectType;
+  div.innerHTML = `
+   <span class="kbd-badge ${badgeClass}" style="${activeInstance ? 'background-color: rgba(100,255,218,0.1); border-color: #64ffda; color: #64ffda;' : ''}">${ef.key.toUpperCase()}</span>
+   <span class="sm-key-name">[FX] ${escapeHTML(typeName)}</span>
+   ${statusSpan}
+  `;
+  keysList.appendChild(div);
  });
 }
 
@@ -2402,22 +3849,34 @@ function renderSmMixLog() {
  const logUl = document.getElementById('sm-mix-log');
  logUl.innerHTML = '';
 
- if (smRecordedClips.length === 0) {
- logUl.innerHTML = '<li class="empty-log">No clips recorded yet. Press shortcut keys while the base audio is playing.</li>';
- return;
+ const combined = [
+  ...smRecordedClips.map(c => ({ type: 'clip', ...c })),
+  ...smRecordedEffects.map(e => ({ type: 'effect', ...e }))
+ ];
+
+ if (combined.length === 0) {
+  logUl.innerHTML = '<li class="empty-log">No clips or effects recorded yet. Press shortcut keys while the base audio is playing.</li>';
+  return;
  }
 
- const sorted = [...smRecordedClips].sort((a, b) =>a.timelineStart - b.timelineStart);
- sorted.forEach(c =>{
- const li = document.createElement('li');
- let cropText = '';
- if (c.cropStart >0 || c.cropEnd !== null) {
- const startSec = c.cropStart.toFixed(3);
- const endSec = c.cropEnd !== null ? c.cropEnd.toFixed(3) + 's': 'end';
- cropText = ` (crop: ${startSec}s â†’ ${endSec})`;
- }
- li.innerHTML = `<span class="log-time">[${c.timelineStart.toFixed(3)}s]</span>${escapeHTML(c.name)}${cropText}`;
- logUl.appendChild(li);
+ combined.sort((a, b) => a.timelineStart - b.timelineStart);
+
+ combined.forEach(item => {
+  const li = document.createElement('li');
+  if (item.type === 'clip') {
+   let cropText = '';
+   if (item.cropStart > 0 || item.cropEnd !== null) {
+    const startSec = item.cropStart.toFixed(3);
+    const endSec = item.cropEnd !== null ? item.cropEnd.toFixed(3) + 's' : 'end';
+    cropText = ` (crop: ${startSec}s → ${endSec})`;
+   }
+   li.innerHTML = `<span class="log-time">[${item.timelineStart.toFixed(3)}s]</span>${escapeHTML(item.name)}${cropText}`;
+  } else {
+   const typeName = SM_EFFECT_TYPES[item.effectType] ? SM_EFFECT_TYPES[item.effectType].name : item.effectType;
+   const endText = item.timelineEnd !== null ? ` → ${item.timelineEnd.toFixed(3)}s` : ' → (active)';
+   li.innerHTML = `<span class="log-time">[${item.timelineStart.toFixed(3)}s${endText}]</span> <span style="color: #64ffda;">[FX] ${escapeHTML(typeName)}</span> applied to ${item.target}`;
+  }
+  logUl.appendChild(li);
  });
 
  const container = logUl.parentElement;
@@ -2461,6 +3920,9 @@ function exitToSetupView() {
   if (typeof capActiveOverlayRecordings === 'function') {
       capActiveOverlayRecordings(true);
   }
+  
+  // Cap active effect records too (they will be restored upon "Continue")
+  deactivateAllSmEffects(true, true);
 
   stopSmAudio();
  document.getElementById('sm-setup-view').hidden = false;
@@ -2488,7 +3950,10 @@ function resetAndRecordFromScratch() {
 
  // 1. Clear recorded data
  smRecordedClips.length = 0;
+ smRecordedEffects.length = 0;
  smBaseSegments.length = 0;
+
+ deactivateAllSmEffects();
 
  // 2. Stop any active physical audios
  Object.keys(activeOverlayAudios).forEach(id =>{
@@ -2596,6 +4061,141 @@ async function exportSuperModeWav(isSaveToLib = false) {
   exportCompressor.release.setValueAtTime(0.05, 0);
   exportCompressor.connect(offline.destination);
 
+  // --- Effects Offline Routing Setup ---
+  const offlineBaseBus = offline.createGain();
+  offlineBaseBus.gain.value = 1.0;
+  const offlineOverlayBus = offline.createGain();
+  offlineOverlayBus.gain.value = 1.0;
+
+  let currentOfflineEffects = [];
+
+  function rebuildOfflineRouting() {
+   try { offlineBaseBus.disconnect(); } catch(_) {}
+   try { offlineOverlayBus.disconnect(); } catch(_) {}
+   
+   currentOfflineEffects.forEach(eff => {
+    if (eff.baseNodes && eff.baseNodes.output) {
+     try { eff.baseNodes.output.disconnect(); } catch(_) {}
+    }
+    if (eff.overlayNodes && eff.overlayNodes.output) {
+     try { eff.overlayNodes.output.disconnect(); } catch(_) {}
+    }
+   });
+
+   const baseEffects = currentOfflineEffects.filter(e => e.target === 'base_only' || e.target === 'all');
+   const overlayEffects = currentOfflineEffects.filter(e => e.target === 'overlays_only' || e.target === 'all');
+   
+   if (baseEffects.length === 0) {
+    offlineBaseBus.connect(exportCompressor);
+   } else {
+    let prev = offlineBaseBus;
+    baseEffects.forEach(eff => {
+     if (eff.baseNodes) {
+      prev.connect(eff.baseNodes.input);
+      prev = eff.baseNodes.output;
+     }
+    });
+    prev.connect(exportCompressor);
+   }
+   
+   if (overlayEffects.length === 0) {
+    offlineOverlayBus.connect(exportCompressor);
+   } else {
+    let prev = offlineOverlayBus;
+    overlayEffects.forEach(eff => {
+     if (eff.overlayNodes) {
+      prev.connect(eff.overlayNodes.input);
+      prev = eff.overlayNodes.output;
+     }
+    });
+    prev.connect(exportCompressor);
+   }
+  }
+
+  // Gather effect boundary events
+  const effectEvents = [];
+  smRecordedEffects.forEach(e => {
+   effectEvents.push({ time: e.timelineStart, type: 'start', effect: e });
+   if (e.timelineEnd !== null) {
+    effectEvents.push({ time: e.timelineEnd, type: 'end', effect: e });
+   } else {
+    effectEvents.push({ time: totalDuration, type: 'end', effect: e });
+   }
+  });
+
+  effectEvents.sort((a, b) => a.time - b.time);
+  
+  const eventsByTime = {};
+  effectEvents.forEach(ev => {
+   const frame = Math.floor(ev.time * sr);
+   const quantizedTime = frame / sr;
+   if (!eventsByTime[quantizedTime]) eventsByTime[quantizedTime] = [];
+   eventsByTime[quantizedTime].push(ev);
+  });
+
+  const overlapBehavior = document.getElementById('sm-effect-overlap-behavior')?.value || 'auto_stop';
+
+  // Init routing at time 0
+  if (eventsByTime[0]) {
+   eventsByTime[0].forEach(ev => {
+    if (ev.type === 'start') {
+     if (overlapBehavior === 'auto_stop') {
+      for (let i = currentOfflineEffects.length - 1; i >= 0; i--) {
+       if (currentOfflineEffects[i].effectType === ev.effect.effectType) {
+        const old = currentOfflineEffects[i];
+        if (old.baseNodes) disposeEffectNodes(old.baseNodes);
+        if (old.overlayNodes) disposeEffectNodes(old.overlayNodes);
+        currentOfflineEffects.splice(i, 1);
+       }
+      }
+     }
+     const entry = { ...ev.effect, baseNodes: null, overlayNodes: null };
+     if (entry.target === 'base_only' || entry.target === 'all') entry.baseNodes = createEffectNodes(offline, entry.effectType, entry.params);
+     if (entry.target === 'overlays_only' || entry.target === 'all') entry.overlayNodes = createEffectNodes(offline, entry.effectType, entry.params);
+     currentOfflineEffects.push(entry);
+    }
+   });
+   delete eventsByTime[0];
+  }
+  rebuildOfflineRouting();
+
+  // Schedule suspends for graph changes
+  Object.keys(eventsByTime).map(Number).sort((a,b)=>a-b).forEach(time => {
+   if (time > 0 && time < totalDuration) {
+    offline.suspend(time).then(() => {
+     eventsByTime[time].forEach(ev => {
+      if (ev.type === 'start') {
+       if (overlapBehavior === 'auto_stop') {
+        for (let i = currentOfflineEffects.length - 1; i >= 0; i--) {
+         if (currentOfflineEffects[i].effectType === ev.effect.effectType) {
+          const old = currentOfflineEffects[i];
+          if (old.baseNodes) disposeEffectNodes(old.baseNodes);
+          if (old.overlayNodes) disposeEffectNodes(old.overlayNodes);
+          currentOfflineEffects.splice(i, 1);
+         }
+        }
+       }
+       const entry = { ...ev.effect, baseNodes: null, overlayNodes: null };
+       if (entry.target === 'base_only' || entry.target === 'all') entry.baseNodes = createEffectNodes(offline, entry.effectType, entry.params);
+       if (entry.target === 'overlays_only' || entry.target === 'all') entry.overlayNodes = createEffectNodes(offline, entry.effectType, entry.params);
+       currentOfflineEffects.push(entry);
+      } else {
+       const idx = currentOfflineEffects.findIndex(x => x.id === ev.effect.id);
+       if (idx > -1) {
+        const active = currentOfflineEffects[idx];
+        if (active.baseNodes) disposeEffectNodes(active.baseNodes);
+        if (active.overlayNodes) disposeEffectNodes(active.overlayNodes);
+        currentOfflineEffects.splice(idx, 1);
+       }
+      }
+     });
+     rebuildOfflineRouting();
+     offline.resume();
+    });
+   }
+  });
+  // --- End Effects Setup ---
+
   const baseVolume = (smBaseAsset && smBaseAsset.volume !== undefined) ? smBaseAsset.volume : 1.0;
 
   exportSegments.forEach(seg =>{
@@ -2604,7 +4204,7 @@ async function exportSuperModeWav(isSaveToLib = false) {
   const baseGain = offline.createGain();
   baseGain.gain.value = baseVolume;
   baseSrc.connect(baseGain);
-  baseGain.connect(exportCompressor);
+  baseGain.connect(offlineBaseBus); // Route to base bus
   baseSrc.start(seg.timelineStart, seg.sourceStart, seg.duration);
   });
 
@@ -2616,7 +4216,7 @@ async function exportSuperModeWav(isSaveToLib = false) {
   const gain = offline.createGain();
   gain.gain.value = (c.volume !== undefined) ? c.volume : 1.0;
   src.connect(gain);
-  gain.connect(exportCompressor);
+  gain.connect(offlineOverlayBus); // Route to overlay bus
 
   const cs = c.cropStart || 0;
   const ce = c.cropEnd != null ? Math.min(c.cropEnd, buf.duration) : buf.duration;
@@ -2643,4 +4243,233 @@ async function exportSuperModeWav(isSaveToLib = false) {
   } finally {
   isExportingMedia = false;
   }
+}
+// Copyright 2012, Google Inc.
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+//     * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//     * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+function createFadeBuffer(context, activeTime, fadeTime) {
+    var length1 = activeTime * context.sampleRate;
+    var length2 = (activeTime - 2*fadeTime) * context.sampleRate;
+    var length = length1 + length2;
+    var buffer = context.createBuffer(1, length, context.sampleRate);
+    var p = buffer.getChannelData(0);
+    
+    console.log("createFadeBuffer() length = " + length);
+    
+    var fadeLength = fadeTime * context.sampleRate;
+
+    var fadeIndex1 = fadeLength;
+    var fadeIndex2 = length1 - fadeLength;
+    
+    // 1st part of cycle
+    for (var i = 0; i < length1; ++i) {
+        var value;
+        
+        if (i < fadeIndex1) {
+            value = Math.sqrt(i / fadeLength);
+        } else if (i >= fadeIndex2) {
+            value = Math.sqrt(1 - (i - fadeIndex2) / fadeLength);
+        } else {
+            value = 1;
+        }
+        
+        p[i] = value;
+    }
+
+    // 2nd part
+    for (var i = length1; i < length; ++i) {
+        p[i] = 0;
+    }
+    
+    
+    return buffer;
+}
+
+function createDelayTimeBuffer(context, activeTime, fadeTime, shiftUp) {
+    var length1 = activeTime * context.sampleRate;
+    var length2 = (activeTime - 2*fadeTime) * context.sampleRate;
+    var length = length1 + length2;
+    var buffer = context.createBuffer(1, length, context.sampleRate);
+    var p = buffer.getChannelData(0);
+
+    console.log("createDelayTimeBuffer() length = " + length);
+    
+    // 1st part of cycle
+    for (var i = 0; i < length1; ++i) {
+        if (shiftUp)
+          // This line does shift-up transpose
+          p[i] = (length1-i)/length;
+        else
+          // This line does shift-down transpose
+          p[i] = i / length1;
+    }
+
+    // 2nd part
+    for (var i = length1; i < length; ++i) {
+        p[i] = 0;
+    }
+
+    return buffer;
+}
+
+var delayTime = 0.030;
+var fadeTime = 0.015;
+var bufferTime = 0.030;
+
+function Jungle(context) {
+    this.context = context;
+    // Create nodes for the input and output of this "module".
+    var input = context.createGain();
+    var output = context.createGain();
+    this.input = input;
+    this.output = output;
+    
+    // Delay modulation.
+    var mod1 = context.createBufferSource();
+    var mod2 = context.createBufferSource();
+    var mod3 = context.createBufferSource();
+    var mod4 = context.createBufferSource();
+    this.shiftDownBuffer = createDelayTimeBuffer(context, bufferTime, fadeTime, false);
+    this.shiftUpBuffer = createDelayTimeBuffer(context, bufferTime, fadeTime, true);
+    mod1.buffer = this.shiftDownBuffer;
+    mod2.buffer = this.shiftDownBuffer;
+    mod3.buffer = this.shiftUpBuffer;
+    mod4.buffer = this.shiftUpBuffer;
+    mod1.loop = true;
+    mod2.loop = true;
+    mod3.loop = true;
+    mod4.loop = true;
+
+    // for switching between oct-up and oct-down
+    var mod1Gain = context.createGain();
+    var mod2Gain = context.createGain();
+    var mod3Gain = context.createGain();
+    mod3Gain.gain.value = 0;
+    var mod4Gain = context.createGain();
+    mod4Gain.gain.value = 0;
+
+    mod1.connect(mod1Gain);
+    mod2.connect(mod2Gain);
+    mod3.connect(mod3Gain);
+    mod4.connect(mod4Gain);
+
+    // Delay amount for changing pitch.
+    var modGain1 = context.createGain();
+    var modGain2 = context.createGain();
+
+    var delay1 = context.createDelay();
+    var delay2 = context.createDelay();
+    mod1Gain.connect(modGain1);
+    mod2Gain.connect(modGain2);
+    mod3Gain.connect(modGain1);
+    mod4Gain.connect(modGain2);
+    modGain1.connect(delay1.delayTime);
+    modGain2.connect(delay2.delayTime);
+
+    // Crossfading.
+    var fade1 = context.createBufferSource();
+    var fade2 = context.createBufferSource();
+    var fadeBuffer = createFadeBuffer(context, bufferTime, fadeTime);
+    fade1.buffer = fadeBuffer
+    fade2.buffer = fadeBuffer;
+    fade1.loop = true;
+    fade2.loop = true;
+
+    var mix1 = context.createGain();
+    var mix2 = context.createGain();
+    mix1.gain.value = 0;
+    mix2.gain.value = 0;
+
+    fade1.connect(mix1.gain);    
+    fade2.connect(mix2.gain);
+        
+    // Connect processing graph.
+    input.connect(delay1);
+    input.connect(delay2);    
+    delay1.connect(mix1);
+    delay2.connect(mix2);
+    mix1.connect(output);
+    mix2.connect(output);
+    
+    // Start
+    var t = context.currentTime + 0.050;
+    var t2 = t + bufferTime - fadeTime;
+    mod1.start(t);
+    mod2.start(t2);
+    mod3.start(t);
+    mod4.start(t2);
+    fade1.start(t);
+    fade2.start(t2);
+
+    this.mod1 = mod1;
+    this.mod2 = mod2;
+    this.mod1Gain = mod1Gain;
+    this.mod2Gain = mod2Gain;
+    this.mod3Gain = mod3Gain;
+    this.mod4Gain = mod4Gain;
+    this.modGain1 = modGain1;
+    this.modGain2 = modGain2;
+    this.fade1 = fade1;
+    this.fade2 = fade2;
+    this.mix1 = mix1;
+    this.mix2 = mix2;
+    this.delay1 = delay1;
+    this.delay2 = delay2;
+    this.allNodes = [
+        input, output, mod1, mod2, mod3, mod4,
+        mod1Gain, mod2Gain, mod3Gain, mod4Gain,
+        modGain1, modGain2, delay1, delay2,
+        fade1, fade2, mix1, mix2
+    ];
+    
+    this.setDelay(delayTime);
+}
+
+Jungle.prototype.setDelay = function(delayTime) {
+    this.modGain1.gain.setTargetAtTime(0.5*delayTime, 0, 0.010);
+    this.modGain2.gain.setTargetAtTime(0.5*delayTime, 0, 0.010);
+}
+
+var previousPitch = -1;
+
+Jungle.prototype.setPitchOffset = function(mult) {
+        if (mult>0) { // pitch up
+            this.mod1Gain.gain.value = 0;
+            this.mod2Gain.gain.value = 0;
+            this.mod3Gain.gain.value = 1;
+            this.mod4Gain.gain.value = 1;
+        } else { // pitch down
+            this.mod1Gain.gain.value = 1;
+            this.mod2Gain.gain.value = 1;
+            this.mod3Gain.gain.value = 0;
+            this.mod4Gain.gain.value = 0;
+        }
+        this.setDelay(delayTime*Math.abs(mult));
+    previousPitch = mult;
 }

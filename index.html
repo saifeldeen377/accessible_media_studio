@@ -425,7 +425,16 @@ window.onerror = function(msg, url, line, col, error) {
 <input type="range" id="sm-base-volume" min="0" max="100" step="5" value="100"
  aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
 </div>
+<!-- Collapsible Additional Settings (Accessible Button, Not a list) -->
 <div class="control-group" style="margin-top: 15px;">
+<button type="button" id="btn-toggle-sm-advanced" class="btn btn-secondary" aria-expanded="false" aria-controls="sm-advanced-settings-panel" style="width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;">
+  <span>Additional Settings &amp; Behaviors</span>
+  <span id="sm-advanced-toggle-indicator" aria-hidden="true">&#9662;</span>
+</button>
+</div>
+
+<div id="sm-advanced-settings-panel" style="display: none; margin-top: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; background: var(--bg-card);">
+<div class="control-group">
 <label for="sm-base-end-behavior">When Base Audio Ends:</label>
 <select id="sm-base-end-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);" aria-describedby="sm-base-end-hint">
 <option value="stop">Stop immediately when base ends</option>
@@ -437,19 +446,36 @@ window.onerror = function(msg, url, line, col, error) {
 <div class="control-group" style="margin-top: 15px;">
 <label for="sm-undo-behavior">Undo Behavior (Ctrl + Left/Right):</label>
 <select id="sm-undo-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="seek"selected>Delete and jump to clip's position </option>
+<option value="seek" selected>Delete and jump to clip's position</option>
 <option value="delete_only">Delete only (Do not move timeline)</option>
 </select>
 </div>
 <div class="control-group" style="margin-top: 15px;">
 <label for="sm-cancel-gap-behavior">Ctrl+Shift+Space — Cancel Gap:</label>
 <select id="sm-cancel-gap-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
-<option value="empty_only" selected>Only when gap has no overlays </option>
-<option value="always">Always (also deletes overlays in gap) </option>
+<option value="empty_only" selected>Only when gap has no overlays</option>
+<option value="always">Always (also deletes overlays in gap)</option>
 </select>
 </div>
 
-<!-- Calibration Button in Setup View -->
+<div class="control-group" style="margin-top: 15px;">
+<label for="sm-effect-overlap-behavior">Multiple Effects of Same Type (e.g., 2 Pitch keys):</label>
+<select id="sm-effect-overlap-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+<option value="auto_stop" selected>Auto-Stop Previous (Pressing new stops old)</option>
+<option value="allow">Allow Overlap (Resume previous when releasing new)</option>
+</select>
+</div>
+
+<div class="control-group" style="margin-top: 15px;">
+<label for="sm-effect-clear-behavior">Overwritten &amp; Connected Effects Stop / Deletion:</label>
+<select id="sm-effect-clear-behavior" style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+<option value="unified" selected>Unified (Stop/clear affects all connected segments as one effect)</option>
+<option value="sequential">Sequential / Layered (Stop/clear removes latest recording first, restoring prior)</option>
+</select>
+</div>
+</div>
+
+<!-- Calibration Button in Setup View (Outside collapsible section) -->
 <div class="control-group" style="margin-top: 15px;">
     <button type="button" id="btn-sm-calibrate-headphones" class="btn btn-secondary">Please click if you are using a headphone to calibrate delay</button>
     <p id="sm-latency-display" class="field-hint" aria-live="polite">Current headphone delay correction: 0 ms</p>
@@ -486,18 +512,57 @@ window.onerror = function(msg, url, line, col, error) {
 </select>
 </div>
 </div>
+<div style="display: flex; gap: 10px;">
 <button type="submit" class="btn btn-secondary">Add to Super Mix </button>
+<button type="button" id="btn-sm-manage-overlays" class="btn btn-secondary btn-sm">Manage Overlays</button>
+</div>
 </form>
 </div>
 
 </div>
 
+<!-- Step 3: Audio Effects Configuration -->
+<div class="sm-card">
+<h3>3. Audio Effects &amp; Shortcuts</h3>
+<form id="form-sm-effect" class="clip-form">
+<div class="form-grid">
+<div class="control-group">
+<label for="sm-effect-type">Effect Type:</label>
+<select id="sm-effect-type" required style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+<option value="" disabled selected>Select an effect...</option>
+</select>
+</div>
+<div class="control-group" id="sm-effect-param-group" hidden>
+<label for="sm-effect-param" id="sm-effect-param-label">Repeat Count:</label>
+<input type="number" id="sm-effect-param" min="2" max="10" value="3"
+ style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+</div>
+<div class="control-group">
+<label for="sm-effect-key">Shortcut Key (single letter/number):</label>
+<input type="text" id="sm-effect-key" placeholder="e.g. e, f, g" maxlength="1" required
+ aria-describedby="sm-effect-key-hint">
+<span id="sm-effect-key-hint" class="field-hint">Pressing this key during playback toggles this effect on/off.</span>
+</div>
+<div class="control-group">
+<label for="sm-effect-target">Apply To:</label>
+<select id="sm-effect-target" required style="width: 100%; padding: 8px; border-radius: var(--radius-sm); background: var(--bg-main); border: 1px solid var(--border); color: var(--text);">
+<option value="all" selected>Everything (Base + Overlays)</option>
+<option value="base_only">Base Audio Only</option>
+<option value="overlays_only">Overlays Only</option>
+</select>
+</div>
+</div>
+<div style="display: flex; gap: 10px;">
+<button type="submit" class="btn btn-secondary">Add Effect</button>
+<button type="button" id="btn-sm-manage-effects" class="btn btn-secondary btn-sm">Manage Effects</button>
+</div>
+</form>
+</div>
+</div>
+
 <div class="sm-card sm-list-card">
 <h3>Configured Shortcuts:</h3>
-<p id="sm-shortcuts-summary" style="margin-bottom: 15px; color: var(--text-muted);">0 overlays configured.</p>
-<div style="display: flex; gap: 10px;">
-<button id="btn-sm-manage-overlays" class="btn btn-secondary btn-sm">Manage Overlays</button>
-</div>
+<p id="sm-shortcuts-summary" style="margin-bottom: 15px; color: var(--text-muted);">0 overlays configured. 0 effects configured.</p>
 </div>
 
 <div class="sm-setup-actions" style="display: flex; gap: 10px;">
@@ -583,6 +648,20 @@ window.onerror = function(msg, url, line, col, error) {
     <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
       <button id="btn-sm-manage-overlays-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>
       <button id="btn-sm-manage-overlays-reset" class="btn btn-danger btn-sm">Reset All</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Manage Effects Dialog -->
+<dialog id="sm-manage-effects-dialog" role="application" aria-label="Manage Effects" style="padding: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text); max-width: 800px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+  <div class="dialog-content">
+    <h3 id="sm-manage-effects-title" style="margin-top: 0;">Manage Effects</h3>
+    <div id="sm-manage-effects-list" style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; padding-right: 10px;">
+      <p id="sm-manage-effects-empty" class="empty-cell" style="text-align: center; color: var(--text-muted);">No effects configured yet.</p>
+    </div>
+    <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+      <button id="btn-sm-manage-effects-close" class="btn btn-secondary btn-sm" aria-label="Close dialog">Close</button>
+      <button id="btn-sm-manage-effects-reset" class="btn btn-danger btn-sm">Reset All</button>
     </div>
   </div>
 </dialog>

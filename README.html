@@ -521,30 +521,28 @@ python -m http.server 3000
 <h3 id="sm-setup">Quick Start </h3>
 <ol class="steps">
 <li>Press <kbd>M </kbd>anywhere on the page - or click <strong>"Super Merger"</strong>in the header. Focus jumps directly to the dialog.</li>
-<li><strong>Step 1:</strong>Select your base audio (the backbone of your mix). Adjust its <strong>Base Audio Volume </strong>(0-100%) to ensure it sits well in the mix. Lastly, configure the <strong>Base Audio End Behavior </strong>and <strong>Undo Behavior </strong>(see below).
+<li><strong>Step 1:</strong>Select your base audio (the backbone of your mix). Adjust its <strong>Base Audio Volume </strong>(0-100%) to ensure it sits well in the mix.
     <ul>
-        <li><strong>Headphone Calibration:</strong>If you are using wireless headphones with noticeable delay, click <strong>"Calibrate Headphone Delay"</strong>and follow the audio prompts. The studio will calculate your hardware latency and automatically deduct it from your future recordings so your final exported mix is perfectly on beat.</li>
+        <li><strong>Additional Settings &amp; Behaviors:</strong> Click the collapsible <strong>"Additional Settings &amp; Behaviors"</strong> button to configure advanced settings like <strong>Base Audio End Behavior</strong>, <strong>Undo Behavior</strong>, <strong>Multiple Effects of Same Type</strong>, and <strong>Overwritten &amp; Connected Effects Stop / Deletion</strong> (detailed below). Grouped behind an accessible disclosure button, this keeps the setup clean and uncluttered.</li>
+        <li><strong>Headphone Calibration:</strong> If you are using wireless or Bluetooth headphones with noticeable delay, click <strong>"Please click if you are using a headphone to calibrate delay"</strong> (located conveniently next to the additional settings button) and follow the audio prompts. The studio will calculate your hardware latency and automatically deduct it from your future <strong>overlay</strong> and <strong>audio effect (FX)</strong> recordings so your final exported mix is perfectly on beat.</li>
     </ul>
 </li>
-<li><strong>Step 2:</strong>For each overlay sound you want to trigger during the live performance:
+<li><strong>Step 2:</strong> Add your live triggers (Overlays and Effects):
 <ul>
-<li>Select the audio file from your library.</li>
-<li>Type a single shortcut key (e.g.,<kbd>d </kbd>).</li>
-<li>Adjust the <strong>Overlay Volume </strong>(0-100%) for this specific sound.</li>
-<li>Select the <strong>Trigger Behavior </strong>(Overlap or Cutoff) for this sound (see below).</li>
-<li>Click <strong>"Add to Super Mix"</strong>.</li>
+<li><strong>For Overlays (Audio clips):</strong> Leave type as "Audio File Overlay". Select an audio file from your library, type a shortcut key (e.g., <kbd>d</kbd>), adjust <strong>Volume</strong>, choose <strong>Trigger Behavior</strong>, and click <strong>"Add to Super Mix"</strong>.</li>
+<li><strong>For Effects (Audio Filters/FX):</strong> Change type to "Audio Effect (FX)". Select an effect (like Cave Reverb or Walkie-Talkie), assign a shortcut key, choose its target (Base track, Overlays, or All), configure its parameter (if applicable), and click <strong>"Add to Super Mix"</strong>.</li>
 </ul>
-<p style="margin-top: 8px; font-size: 0.9em; color: var(--text-sub);"><em>(Note: If you forget to select a file, forget to type a shortcut, or choose a shortcut that is already in use, the app will announce a warning and automatically return your focus to the correct field so you can fix it.)</em></p>
+<p style="margin-top: 8px; font-size: 0.9em; color: var(--text-sub);"><em>(Note: If you forget a shortcut, or choose one that is already in use, the app will announce a warning and automatically return your focus to the correct field so you can fix it.)</em></p>
 </li>
 <li>Click <strong>"Go Now - Start Live Mixer"</strong>. <em>(Focus automatically moves to the <strong>Manage Overlays</strong> button while session files load in the background, accompanied by periodic loading announcements for files larger than 30MB).</em></li>
 </ol>
 
-<h3 id="sm-managing-overlays">Managing Overlays </h3>
-<p>If you made a mistake or want to change your assigned overlays, click <strong>"Manage Overlays"</strong>in the setup view. From there, you can:</p>
+<h3 id="sm-managing-overlays">Managing Overlays and Effects</h3>
+<p>If you made a mistake or want to change your assigned triggers, use the <strong>"Manage Overlays"</strong> or <strong>"Manage Effects"</strong> buttons in the setup view. From these separate dialogs, you can:</p>
 <ul>
-<li><strong>Edit</strong>: Change the assigned file, shortcut key, volume, or behavior of any existing overlay.</li>
-<li><strong>Remove</strong>: Delete a specific overlay entirely.</li>
-<li><strong>Reset</strong>: Remove all overlays at once.</li>
+<li><strong>Edit</strong>: Change the assigned file/effect, shortcut key, volume, target, or behavior of any existing trigger.</li>
+<li><strong>Remove</strong>: Delete a specific trigger entirely.</li>
+<li><strong>Reset</strong>: Clear all overlays or effects from your setup at once.</li>
 </ul>
 
 <h3 id="sm-keys">Keyboard Shortcuts in Super Merger </h3>
@@ -553,14 +551,16 @@ python -m http.server 3000
 <thead><tr><th>Key </th><th>Action </th></tr></thead>
 <tbody>
 <tr><td><kbd>Space </kbd></td><td>Restart playback from 0.0s (Replay mode). During replay, any new overlays you trigger will be overdubbed/layered onto the mix without erasing your previous recordings.</td></tr>
-<tr><td><kbd>Shift </kbd>+<kbd>Space </kbd></td><td>Hard Pause / Resume all tracks (pauses base, timeline, and all active overlays, seamlessly resuming them together)</td></tr>
+<tr><td><kbd>Shift </kbd>+<kbd>Space </kbd></td><td>Hard Pause / Resume all tracks (pauses base, timeline, active overlays, and active effects, seamlessly resuming them together)</td></tr>
 <tr><td><kbd>Ctrl </kbd>+<kbd>Space </kbd></td><td>Soft-Pause /<strong>Punch-In </strong>. If you use this during replay, it deletes any future base segments and starts recording a new one. Can also be used to create silent gaps in the base audio where the timeline continues ticking.</td></tr>
-<tr><td><kbd>Ctrl </kbd>+<kbd>Shift </kbd>+<kbd>Space </kbd></td><td><strong>Cancel Gap.</strong>If in a soft-pause mid-track: rewinds timeline to where the gap started and resumes the base, as if the gap never happened. Behavior depends on the <strong>Cancel Gap</strong>setting.</td></tr>
+<tr><td><kbd>Ctrl </kbd>+<kbd>Shift </kbd>+<kbd>Space </kbd></td><td><strong>Cancel Gap.</strong> If in a soft-pause mid-track: rewinds timeline to where the gap started and resumes the base, as if the gap never happened. Any downstream effects and overlays shift back in sync. Behavior depends on the <strong>Cancel Gap</strong> setting.</td></tr>
 <tr><td><kbd>←</kbd>/<kbd>→</kbd></td><td>Seek timeline back or forward by 5 seconds.</td></tr>
 <tr><td><kbd>Ctrl </kbd>+<kbd>←</kbd>/<kbd>→</kbd></td><td>Delete the previous/next recorded overlay clip and jump to its position on the timeline. (Does not affect currently active live clips)</td></tr>
-<tr><td><kbd>d </kbd>(your key)</td><td>Play overlay from beginning (restarts if already playing)</td></tr>
-<tr><td><kbd>Shift </kbd>+<kbd>d </kbd></td><td>Pause / Resume that overlay from current position in both listening and the final track </td></tr>
-<tr><td><kbd>Alt </kbd>+<kbd>Shift </kbd>+<kbd>d </kbd></td><td>Stop, delete, and erase the currently playing overlay clip from the log and timeline </td></tr>
+<tr><td><kbd>[Your Overlay Key] </kbd></td><td>Play overlay from beginning (restarts if already playing)</td></tr>
+<tr><td><kbd>Shift </kbd>+<kbd>[Your Overlay Key] </kbd></td><td>Pause / Resume that overlay from current position in both listening and the final track </td></tr>
+<tr><td><kbd>Alt </kbd>+<kbd>Shift </kbd>+<kbd>[Your Overlay Key] </kbd></td><td>Stop, delete, and erase the currently playing overlay clip from the log and timeline </td></tr>
+<tr><td><kbd>[Your Effect Key] </kbd></td><td>Toggle audio effect ON / OFF during live recording. During review/replay playback, pressing the key punches out (stops) the currently playing effect segment at the current timestamp.</td></tr>
+<tr><td><kbd>Alt </kbd>+<kbd>Shift </kbd>+<kbd>[Your Effect Key] </kbd></td><td>Stop, delete, and erase recorded effect segments from the timeline (removes connected segments or the topmost layered pass based on your clear behavior setting).</td></tr>
 <tr><td><kbd>Escape </kbd></td><td>During Setup: Exits Super Merger. During Live Session: Returns to Setup view safely. </td></tr>
 </tbody>
 </table>
@@ -573,7 +573,30 @@ python -m http.server 3000
 </div>
 </div>
 
-<h3 id="sm-advanced">Advanced Settings </h3>
+<h3 id="sm-effects">Super Merger Effects (Live Audio FX)</h3>
+<p>You can assign real-time effects to keys and apply them live (or offline via export) to the base track, overlays, or both.</p>
+<ul>
+<li><strong>Auto-Pan (8D Audio):</strong> Pits the audio back and forth between the left and right speakers.</li>
+<li><strong>True Reverb (Cave):</strong> A convolution reverb that simulates massive, echoing physical spaces.</li>
+<li><strong>Radio Announcer (Bass Boost):</strong> A multi-stage broadcast chain that boosts bass, enhances highs, and compresses the audio for a professional podcast/radio sound.</li>
+<li><strong>Walkie-Talkie:</strong> A distorted, band-passed megaphone/police radio effect.</li>
+<li><strong>Flanger / Underwater:</strong> A sweeping delay effect that creates a swirling, underwater sound.</li>
+<li><strong>Pitch Shift:</strong> Deepens or heightens the pitch in real-time (WSOLA delay-line algorithm) without altering the speed.</li>
+<li><strong>Echo, Tremolo, Doubling, Robot, Lowpass, Highpass, and Distortion:</strong> A full suite of standard audio manipulation tools.</li>
+</ul>
+
+<p><strong>Smart Effect Routing &amp; Management:</strong> Super Merger ensures your audio graph remains pristine, no matter how many effects you trigger:</p>
+<ul>
+<li><strong>Zero Signal Leakage:</strong> Effects are routed purely in series (e.g., <code>Phone -&gt; Pitch -&gt; Reverb</code>). Disconnecting or changing effects instantly cleans up the internal web audio nodes to prevent "dry signal" leakage or double-triggering.</li>
+<li><strong>Intelligent Overrides &amp; De-overlapping:</strong> Triggering multiple instances of heavy delay-line effects (like Pitch Shifting) or same-type effects automatically cancels older active instances (live and review) when <code>Auto-Stop Previous</code> is active, preventing audio corruption, WSOLA engine conflicts, and overlapping duplicate effects in exports.</li>
+<li><strong>Headphone Latency Compensation:</strong> The calibrated headphone delay offset is automatically subtracted from effect start and end boundaries, keeping live-triggered filters tightly in sync with the audio you hear.</li>
+<li><strong>Gap &amp; Punch-In Synchronization:</strong> If you cancel a soft-pause gap (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd>) or punch-in over existing base audio, all subsequent recorded effect timelines are automatically shifted and kept in frame-accurate alignment.</li>
+<li><strong>State Persistence Across Pauses:</strong> Live active effects remain engaged across hard pause and resume cycles (<kbd>Shift</kbd>+<kbd>Space</kbd>), continuing seamlessly until you toggle them off.</li>
+<li><strong>Continuous Timeline Seeking &amp; Replay:</strong> Live active effects do not prematurely cut off when jumping backwards or forwards on the timeline (<kbd>&larr;</kbd> / <kbd>&rarr;</kbd>) or restarting from the beginning (<kbd>Space</kbd>). An effect remains open-ended and continues processing indefinitely from its start point until explicitly stopped by pressing its shortcut key again.</li>
+<li><strong>Calibrated Makeup Gain &amp; Volume Balance:</strong> Filter-heavy effects (Phone, Radio, Walkie-Talkie, Lowpass) incorporate calibrated makeup gain to prevent signal drops caused by frequency cuts, while intelligent single-pass routing guarantees compensation never stacks or doubles unexpectedly across re-recorded intervals.</li>
+</ul>
+
+<h3 id="sm-advanced">Additional Settings &amp; Behaviors</h3>
 
 <h4 id="sm-settings">Base Audio End Behavior </h4>
 <p>Under the Base Audio File selection, you can configure what happens when the base audio ends physically:</p>
@@ -608,6 +631,23 @@ python -m http.server 3000
 <li><strong>Overlap (Default):</strong>If you press the key multiple times, the sound will play on top of itself. This is ideal for sounds with long tails (like crash cymbals or pads) where you want the sound to ring out naturally without being cut short.</li>
 <li><strong>Cutoff:</strong>If you press the key multiple times, the currently playing instance of the sound will instantly stop, and a new one will begin. This acts as a "Choke Group"and is perfect for percussive hits, vocal chops, or melodic samples.<strong>Note:</strong>This choke behavior applies both during live recording and when playing back previously recorded overlays (overdubbing).</li>
 </ul>
+
+<h4 id="sm-effect-overlap-behavior-section">Multiple Effects of Same Type (e.g., 2 Pitch keys)</h4>
+<p>Configure how the mixer handles triggering multiple effects of the same type (such as two different Pitch Shift presets or multiple Reverbs):</p>
+<ul>
+<li><strong>Auto-Stop Previous (Default):</strong> Pressing a shortcut for an effect of a type that is already running immediately stops the current active instance (both live and review playback) before starting the new one. This prevents WSOLA pitch delay-line conflicts, avoids duplicate signal processing, and eliminates clashing stacked effects during export.</li>
+<li><strong>Allow Overlap:</strong> Allows multiple instances of the same effect type to run simultaneously on the audio bus.</li>
+</ul>
+
+<h4 id="sm-effect-clear-behavior-section">Overwritten &amp; Connected Effects Stop / Deletion</h4>
+<p>Configure how the timeline handles stop and delete actions when an effect has been recorded in overlapping passes or contiguous segments:</p>
+<ul>
+<li><strong>Unified (Default):</strong> Contiguous or touching segments of the same effect are treated as a single unified effect. When you stop live recording, the effect ends cleanly (any touching downstream remnants are swallowed so the effect never restarts unexpectedly later). Deleting via <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>[Your Key]</kbd> or timeline actions deletes the entire connected segment cluster at once.</li>
+<li><strong>Sequential / Layered (Preserves History):</strong> Each recording pass is tracked as an independent layer with an undo history (while strictly ensuring zero double-processing during playback and export). Deleting via <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>[Your Key]</kbd> removes only the most recent recording pass and automatically restores the underlying prior pass to its original boundaries. A second delete will then remove the earlier pass.</li>
+</ul>
+
+<h4 id="sm-advanced-panel-section">Collapsible Additional Settings Panel</h4>
+<p>All secondary mixer behaviors in Step 1 are tucked inside an accessible disclosure panel toggled with the <strong>"Additional Settings &amp; Behaviors"</strong> button. Built using standard button disclosure semantics (<code>aria-expanded</code> and <code>aria-controls</code>), it keeps the setup screen streamlined while ensuring screen readers (NVDA, JAWS) announce clear collapsed/expanded status without intrusive list announcements ("1 of 1").</p>
 
 <h3 id="sm-resume">Resuming Interrupted Sessions </h3>
 <p>If you accidentally press <kbd>Escape </kbd>or leave the Live Mixer while you have a session with recorded clips or an active timeline, your work is perfectly preserved. When you open the Super Merger again, a <strong>Continue Recording </strong>button will appear next to the "Go Now" button. Clicking it instantly restores your base track, timeline, and all overlays precisely where you left off, and seamlessly auto-resumes the playback and recording.</p>
@@ -800,7 +840,6 @@ python -m http.server 3000
 </tbody>
 </table>
 </div>
-
 <h3 id="comparison">Comparison </h3>
 <div class="table-wrap">
 <table class="shortcuts">
@@ -896,13 +935,13 @@ python -m http.server 3000
 </ul>
 
 <h3>Super Merger Recording Engine </h3>
-<p>The live mixer uses a <strong>timeline-based clip log </strong>(<code>smRecordedClips </code>). Each overlay trigger creates a clip with:</p>
+<p>The live mixer uses a <strong>timeline-based clip log </strong>(<code>smRecordedClips </code>) and <strong>effect segment log </strong>(<code>smRecordedEffects </code>). Each overlay trigger creates a clip with:</p>
 <ul>
-<li><code>timelineStart </code>— when in the base timeline this clip begins.</li>
+<li><code>timelineStart </code>— when in the base timeline this clip begins (adjusted by calibrated headphone latency).</li>
 <li><code>cropStart </code>— where in the overlay file playback starts.</li>
 <li><code>cropEnd </code>— where it stops (set on pause or retrigger).</li>
 </ul>
-<p>The exporter replays all clips through an <code>OfflineAudioContext </code>— faster than real-time for audio-only exports.</p>
+<p>Similarly, each recorded audio effect tracks its timeline window (<code>timelineStart </code> to <code>timelineEnd </code> with headphone delay offset), target audio bus, effect parameters, and overwrite layer history. The exporter replays all clips and effects through an <code>OfflineAudioContext </code>— applying effects strictly in de-overlapped series for studio-quality exports that perfectly match the live performance.</p>
 </section>
 
 </main>
