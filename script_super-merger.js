@@ -2017,22 +2017,6 @@ async function startSuperModeLive() {
   }
  }
 
-  // Immediately hide and disable buttons and blur
-  if (goBtn) {
-      goBtn.disabled = true;
-      goBtn.style.display = 'none';
-      goBtn.setAttribute('tabindex', '-1');
-      goBtn.setAttribute('aria-hidden', 'true');
-      if (document.activeElement === goBtn) goBtn.blur();
-  }
-  if (continueBtn) {
-      continueBtn.disabled = true;
-      continueBtn.style.display = 'none';
-      continueBtn.setAttribute('tabindex', '-1');
-      continueBtn.setAttribute('aria-hidden', 'true');
-      if (document.activeElement === continueBtn) continueBtn.blur();
-  }
-
   if (container) container.classList.add('sm-live-active');
   if (overlay) overlay.classList.add('sm-live-active');
 
@@ -2093,6 +2077,16 @@ async function startSuperModeLive() {
   
   if (goBtn) {
       goBtn.textContent = originalGoBtnText;
+      goBtn.disabled = true;
+      goBtn.style.display = 'none';
+      goBtn.setAttribute('tabindex', '-1');
+      goBtn.setAttribute('aria-hidden', 'true');
+  }
+  if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.style.display = 'none';
+      continueBtn.setAttribute('tabindex', '-1');
+      continueBtn.setAttribute('aria-hidden', 'true');
   }
 
   const setupView = document.getElementById('sm-setup-view');
@@ -2107,6 +2101,8 @@ async function startSuperModeLive() {
       liveView.style.display = 'block';
       liveView.removeAttribute('aria-hidden');
       liveView.removeAttribute('inert');
+      liveView.setAttribute('tabindex', '-1');
+      liveView.focus();
   }
 
   // Show header control buttons when live mixer is active
@@ -2190,21 +2186,6 @@ async function continueSuperModeLive() {
   const container = document.querySelector('.sm-container');
   const overlay = document.getElementById('super-mode-overlay');
 
-  if (goBtn) {
-      goBtn.disabled = true;
-      goBtn.style.display = 'none';
-      goBtn.setAttribute('tabindex', '-1');
-      goBtn.setAttribute('aria-hidden', 'true');
-      if (document.activeElement === goBtn) goBtn.blur();
-  }
-  if (continueBtn) {
-      continueBtn.disabled = true;
-      continueBtn.style.display = 'none';
-      continueBtn.setAttribute('tabindex', '-1');
-      continueBtn.setAttribute('aria-hidden', 'true');
-      if (document.activeElement === continueBtn) continueBtn.blur();
-  }
-
   if (container) container.classList.add('sm-live-active');
   if (overlay) overlay.classList.add('sm-live-active');
 
@@ -2252,6 +2233,18 @@ async function continueSuperModeLive() {
   if (continueBtn) {
       continueBtn.textContent = originalContinueText;
   }
+  if (goBtn) {
+      goBtn.disabled = true;
+      goBtn.style.display = 'none';
+      goBtn.setAttribute('tabindex', '-1');
+      goBtn.setAttribute('aria-hidden', 'true');
+  }
+  if (continueBtn) {
+      continueBtn.disabled = true;
+      continueBtn.style.display = 'none';
+      continueBtn.setAttribute('tabindex', '-1');
+      continueBtn.setAttribute('aria-hidden', 'true');
+  }
 
   const setupView = document.getElementById('sm-setup-view');
   if (setupView) {
@@ -2265,6 +2258,8 @@ async function continueSuperModeLive() {
       liveView.style.display = 'block';
       liveView.removeAttribute('aria-hidden');
       liveView.removeAttribute('inert');
+      liveView.setAttribute('tabindex', '-1');
+      liveView.focus();
   }
 
   document.getElementById('btn-sm-export').style.display = 'inline-block';
