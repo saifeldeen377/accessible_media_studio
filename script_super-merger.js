@@ -3,7 +3,14 @@
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Headphone calibration variables
-let smHeadphoneLatencySec = 0; 
+let smHeadphoneLatencySec = amsHeadphoneLatencySec || 0; 
+function getSmEffectiveLatencySec() {
+  const compCheckbox = document.getElementById('sm-headphone-compensation');
+  if (compCheckbox && !compCheckbox.checked) {
+    return 0;
+  }
+  return smHeadphoneLatencySec || amsHeadphoneLatencySec || 0;
+}
 let isCalibrating = false;
 let calibrationTicksPlayed = 0;
 let calibrationTapsCount = 0;
@@ -428,8 +435,10 @@ function initSuperMode() {
   const latencyDisplay = document.getElementById('sm-latency-display');
   const calibrationInstructions = document.getElementById('calibration-instructions');
 
-  calibrateBtn.addEventListener('click', () =>{
-      // Reset state before starting
+  let activeCalibrationTriggerBtn = calibrateBtn;
+
+  window.openHeadphoneCalibration = function(triggerBtn) {
+      activeCalibrationTriggerBtn = triggerBtn || calibrateBtn;
       isCalibrating = false;
       calibrationTicksPlayed = 0;
       calibrationTapsCount = 0;
@@ -437,11 +446,17 @@ function initSuperMode() {
       if (tickIntervalId) clearInterval(tickIntervalId);
       
       calibrationStatus.textContent = "Ready. Click start or press Space.";
-      calibrationDialog.showModal();
-      
-      // Focus the application role container to trigger Focus Mode in Screen Readers immediately
-      calibrationInstructions.focus(); 
-  });
+      if (calibrationDialog && typeof calibrationDialog.showModal === 'function') {
+          calibrationDialog.showModal();
+          calibrationInstructions.focus();
+      }
+  };
+
+  if (calibrateBtn) {
+      calibrateBtn.addEventListener('click', () =>{
+          window.openHeadphoneCalibration(calibrateBtn);
+      });
+  }
 
   function playCalibrationTick(time) {
       const ctx = getAudioCtx();
@@ -494,7 +509,8 @@ function initSuperMode() {
           if (tickIntervalId) clearInterval(tickIntervalId);
           isCalibrating = false;
           calibrationDialog.close();
-          calibrateBtn.focus(); // Exit application mode and return focus
+          if (activeCalibrationTriggerBtn) activeCalibrationTriggerBtn.focus();
+          else if (calibrateBtn) calibrateBtn.focus();
           return;
       }
       
@@ -537,21 +553,32 @@ function initSuperMode() {
               if (avgLatency < 0.02) avgLatency = 0; 
               
               smHeadphoneLatencySec = avgLatency;
+              amsHeadphoneLatencySec = avgLatency;
+              try { localStorage.setItem('ams_headphone_latency_sec', avgLatency.toString()); } catch(_) {}
+              const smComp = document.getElementById('sm-headphone-compensation');
+              if (smComp) smComp.checked = true;
+              const staComp = document.getElementById('sta-headphone-compensation');
+              if (staComp) staComp.checked = true;
+              const sctComp = document.getElementById('sct-headphone-compensation');
+              if (sctComp) sctComp.checked = true;
+              updateAllLatencyDisplays();
               
               const ms = Math.round(smHeadphoneLatencySec * 1000);
               calibrationStatus.textContent = `Done! Delay calibrated: ${ms} ms`;
-              latencyDisplay.textContent = `Current headphone delay correction: ${ms} ms`;
               announce(`Calibration complete. Delay set to ${ms} milliseconds.`, true);
               
               window._isCalibrationFinished = true;
               setTimeout(() =>{
                   calibrationDialog.close();
-                  calibrateBtn.focus();
+                  if (activeCalibrationTriggerBtn) activeCalibrationTriggerBtn.focus();
+                  else if (calibrateBtn) calibrateBtn.focus();
                   window._isCalibrationFinished = false;
               }, 1500);
           }
       }
   });
+
+  updateAllLatencyDisplays();
 }
 
 function enterSuperMode() {
@@ -1577,8 +1604,9 @@ function toggleSmEffect(effect) {
       const now = getAudioCtx().currentTime;
       const elapsed = Math.max(0, now - smLastUpdateTime);
       let calculatedEnd = smVirtualTime + elapsed;
-      if (smHeadphoneLatencySec > 0) {
-        calculatedEnd = Math.max(0, calculatedEnd - smHeadphoneLatencySec);
+      const effLatency = getSmEffectiveLatencySec();
+      if (effLatency > 0) {
+        calculatedEnd = Math.max(0, calculatedEnd - effLatency);
       }
       recordEntry.timelineEnd = Math.max(recordEntry.timelineStart + 0.02, calculatedEnd);
       finalizeEffectRecording(recordEntry, effect);
@@ -1613,8 +1641,9 @@ function toggleSmEffect(effect) {
     );
 
     let punchOutTime = smVirtualTime;
-    if (smHeadphoneLatencySec > 0) {
-      punchOutTime = Math.max(0, punchOutTime - smHeadphoneLatencySec);
+    const effLatency = getSmEffectiveLatencySec();
+    if (effLatency > 0) {
+      punchOutTime = Math.max(0, punchOutTime - effLatency);
     }
 
     if (clearBehavior === 'unified') {
@@ -1673,8 +1702,9 @@ function toggleSmEffect(effect) {
       const now = getAudioCtx().currentTime;
       const elapsed = Math.max(0, now - smLastUpdateTime);
       let calculatedStart = smVirtualTime + elapsed;
-      if (smHeadphoneLatencySec > 0) {
-        calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+      const effLatency = getSmEffectiveLatencySec();
+      if (effLatency > 0) {
+        calculatedStart = Math.max(0, calculatedStart - effLatency);
       }
       smRecordedEffects.forEach(r => {
         if ((r.effectId === effect.id || r.effectType === effect.effectType) &&
@@ -1726,8 +1756,9 @@ function toggleSmEffect(effect) {
 
     // Record start time
     let calculatedStart = smVirtualTime + elapsed;
-    if (smHeadphoneLatencySec > 0) {
-      calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+    const effLatency = getSmEffectiveLatencySec();
+    if (effLatency > 0) {
+      calculatedStart = Math.max(0, calculatedStart - effLatency);
     }
 
     smRecordedEffects.push({
@@ -3340,9 +3371,10 @@ function triggerOverlayStart(overlay) {
  // Calculate actual timeline start applying the latency correction
  let calculatedStart = active_timeline ? (smVirtualTime + (getAudioCtx().currentTime - smLastUpdateTime)) : 0;
  
+ const effLatency = getSmEffectiveLatencySec();
  // Apply latency deduction only if actively recording and delay exists
- if (active_timeline && smHeadphoneLatencySec >0) {
-     calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+ if (active_timeline && effLatency > 0) {
+     calculatedStart = Math.max(0, calculatedStart - effLatency);
  }
 
   const clip = {
@@ -3438,8 +3470,9 @@ function toggleOverlayPauseResume(overlay) {
 
  if (shouldRecord) {
  let calculatedStart = smVirtualTime;
- if (smHeadphoneLatencySec >0) {
-     calculatedStart = Math.max(0, calculatedStart - smHeadphoneLatencySec);
+ const effLatency = getSmEffectiveLatencySec();
+ if (effLatency > 0) {
+     calculatedStart = Math.max(0, calculatedStart - effLatency);
  }
  const timelineStart = calculatedStart;
  const newClip = {

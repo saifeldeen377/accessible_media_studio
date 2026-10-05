@@ -50,12 +50,22 @@ function initSuperCut() {
   const footerApp = document.querySelector('footer');
   const container = overlay.querySelector('.sm-container');
 
+  const btnCalibrate = document.getElementById('btn-sct-calibrate-headphones');
+  if (btnCalibrate) {
+    btnCalibrate.addEventListener('click', () => {
+      if (typeof window.openHeadphoneCalibration === 'function') {
+        window.openHeadphoneCalibration(btnCalibrate);
+      }
+    });
+  }
+
   setupFocusTrap(overlay);
 
   btnEnter.addEventListener('click', () =>{
     overlay.hidden = false;
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
+    updateAllLatencyDisplays();
     container.focus();
   });
 
@@ -326,7 +336,11 @@ function initSuperCut() {
 
   function markStart() {
     if (!sctBuffer) return;
-    const curr = getCurrentTime();
+    let curr = getCurrentTime();
+    const useComp = document.getElementById('sct-headphone-compensation')?.checked ?? true;
+    if (sctIsPlaying && useComp && amsHeadphoneLatencySec > 0) {
+      curr = Math.max(0, curr - amsHeadphoneLatencySec);
+    }
     
     if (sctLastAction === 'end') {
       sctActiveCut = { start: null, end: null, id: null };
@@ -350,7 +364,11 @@ function initSuperCut() {
 
   function markEnd() {
     if (!sctBuffer) return;
-    const curr = getCurrentTime();
+    let curr = getCurrentTime();
+    const useComp = document.getElementById('sct-headphone-compensation')?.checked ?? true;
+    if (sctIsPlaying && useComp && amsHeadphoneLatencySec > 0) {
+      curr = Math.max(0, curr - amsHeadphoneLatencySec);
+    }
     
     if (sctLastAction === null) {
       sctActiveCut.start = 0;

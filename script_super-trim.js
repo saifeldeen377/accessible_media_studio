@@ -33,12 +33,22 @@ function initSuperTrimAudio() {
  const footerApp = document.querySelector('footer');
  const container = overlay.querySelector('.sm-container');
 
+ const btnCalibrate = document.getElementById('btn-sta-calibrate-headphones');
+ if (btnCalibrate) {
+   btnCalibrate.addEventListener('click', () => {
+     if (typeof window.openHeadphoneCalibration === 'function') {
+       window.openHeadphoneCalibration(btnCalibrate);
+     }
+   });
+ }
+
  setupFocusTrap(overlay);
 
  btnEnter.addEventListener('click', () =>{
     overlay.hidden = false;
     overlay.style.display = 'flex';
     setAppBackgroundInert(true);
+    updateAllLatencyDisplays();
     container.focus();
   });
 
@@ -261,7 +271,11 @@ function initSuperTrimAudio() {
  }
 
     function markStart() {
-      const curr = getCurrentTime();
+      let curr = getCurrentTime();
+      const useComp = document.getElementById('sta-headphone-compensation')?.checked ?? true;
+      if (trimIsPlaying && useComp && amsHeadphoneLatencySec > 0) {
+        curr = Math.max(0, curr - amsHeadphoneLatencySec);
+      }
       if (trimEnd !== null && curr >= trimEnd) {
         announce("Start time cannot be after end time.");
         return;
@@ -278,7 +292,11 @@ function initSuperTrimAudio() {
     }
   
     function markEnd() {
-      const curr = getCurrentTime();
+      let curr = getCurrentTime();
+      const useComp = document.getElementById('sta-headphone-compensation')?.checked ?? true;
+      if (trimIsPlaying && useComp && amsHeadphoneLatencySec > 0) {
+        curr = Math.max(0, curr - amsHeadphoneLatencySec);
+      }
       if (curr <= trimStart) {
         announce("End time cannot be before start time.");
         return;

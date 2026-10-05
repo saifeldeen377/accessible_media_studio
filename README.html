@@ -524,7 +524,7 @@ python -m http.server 3000
 <li><strong>Step 1:</strong>Select your base audio (the backbone of your mix). Adjust its <strong>Base Audio Volume </strong>(0-100%) to ensure it sits well in the mix.
     <ul>
         <li><strong>Additional Settings &amp; Behaviors:</strong> Click the collapsible <strong>"Additional Settings &amp; Behaviors"</strong> button to configure advanced settings like <strong>Base Audio End Behavior</strong>, <strong>Undo Behavior</strong>, <strong>Multiple Effects of Same Type</strong>, and <strong>Overwritten &amp; Connected Effects Stop / Deletion</strong> (detailed below). Grouped behind an accessible disclosure button, this keeps the setup clean and uncluttered.</li>
-        <li><strong>Headphone Calibration:</strong> If you are using wireless or Bluetooth headphones with noticeable delay, click <strong>"Please click if you are using a headphone to calibrate delay"</strong> (located conveniently next to the additional settings button) and follow the audio prompts. The studio will calculate your hardware latency and automatically deduct it from your future <strong>overlay</strong> and <strong>audio effect (FX)</strong> recordings so your final exported mix is perfectly on beat.</li>
+        <li><strong>Headphone Latency Compensation &amp; Calibration:</strong> If you are using wireless or Bluetooth headphones with noticeable delay, click <strong>"Calibrate Delay"</strong> (located conveniently next to the additional settings button) and follow the audio prompts. You can also toggle the <strong>"Apply headphone delay compensation"</strong> checkbox on or off at any time. When disabled, the compensation value becomes 0 ms. When enabled, the studio automatically deducts your calibrated delay from both your future <strong>overlay</strong> and <strong>audio effect (FX)</strong> recordings so your final exported mix is perfectly on beat. <em>(Note: The calibrated delay value is unified and saved globally across Super Merger, Super Trim, and Super Cut — calibrating once in any tool automatically updates the others).</em></li>
     </ul>
 </li>
 <li><strong>Step 2:</strong> Add your live triggers (Overlays and Effects):
@@ -693,6 +693,7 @@ python -m http.server 3000
 <ul>
 <li><strong>100% Sample-Accurate Sync:</strong>Super Trim bypasses the standard browser audio player and uses the raw <code>Web Audio API </code>for playback. This means the time you capture during playback is guaranteed to have <strong>0ms of drift </strong>compared to the final exported file (a common issue when playing MP3s in Chrome/Edge).</li>
 <li><strong>International Keyboard Support:</strong>The shortcuts <kbd>s </kbd>/<kbd>[</kbd>for start and <kbd>e </kbd>/<kbd>]</kbd>for end read physical key codes, meaning they work perfectly on any layout.</li>
+<li><strong>Headphone Latency Compensation:</strong>Using Bluetooth headphones? Calibrate your delay once (shared globally across Super Merger, Super Trim, and Super Cut) and Super Trim will automatically offset marked In/Out points backward so you never trim too late due to wireless audio delay. Calibrating in any tool automatically synchronizes across all three.</li>
 </ul>
 </section>
 
@@ -733,6 +734,7 @@ python -m http.server 3000
 <li><strong>Missing End:</strong>If you press <kbd>s </kbd>to mark a start but never press <kbd>e </kbd>, it assumes you want to cut everything from that point to the end of the file.</li>
 <li><strong>Missing Start:</strong>If you press <kbd>e </kbd>without ever pressing <kbd>s </kbd>, it assumes you want to cut everything from the very beginning up to that point.</li>
 <li><strong>Modifications:</strong>If you press <kbd>s </kbd>twice in a row, it just updates the start point of your current cut. If you press <kbd>e </kbd>twice in a row, it extends or shortens the end point of the cut you just made, without creating a duplicate.</li>
+<li><strong>Headphone Latency Compensation:</strong>Automatically offsets live cut marks backward by your calibrated headphone delay (shared globally with Super Merger and Super Trim), ensuring you never cut into adjacent words when using Bluetooth headphones. Calibrating in any tool automatically synchronizes across all three.</li>
 </ul>
 </section>
 

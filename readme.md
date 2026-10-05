@@ -131,7 +131,7 @@ Traditional editors require you to carefully place audio clips on a visual timel
 1. Press `M` anywhere on the page - or click **" Super Merger"** in the header. Focus jumps directly to the dialog.
 2. **Step 1:** Select your base audio (the backbone of your mix). Adjust its **Base Audio Volume** (0-100%) to ensure it sits well in the mix.
    - **Additional Settings & Behaviors:** Click the collapsible **"Additional Settings & Behaviors"** button to configure advanced settings like **Base Audio End Behavior**, **Undo Behavior**, **Multiple Effects of Same Type**, and **Overwritten & Connected Effects Stop / Deletion** (detailed below). Grouped behind an accessible disclosure button, this keeps the setup clean and uncluttered.
-   - **Headphone Calibration:** If you are using wireless or Bluetooth headphones with noticeable delay, click **"Please click if you are using a headphone to calibrate delay"** (located conveniently next to the additional settings button) and follow the audio prompts. The studio calculates your hardware latency and automatically deducts it from both your future **overlay** and **audio effect (FX)** recordings so your final exported mix is perfectly on beat.
+   - **Headphone Latency Compensation & Calibration:** If you are using wireless or Bluetooth headphones with noticeable delay, click **"Calibrate Delay"** (located conveniently next to the additional settings button) and follow the audio prompts. You can also toggle the **"Apply headphone delay compensation"** checkbox on or off at any time. When disabled, the compensation value becomes 0 ms. When enabled, the studio automatically deducts your calibrated delay from both your future **overlay** and **audio effect (FX)** recordings so your final exported mix is perfectly on beat. *(Note: The calibrated delay value is unified and saved globally across Super Merger, Super Trim, and Super Cut — calibrating once in any tool automatically updates the others).*
 3. **Step 2:** Add your live triggers (Overlays and Effects):
    - **For Overlays (Audio clips):** Leave type as "Audio File Overlay". Select an audio file from your library, type a shortcut key (e.g., `d`), adjust **Volume**, choose **Trigger Behavior**, and click **" Add to Super Mix"**.
    - **For Effects (Audio Filters/FX):** Change type to "Audio Effect (FX)". Select an effect (like Cave Reverb or Walkie-Talkie), assign a shortcut key, choose its target (Base track, Overlays, or All), configure its parameter (if applicable), and click **" Add to Super Mix"**.
@@ -252,6 +252,7 @@ Super Trim is the fastest, most precise way to crop audio files using only your 
 ### Why Super Trim is Unique
 - **100% Sample-Accurate Sync:** Super Trim bypasses the standard browser audio player and uses the raw `Web Audio API` for playback. This means the time you capture during playback is guaranteed to have **0ms of drift** compared to the final exported file (a common issue when playing MP3s in Chrome/Edge).
 - **International Keyboard Support:** The shortcuts `s` / `[` for start and `e` / `]` for end read physical key codes, meaning they work perfectly on any layout.
+- **Headphone Latency Compensation:** Using Bluetooth headphones? Calibrate your delay once (shared globally across Super Merger, Super Trim, and Super Cut) and Super Trim will automatically offset marked In/Out points backward so you never trim too late due to wireless audio delay. Calibrating in any tool automatically synchronizes across all three.
 
 ### 3. Super Cut — Live Audio Cleaner
 
@@ -281,6 +282,7 @@ Super Cut's state machine is designed to be forgiving:
 - **Missing End**: If you press `s` to mark a start but never press `e`, it assumes you want to cut everything from that point to the end of the file.
 - **Missing Start**: If you press `e` without ever pressing `s`, it assumes you want to cut everything from the very beginning up to that point.
 - **Modifications**: If you press `s` twice in a row, it just updates the start point of your current cut. If you press `e` twice in a row, it extends or shortens the end point of the cut you just made, without creating a duplicate.
+- **Headphone Latency Compensation**: Automatically offsets live cut marks backward by your calibrated headphone delay (shared globally with Super Merger and Super Trim), ensuring you never cut into adjacent words when using Bluetooth headphones. Calibrating in any tool automatically synchronizes across all three.
 
 ---
 

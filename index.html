@@ -475,11 +475,15 @@ window.onerror = function(msg, url, line, col, error) {
 </div>
 </div>
 
-<!-- Calibration Button in Setup View (Outside collapsible section) -->
-<div class="control-group" style="margin-top: 15px;">
-    <button type="button" id="btn-sm-calibrate-headphones" class="btn btn-secondary">Please click if you are using a headphone to calibrate delay</button>
-    <p id="sm-latency-display" class="field-hint" aria-live="polite">Current headphone delay correction: 0 ms</p>
+<!-- Headphone Compensation & Calibration in Setup View (Outside collapsible section) -->
+<div class="control-group" style="margin-top: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+    <input type="checkbox" id="sm-headphone-compensation" checked>
+    <span>Apply headphone delay compensation (<strong id="sm-latency-val">0 ms</strong>)</span>
+  </label>
+  <button type="button" id="btn-sm-calibrate-headphones" class="btn btn-secondary btn-sm" aria-label="Calibrate headphone delay">Calibrate Delay</button>
 </div>
+<p id="sm-latency-display" class="field-hint" style="margin-top: -5px; margin-bottom: 10px;">Current headphone delay correction: 0 ms</p>
 </div>
 
 <!-- Step 2: Overlay Tracks Configuration -->
@@ -713,6 +717,15 @@ window.onerror = function(msg, url, line, col, error) {
 <p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>e </kbd>(or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
+
+<div class="control-group" style="margin-top: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+    <input type="checkbox" id="sta-headphone-compensation" checked>
+    <span>Apply headphone delay compensation (<strong id="sta-latency-val">0 ms</strong>)</span>
+  </label>
+  <button type="button" id="btn-sta-calibrate-headphones" class="btn btn-secondary btn-sm">Calibrate Delay</button>
+</div>
+<p id="sta-latency-display" class="field-hint">Current headphone delay correction: 0 ms</p>
 </div>
 
 <div class="panel-actions">
@@ -777,6 +790,15 @@ window.onerror = function(msg, url, line, col, error) {
 <p style="margin: 10px 0 0 0; color: var(--text-sub);">Press <kbd>e</kbd>(or <kbd>]</kbd>) while playing </p>
 </div>
 </div>
+
+<div class="control-group" style="margin-top: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+    <input type="checkbox" id="sct-headphone-compensation" checked>
+    <span>Apply headphone delay compensation (<strong id="sct-latency-val">0 ms</strong>)</span>
+  </label>
+  <button type="button" id="btn-sct-calibrate-headphones" class="btn btn-secondary btn-sm">Calibrate Delay</button>
+</div>
+<p id="sct-latency-display" class="field-hint">Current headphone delay correction: 0 ms</p>
 </div>
 
 <div class="clips-table-wrapper" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">

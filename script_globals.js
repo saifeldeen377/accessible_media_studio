@@ -39,6 +39,50 @@ let smSoftPauseStartVirtual = 0;
 let smSoftPauseStartWall = 0;
 let smBaseSegments = []; // { timelineStart, sourceStart, duration }
 
+// ── Shared Headphone Latency Compensation ────────────────────────
+let amsHeadphoneLatencySec = parseFloat(localStorage.getItem('ams_headphone_latency_sec') || '0') || 0;
+
+function updateAllLatencyDisplays() {
+  const ms = Math.round(amsHeadphoneLatencySec * 1000);
+
+  // Super Merger
+  const smComp = document.getElementById('sm-headphone-compensation');
+  const smChecked = smComp ? smComp.checked : true;
+  const smVal = document.getElementById('sm-latency-val');
+  if (smVal) smVal.textContent = smChecked ? `${ms} ms` : `0 ms`;
+  const smEl = document.getElementById('sm-latency-display');
+  if (smEl) {
+    smEl.textContent = `Current headphone delay correction: ${smChecked ? ms : 0} ms`;
+  }
+
+  // Super Trim
+  const staComp = document.getElementById('sta-headphone-compensation');
+  const staChecked = staComp ? staComp.checked : true;
+  const staVal = document.getElementById('sta-latency-val');
+  if (staVal) staVal.textContent = staChecked ? `${ms} ms` : `0 ms`;
+  const staHint = document.getElementById('sta-latency-display');
+  if (staHint) {
+    staHint.textContent = `Current headphone delay correction: ${staChecked ? ms : 0} ms`;
+  }
+
+  // Super Cut
+  const sctComp = document.getElementById('sct-headphone-compensation');
+  const sctChecked = sctComp ? sctComp.checked : true;
+  const sctVal = document.getElementById('sct-latency-val');
+  if (sctVal) sctVal.textContent = sctChecked ? `${ms} ms` : `0 ms`;
+  const sctHint = document.getElementById('sct-latency-display');
+  if (sctHint) {
+    sctHint.textContent = `Current headphone delay correction: ${sctChecked ? ms : 0} ms`;
+  }
+}
+
+// Global listener for toggling compensation checkboxes across tools (silent, letting standard checkbox announce state)
+document.addEventListener('change', (e) => {
+  if (e.target && (e.target.id === 'sm-headphone-compensation' || e.target.id === 'sta-headphone-compensation' || e.target.id === 'sct-headphone-compensation')) {
+    updateAllLatencyDisplays();
+  }
+});
+
 // Safety lock to prevent accidental tab closing during long exports
 let isExportingMedia = false;
 window.addEventListener('beforeunload', (e) =>{
